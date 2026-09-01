@@ -53,6 +53,7 @@ class TraderExecutor:
             self.logger.info(f"✅ Ордер исполнен! ID: {order['id']}")
             
             actual_price = order.get('average') or order.get('price')
+            actual_position_amount = float(order.get('filled') or order.get('amount') or amount_coin)
 
             
             if not actual_price or pd.isna(actual_price) or actual_price == 0:
@@ -210,6 +211,13 @@ class TraderExecutor:
                                 self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
                     except Exception as e:
                         self.logger.warning(f"Не удалось восстановить SL/TP ордера: {e}")
+
+                
+                if self.positions[symbol]['sl_order_id'] is None:
+
+                
+                    self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} найдена, но защитный SL не установлен или не найден! ПОТРЕБУЕТСЯ РУЧНОЕ ВМЕШАТЕЛЬСТВО!")
+
                 
                 # Трейлинг стоп логика
                 if USE_TRAILING:
