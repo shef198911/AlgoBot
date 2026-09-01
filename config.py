@@ -1,5 +1,8 @@
 import logging
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # --- Настройки API (Binance Testnet) ---
 # Ключи добавим позже, пока оставляем пустыми
@@ -43,8 +46,8 @@ ML_PROBABILITY_THRESHOLD = 0.50  # Минимальная уверенность
 MODEL_FILE = f"model_{TRADING_MODE.lower()}.pkl" # Разные файлы для разных режимов
 
 # --- Настройки Telegram ---
-TG_BOT_TOKEN = ""
-TG_CHAT_ID = "332680373" # Будет заполнено позже
+TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN", "")
+TG_CHAT_ID = os.getenv("TG_CHAT_ID", "") # Будет заполнено позже
 
 # --- Настройки логирования ---
 LOG_FILE = "bot.log"

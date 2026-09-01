@@ -4,3 +4,5 @@ bot.log
 *.sqlite
 venv/
 .venv/
+
+.env
