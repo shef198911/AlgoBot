@@ -1,7 +1,7 @@
 import pandas as pd
 import joblib
 import os
-from config import logger, MODEL_FILE, ML_PROBABILITY_THRESHOLD, FEATURE_COLUMNS
+from config import logger, MODEL_FILE, ML_PROBABILITY_THRESHOLD, FEATURE_COLUMNS, TAKE_PROFIT_PCT
 
 class MLFilter:
     def __init__(self):
@@ -54,7 +54,7 @@ class MLFilter:
             if is_approved and self.regressor is not None:
                 predicted_tp_pct = self.regressor.predict(X)[0]
                 # Ограничиваем неадекватные значения
-                predicted_tp_pct = max(0.005, min(0.05, predicted_tp_pct)) 
+                predicted_tp_pct = max(0.005, min(TAKE_PROFIT_PCT * 2.0, predicted_tp_pct))
                 
             return is_approved, prob, predicted_tp_pct
             

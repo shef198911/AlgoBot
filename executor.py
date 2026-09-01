@@ -1,5 +1,6 @@
 import time
 import json
+import pandas as pd
 from config import logger, STOP_LOSS_PCT, TAKE_PROFIT_PCT, LEVERAGE, MAX_CAPITAL_USDT, USE_ATR, USE_TRAILING, TRAILING_ACTIVATION_PCT, TRAILING_DISTANCE_PCT
 from analytics import analytics_manager
 from telegram_notifier import TelegramNotifier
@@ -49,8 +50,54 @@ class TraderExecutor:
             self.logger.info(f"✅ ВХОД ИСПОЛНЕН! ID: {order['id']}")
             
             actual_price = order.get('average') or order.get('price')
+
+            
             if not actual_price or pd.isna(actual_price) or actual_price == 0:
-                actual_price = current_price
+
+            
+                try:
+
+            
+                    time.sleep(1)
+
+            
+                    pos = self.exchange.fetch_positions([symbol])
+
+            
+                    if pos and len(pos) > 0 and pos[0].get('entryPrice'):
+
+            
+                        actual_price = float(pos[0]['entryPrice'])
+
+            
+                except:
+
+            
+                    pass
+
+            
+            if not actual_price or pd.isna(actual_price) or actual_price == 0:
+
+            
+                self.logger.critical(f"Невозможно определить цену исполнения (Fill Price). Экстренное закрытие {symbol}!")
+
+            
+                close_side = 'sell' if side == 'buy' else 'buy'
+
+            
+                try:
+
+            
+                    self.exchange.create_market_order(symbol, close_side, amount_coin, params={'reduceOnly': True})
+
+            
+                except:
+
+            
+                    pass
+
+            
+                return False
                 
             self.logger.info(f"Ордер исполнен. Запрошенная цена: {current_price}, Фактическая цена (Fill): {actual_price}")
             
@@ -72,18 +119,29 @@ class TraderExecutor:
                     self.logger.critical(f"КРИТИЧЕСКАЯ ОШИБКА: Не удалось закрыть позицию после сбоя SL: {close_e}")
                 return False
                 
+            tp_order_id = None
+
+                
             try:
+
+                
                 tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, amount_coin, params={'stopPrice': tp_price, 'closePosition': True})
+
+                
                 tp_order_id = tp_ord['id']
+
+                
             except Exception as e:
-                self.logger.error(f"Не удалось поставить TP: {e}")
+
+                
+                self.logger.warning(f"Не удалось поставить TP: {e}. Позиция оставлена только со SL.")
                 
             self.positions[symbol] = {
                 "side": side,
-                "entry": current_price,
+                "entry": actual_price,
                 "amount": amount_coin,
-                "max_price": current_price,
-                "min_price": current_price,
+                "max_price": actual_price,
+                "min_price": actual_price,
                 "sl_order_id": sl_order_id,
                 "tp_order_id": tp_order_id,
                 "sl_price": sl_price,
