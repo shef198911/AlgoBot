@@ -1,7 +1,7 @@
 import pandas as pd
 import joblib
 import os
-from config import logger, MODEL_FILE, ML_PROBABILITY_THRESHOLD
+from config import logger, MODEL_FILE, ML_PROBABILITY_THRESHOLD, FEATURE_COLUMNS
 
 class MLFilter:
     def __init__(self):
@@ -38,7 +38,7 @@ class MLFilter:
             return False, 0.0, None 
             
         try:
-            feature_cols = ['open', 'high', 'low', 'close', 'volume', 'EMA_FAST', 'EMA_SLOW', 'RSI', 'ATRr', 'VWAP', 'ADX', 'BB_UPPER', 'BB_LOWER', 'BB_WIDTH', 'PRICE_ROC', 'VOL_RATIO', 'VWAP_DIST']
+            feature_cols = FEATURE_COLUMNS
             
             X = pd.DataFrame([current_features[feature_cols]])
             

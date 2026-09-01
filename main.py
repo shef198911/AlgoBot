@@ -22,6 +22,7 @@ def main():
     executor = TraderExecutor(fetcher.exchange)
 
     logger.info(f"Символы: {SYMBOLS}, Таймфрейм: {TIMEFRAME}")
+    last_processed_candle = {sym: None for sym in SYMBOLS}
     logger.info("Бот переходит в цикл мониторинга...")
 
     while True:
@@ -58,11 +59,18 @@ def main():
                     continue
 
                 current_state = analyzed_data.iloc[-1]
+                
+                # Duplicate Signal Protection
+                current_time = current_state.name if hasattr(current_state, 'name') else current_state.get('timestamp')
+                if last_processed_candle[symbol] == current_time:
+                    continue
+
                 ta_signal = current_state['ta_signal']
                 current_price = current_state['close']
                 atr_value = current_state.get('ATRr', 0)
 
                 if ta_signal != 0:
+                    last_processed_candle[symbol] = current_time
                     side_str = 'buy' if ta_signal == 1 else 'sell'
                     
                     # Проверка глобального тренда

@@ -50,3 +50,6 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("AlgoBot")
+ 
+FEATURE_COLUMNS = [open high low close volume EMA_FAST EMA_SLOW RSI ATRr VWAP ADX BB_UPPER BB_LOWER BB_WIDTH PRICE_ROC VOL_RATIO VWAP_DIST ] 
+

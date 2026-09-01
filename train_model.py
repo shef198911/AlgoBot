@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.metrics import accuracy_score
 import os
 import joblib
-from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT
+from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
 
@@ -92,7 +92,7 @@ def train_ai():
         
     logger.info(f"Собрано {len(combined_trades)} сигналов. Запуск AutoML и ансамбля...")
 
-    feature_cols = ['open', 'high', 'low', 'close', 'volume', 'EMA_FAST', 'EMA_SLOW', 'RSI', 'ATRr', 'VWAP', 'ADX', 'BB_UPPER', 'BB_LOWER', 'BB_WIDTH', 'PRICE_ROC', 'VOL_RATIO', 'VWAP_DIST']
+    feature_cols = FEATURE_COLUMNS
     X = combined_trades[feature_cols]
     y = combined_trades['is_success']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
