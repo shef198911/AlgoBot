@@ -28,6 +28,8 @@ class TraderExecutor:
             self.logger.warning(f"Достигнут лимит капитала! Выделено {MAX_CAPITAL_USDT} USDT, уже используется {current_used_capital} USDT. Пропускаем {symbol}.")
             return False
 
+        position_opened = False
+        actual_position_amount = None
         try:
             if symbol not in self.exchange.markets:
                 self.exchange.load_markets()
@@ -47,7 +49,8 @@ class TraderExecutor:
             self.logger.info(f"Подготовка {side.upper()} ордера: {amount_coin} {symbol} (Маржа: {amount_usdt}$, Lev: {LEVERAGE}x)")
 
             order = self.exchange.create_market_order(symbol, side, amount_coin)
-            self.logger.info(f"✅ ВХОД ИСПОЛНЕН! ID: {order['id']}")
+            position_opened = True
+            self.logger.info(f"✅ Ордер исполнен! ID: {order['id']}")
             
             actual_price = order.get('average') or order.get('price')
 
@@ -65,9 +68,8 @@ class TraderExecutor:
 
             
                     if pos and len(pos) > 0 and pos[0].get('entryPrice'):
-
-            
                         actual_price = float(pos[0]['entryPrice'])
+                        actual_position_amount = abs(float(pos[0].get('info', {}).get('positionAmt', pos[0].get('contracts', amount_coin))))
 
             
                 except:
@@ -79,16 +81,11 @@ class TraderExecutor:
             if not actual_price or pd.isna(actual_price) or actual_price == 0:
 
             
-                self.logger.critical(f"Невозможно определить цену исполнения (Fill Price). Экстренное закрытие {symbol}!")
-
-            
+                self.logger.critical(f"КРИТИЧЕСКИ: Невозможно определить цену исполнения (Fill Price). Экстренное закрытие {symbol}!")
                 close_side = 'sell' if side == 'buy' else 'buy'
-
-            
+                close_amount = actual_position_amount if actual_position_amount else amount_coin
                 try:
-
-            
-                    self.exchange.create_market_order(symbol, close_side, amount_coin, params={'reduceOnly': True})
+                    self.exchange.create_market_order(symbol, close_side, close_amount, params={'reduceOnly': True})
 
             
                 except:
@@ -153,7 +150,15 @@ class TraderExecutor:
             self.logger.info(f"Сделка {side} по {symbol} открыта. Вход: {current_price}, SL: {sl_price}, TP: {tp_price}")
             return True
         except Exception as e:
-            self.logger.error(f"КРИТИЧЕСКАЯ ОШИБКА при открытии ордера: {e}")
+            self.logger.error(f"Ошибка при выполнении execute_trade: {e}")
+            if position_opened:
+                self.logger.critical(f"КРИТИЧЕСКИ: Ошибка ПОСЛЕ открытия позиции {symbol}. Экстренное закрытие!")
+                close_side = 'sell' if side == 'buy' else 'buy'
+                close_amount = actual_position_amount if actual_position_amount else amount_coin
+                try:
+                    self.exchange.create_market_order(symbol, close_side, close_amount, params={'reduceOnly': True})
+                except Exception as close_e:
+                    self.logger.critical(f"НЕ УДАЛОСЬ ЗАКРЫТЬ ПОЗИЦИЮ: {close_e}")
             return False
 
     def _save_live_state(self):
@@ -193,6 +198,18 @@ class TraderExecutor:
             if active_pos:
                 if symbol not in self.positions:
                     self.positions[symbol] = {"side": active_pos['side'].lower(), "entry": float(active_pos['entryPrice']), "max_price": float(active_pos['entryPrice']), "min_price": float(active_pos['entryPrice']), "sl_order_id": None, "sl_price": 0, "amount": abs(float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0))))}
+                    try:
+                        open_orders = self.exchange.fetch_open_orders(symbol)
+                        for o in open_orders:
+                            o_type = o['type'].lower()
+                            if 'stop' in o_type:
+                                self.positions[symbol]['sl_order_id'] = o['id']
+                                self.positions[symbol]['sl_price'] = float(o.get('stopPrice') or 0)
+                            elif 'take_profit' in o_type:
+                                self.positions[symbol]['tp_order_id'] = o['id']
+                                self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
+                    except Exception as e:
+                        self.logger.warning(f"Не удалось восстановить SL/TP ордера: {e}")
                 
                 # Трейлинг стоп логика
                 if USE_TRAILING:
@@ -283,5 +300,5 @@ class TraderExecutor:
 
             return False
         except Exception as e:
-            self.logger.warning(f"Ошибка проверки статуса позиции {symbol}: {e}")
+            self.logger.warning(f"API ERROR проверки статуса позиции {symbol}: {e}")
             return symbol in self.positions
