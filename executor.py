@@ -48,7 +48,13 @@ class TraderExecutor:
             order = self.exchange.create_market_order(symbol, side, amount_coin)
             self.logger.info(f"✅ ВХОД ИСПОЛНЕН! ID: {order['id']}")
             
-            sl_price, tp_price = self.calculate_sl_tp(side, current_price, atr_value, dynamic_tp=dynamic_tp)
+            actual_price = order.get('average') or order.get('price')
+            if not actual_price or pd.isna(actual_price) or actual_price == 0:
+                actual_price = current_price
+                
+            self.logger.info(f"Ордер исполнен. Запрошенная цена: {current_price}, Фактическая цена (Fill): {actual_price}")
+            
+            sl_price, tp_price = self.calculate_sl_tp(side, actual_price, atr_value, dynamic_tp=dynamic_tp)
             sl_price = float(self.exchange.price_to_precision(symbol, sl_price))
             tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
             
@@ -59,7 +65,12 @@ class TraderExecutor:
                 sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'closePosition': True})
                 sl_order_id = sl_ord['id']
             except Exception as e:
-                self.logger.error(f"Не удалось поставить SL: {e}")
+                self.logger.error(f"Не удалось выставить SL: {e}. Экстренное закрытие позиции!")
+                try:
+                    self.exchange.create_market_order(symbol, close_side, amount_coin, params={'reduceOnly': True})
+                except Exception as close_e:
+                    self.logger.critical(f"КРИТИЧЕСКАЯ ОШИБКА: Не удалось закрыть позицию после сбоя SL: {close_e}")
+                return False
                 
             try:
                 tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, amount_coin, params={'stopPrice': tp_price, 'closePosition': True})

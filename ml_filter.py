@@ -34,7 +34,8 @@ class MLFilter:
         Возвращает: (is_approved: bool, ai_confidence: float, predicted_tp_pct: float)
         """
         if not self.is_trained or self.ensemble is None:
-            return True, 1.0, None 
+            self.logger.warning("ML модель не загружена. Fail-closed активирован: сигнал отклонен.")
+            return False, 0.0, None 
             
         try:
             feature_cols = ['open', 'high', 'low', 'close', 'volume', 'EMA_FAST', 'EMA_SLOW', 'RSI', 'ATRr', 'VWAP', 'ADX', 'BB_UPPER', 'BB_LOWER', 'BB_WIDTH', 'PRICE_ROC', 'VOL_RATIO', 'VWAP_DIST']
@@ -58,5 +59,5 @@ class MLFilter:
             return is_approved, prob, predicted_tp_pct
             
         except Exception as e:
-            self.logger.error(f"Ошибка при оценке ИИ: {e}")
-            return True, 1.0, None
+            self.logger.error(f"Ошибка при оценке сигнала: {e}")
+            return False, 0.0, None

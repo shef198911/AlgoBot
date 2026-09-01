@@ -84,6 +84,8 @@ def train_ai():
         return
 
     combined_trades = pd.concat(all_trades, ignore_index=True)
+    if 'timestamp' in combined_trades.columns:
+        combined_trades = combined_trades.sort_values('timestamp').reset_index(drop=True)
     if len(combined_trades) < 20:
         logger.warning(f"Слишком мало сигналов ({len(combined_trades)}) для обучения.")
         return
@@ -93,7 +95,7 @@ def train_ai():
     feature_cols = ['open', 'high', 'low', 'close', 'volume', 'EMA_FAST', 'EMA_SLOW', 'RSI', 'ATRr', 'VWAP', 'ADX', 'BB_UPPER', 'BB_LOWER', 'BB_WIDTH', 'PRICE_ROC', 'VOL_RATIO', 'VWAP_DIST']
     X = combined_trades[feature_cols]
     y = combined_trades['is_success']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
     
     # AutoML: RandomizedSearchCV для XGBoost
     xgb_base = xgb.XGBClassifier(random_state=42, eval_metric='logloss')

@@ -57,6 +57,10 @@ class DataFetcher:
             df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
             
+            # Closed-candle enforcement: удаляем последнюю (текущую незакрытую) свечу
+            if not df.empty:
+                df = df.iloc[:-1].copy()
+            
             return df
         except ccxt.RateLimitExceeded:
             self.logger.warning("Превышен лимит запросов к API. Ждем...")
