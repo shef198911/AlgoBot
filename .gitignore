@@ -1,0 +1,6 @@
+﻿__pycache__/
+bot.log
+*.json
+*.sqlite
+venv/
+.venv/

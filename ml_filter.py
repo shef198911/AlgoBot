@@ -1,0 +1,62 @@
+import pandas as pd
+import joblib
+import os
+from config import logger, MODEL_FILE, ML_PROBABILITY_THRESHOLD
+
+class MLFilter:
+    def __init__(self):
+        self.logger = logger.getChild("MLFilter")
+        self.ensemble = None
+        self.regressor = None
+        self.is_trained = False
+        self.load_model()
+        
+    def load_model(self):
+        if os.path.exists(MODEL_FILE):
+            try:
+                model_data = joblib.load(MODEL_FILE)
+                # Обратная совместимость или новая структура
+                if isinstance(model_data, dict) and 'ensemble' in model_data:
+                    self.ensemble = model_data['ensemble']
+                    self.regressor = model_data['regressor']
+                else:
+                    self.ensemble = model_data # старая версия (если вдруг)
+                    
+                self.is_trained = True
+                self.logger.info(f"Модель ИИ V3 успешно загружена из {MODEL_FILE}")
+            except Exception as e:
+                self.logger.error(f"Ошибка загрузки ИИ: {e}")
+        else:
+            self.logger.warning(f"Файл {MODEL_FILE} не найден. ИИ отключен.")
+            
+    def evaluate_signal(self, current_features):
+        """
+        Возвращает: (is_approved: bool, ai_confidence: float, predicted_tp_pct: float)
+        """
+        if not self.is_trained or self.ensemble is None:
+            return True, 1.0, None 
+            
+        try:
+            feature_cols = ['open', 'high', 'low', 'close', 'volume', 'EMA_FAST', 'EMA_SLOW', 'RSI', 'ATRr', 'VWAP', 'ADX', 'BB_UPPER', 'BB_LOWER', 'BB_WIDTH', 'PRICE_ROC', 'VOL_RATIO', 'VWAP_DIST']
+            
+            X = pd.DataFrame([current_features[feature_cols]])
+            
+            # Ансамбль: усредненная вероятность от 3-х моделей
+            prob = self.ensemble.predict_proba(X)[0][1] 
+            
+            self.logger.info(f"Оценка ИИ (Ансамбль): уверенность {prob:.2f} (порог {ML_PROBABILITY_THRESHOLD})")
+            
+            is_approved = prob >= ML_PROBABILITY_THRESHOLD
+            
+            # Если сделка одобрена, просим регрессор предсказать Тейк-Профит
+            predicted_tp_pct = None
+            if is_approved and self.regressor is not None:
+                predicted_tp_pct = self.regressor.predict(X)[0]
+                # Ограничиваем неадекватные значения
+                predicted_tp_pct = max(0.005, min(0.05, predicted_tp_pct)) 
+                
+            return is_approved, prob, predicted_tp_pct
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка при оценке ИИ: {e}")
+            return True, 1.0, None
