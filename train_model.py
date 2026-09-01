@@ -97,8 +97,12 @@ def train_ai():
     y = combined_trades['is_success']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
     
+    pos_count = sum(y_train == 1)
+    neg_count = sum(y_train == 0)
+    scale_pos = neg_count / pos_count if pos_count > 0 else 1.0
+    
     # AutoML: RandomizedSearchCV для XGBoost
-    xgb_base = xgb.XGBClassifier(random_state=42, eval_metric='logloss')
+    xgb_base = xgb.XGBClassifier(random_state=42, eval_metric='logloss', scale_pos_weight=scale_pos)
     param_dist = {
         'n_estimators': [50, 100],
         'max_depth': [3, 4, 5],
@@ -113,7 +117,7 @@ def train_ai():
     # Ансамбль
     ensemble = VotingClassifier(estimators=[
         ('xgb', best_xgb), 
-        ('rf', RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)),
+        ('rf', RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42, class_weight='balanced')),
         ('gb', GradientBoostingClassifier(n_estimators=100, max_depth=3, random_state=42))
     ], voting='soft')
     

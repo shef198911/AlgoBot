@@ -49,7 +49,7 @@ def main():
                 # Если ИИ строгий, он и так не пустит в сделку.
 
                 # Шаг 1: Получаем рыночные данные
-                df = fetcher.get_historical_klines(symbol, TIMEFRAME, limit=250)
+                df = fetcher.get_historical_klines(symbol, TIMEFRAME, limit=1000)
                 if df is None:
                     continue
 
