@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier, RandomForestRegressor
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.model_selection import train_test_split, RandomizedSearchCV, TimeSeriesSplit
 from sklearn.metrics import accuracy_score
 import os
 import joblib
@@ -104,7 +104,8 @@ def train_ai():
         'max_depth': [3, 4, 5],
         'learning_rate': [0.01, 0.05, 0.1]
     }
-    search = RandomizedSearchCV(xgb_base, param_distributions=param_dist, n_iter=3, cv=3, random_state=42)
+    tscv = TimeSeriesSplit(n_splits=3)
+    search = RandomizedSearchCV(xgb_base, param_distributions=param_dist, n_iter=3, cv=tscv, random_state=42)
     search.fit(X_train, y_train)
     best_xgb = search.best_estimator_
     logger.info("AutoML подобрал лучшие параметры XGBoost.")
