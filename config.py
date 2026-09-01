@@ -15,7 +15,14 @@ SYMBOLS = [
     "DOT/USDT", "LTC/USDT", "BCH/USDT", "ATOM/USDT", "UNI/USDT", "FIL/USDT", "NEAR/USDT", "AAVE/USDT", "OP/USDT", 
     "ARB/USDT", "INJ/USDT", "SUI/USDT", "APT/USDT", "FTM/USDT", "WLD/USDT", "GALA/USDT"
 ]
-TIMEFRAME = "15m"  # Для скальпинга 1m, для нормального 15m
+if TRADING_MODE == "NORMAL":
+    TIMEFRAME = "15m"
+    TREND_TIMEFRAME = "1h"
+    ML_HORIZON = 48
+else:
+    TIMEFRAME = "1m"
+    TREND_TIMEFRAME = "15m"
+    ML_HORIZON = 60
 TRADE_SIZE_USDT = 100.0  # Сколько СВОИХ денег (маржи) мы вкладываем в сделку
 LEVERAGE = 20 # Плечо
 MAX_CAPITAL_USDT = 500.0 # Общий лимит выделенных средств на торговлю

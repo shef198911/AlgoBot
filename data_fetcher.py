@@ -73,15 +73,12 @@ class DataFetcher:
     def check_global_trend(self, symbol):
         """Мульти-таймфрейм анализ: определяет глобальный тренд"""
         try:
-            from config import TRADING_MODE
+            from config import TRADING_MODE, TREND_TIMEFRAME
             
-            # Для скальпинга (1m) глобальный тренд - это 15m
-            # Для нормальной торговли (15m) глобальный тренд - это 4h
+            tf = TREND_TIMEFRAME
             if TRADING_MODE == "SCALPING":
-                tf = '15m'
                 fast_window, slow_window = 21, 50
             else:
-                tf = '1h'
                 fast_window, slow_window = 9, 21
                 
             df = self.get_historical_klines(symbol, tf, limit=100)

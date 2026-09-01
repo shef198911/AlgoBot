@@ -61,7 +61,7 @@ def main():
                 current_state = analyzed_data.iloc[-1]
                 
                 # Duplicate Signal Protection
-                current_time = current_state.name if hasattr(current_state, 'name') else current_state.get('timestamp')
+                current_time = current_state['timestamp']
                 if last_processed_candle[symbol] == current_time:
                     continue
 

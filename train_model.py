@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV, TimeSe
 from sklearn.metrics import accuracy_score
 import os
 import joblib
-from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS
+from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
 
@@ -24,6 +24,16 @@ def train_ai():
             continue
 
         df_analyzed = ta_bot.generate_features_and_signals(df)
+        
+        from trend_helper import add_global_trend
+        df_analyzed = add_global_trend(df_analyzed, fetcher, symbol)
+        
+        # Filter TA signals by Global Trend (just like in Live)
+        for i in df_analyzed.index:
+            sig = df_analyzed.at[i, 'ta_signal']
+            trend = df_analyzed.at[i, 'global_trend']
+            if sig != 0 and trend != 0 and sig != trend:
+                df_analyzed.at[i, 'ta_signal'] = 0
         if df_analyzed is None or df_analyzed.empty:
             continue
             
@@ -45,7 +55,7 @@ def train_ai():
             
             signal = signals[i]
             entry = closes[i]
-            horizon = min(48, len(df_analyzed) - i - 1)
+            horizon = min(ML_HORIZON, len(df_analyzed) - i - 1)
             
             max_exc = 0.0
             success = 0
