@@ -232,6 +232,12 @@ class AlgoBotApp(ctk.CTk):
                     entry = float(pos['entryPrice'])
                     unrealized_pnl = float(pos.get('unrealizedPnl', 0))
                     
+                    leverage = float(pos.get('info', {}).get('leverage', 1))
+                    
+                    margin = (entry * contracts) / leverage if leverage else (entry * contracts)
+                    
+                    roe_pct = (unrealized_pnl / margin) * 100 if margin > 0 else 0.0
+                    
                     sl, tp = "Нет", "Нет"
                     
                     try:
@@ -250,6 +256,7 @@ class AlgoBotApp(ctk.CTk):
                         'side': side.upper(),
                         'entry': entry,
                         'pnl': unrealized_pnl,
+                        'roe_pct': roe_pct,
                         'sl': sl,
                         'tp': tp,
                         'contracts': contracts
@@ -280,7 +287,7 @@ class AlgoBotApp(ctk.CTk):
             lbl_info.pack(anchor="w", padx=5)
             
             pnl_color = "lightgreen" if p['pnl'] >= 0 else "#E74C3C"
-            lbl_pnl = ctk.CTkLabel(frame, text=f"PnL: {p['pnl']:.2f} USDT", text_color=pnl_color, font=ctk.CTkFont(weight="bold"))
+            lbl_pnl = ctk.CTkLabel(frame, text=f"PnL: {p['pnl']:.2f} USDT ({p['roe_pct']:+.2f}%)", text_color=pnl_color, font=ctk.CTkFont(weight="bold"))
             lbl_pnl.pack(anchor="w", padx=5, pady=(0,5))
             
             btn_close = ctk.CTkButton(frame, text="❌ Закрыть", fg_color="darkred", hover_color="red", height=24,
