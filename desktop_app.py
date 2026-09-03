@@ -118,6 +118,9 @@ class AlgoBotApp(ctk.CTk):
         
         self.pos_scroll = ctk.CTkScrollableFrame(self.right_sidebar, width=230)
         self.pos_scroll.pack(fill="both", expand=True, padx=5, pady=5)
+        self.pos_cards = {}
+        self.lbl_no_pos = None
+        self._is_refreshing_positions = False
         
         self.btn_refresh_pos = ctk.CTkButton(self.right_sidebar, text="🔄 Обновить", command=self.refresh_positions, fg_color="#3498DB", hover_color="#2980B9")
         self.btn_refresh_pos.pack(pady=10, padx=10, fill="x")
@@ -238,8 +241,8 @@ class AlgoBotApp(ctk.CTk):
 
     def update_positions_loop(self):
         self.refresh_positions()
-        # Обновляем позиции каждые 15 секунд автоматически
-        self.after(15000, self.update_positions_loop)
+        # Обновляем позиции каждые 5 секунд (в фоне, плавно и без моргания)
+        self.after(5000, self.update_positions_loop)
 
     def fetch_balance(self):
         try:
@@ -251,14 +254,14 @@ class AlgoBotApp(ctk.CTk):
             usdt = balance['total'].get('USDT', 0.0)
             self.lbl_balance.configure(text=f"Баланс Фьючерсов: {usdt:.2f} USDT")
         except Exception as e:
-            self.lbl_balance.configure(text=f"Ошибка загрузки баланса")
+            self.lbl_balance.configure(text="Ошибка загрузки баланса")
             self.log_message(f"[ОШИБКА АПИ] Не удалось получить баланс: {e}")
 
     def refresh_positions(self):
-        for widget in self.pos_scroll.winfo_children():
-            widget.destroy()
-        lbl_loading = ctk.CTkLabel(self.pos_scroll, text="Обновление...")
-        lbl_loading.pack(pady=10)
+        # Фоновое обновление без удаления карточек и без моргания
+        if getattr(self, '_is_refreshing_positions', False):
+            return
+        self._is_refreshing_positions = True
         threading.Thread(target=self._fetch_and_render_positions, daemon=True).start()
 
     def _fetch_and_render_positions(self):
@@ -268,103 +271,183 @@ class AlgoBotApp(ctk.CTk):
             fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
             positions = fetcher.exchange.fetch_positions()
             
+            import json, os
+            st = {}
+            if os.path.exists('live_state.json'):
+                try:
+                    with open('live_state.json', 'r', encoding='utf-8') as f:
+                        st = json.load(f)
+                except:
+                    pass
+            
             active_pos = []
             for pos in positions:
                 contracts = float(pos.get('contracts', 0))
                 if contracts > 0:
                     symbol = pos['symbol']
-                    side = pos['side']
+                    clean_sym = symbol.split(':')[0]
+                    side = pos['side'].upper()
                     entry = float(pos['entryPrice'])
                     unrealized_pnl = float(pos.get('unrealizedPnl', 0))
                     
                     leverage = float(pos.get('info', {}).get('leverage', 1))
-                    
                     margin = (entry * contracts) / leverage if leverage else (entry * contracts)
-                    
                     roe_pct = (unrealized_pnl / margin) * 100 if margin > 0 else 0.0
                     
                     sl, tp = "Нет", "Нет"
-                    clean_sym = symbol.split(':')[0]
-                    
-                    try:
-                        import json, os
-                        if os.path.exists('live_state.json'):
-                            with open('live_state.json', 'r', encoding='utf-8') as f:
-                                st = json.load(f)
-                                match_key = clean_sym if clean_sym in st else (symbol if symbol in st else None)
-                                if match_key:
-                                    sl = str(st[match_key].get('sl_price', sl))
-                                    tp = str(st[match_key].get('tp_price', tp))
-                    except Exception:
-                        pass
+                    match_key = clean_sym if clean_sym in st else (symbol if symbol in st else None)
+                    if match_key:
+                        sl = str(st[match_key].get('sl_price', sl))
+                        tp = str(st[match_key].get('tp_price', tp))
                         
+                    current_price = entry
                     market_pnl = unrealized_pnl
                     try:
                         ticker = fetcher.exchange.fetch_ticker(symbol)
                         bid = float(ticker.get('bid', 0))
                         ask = float(ticker.get('ask', 0))
+                        last = float(ticker.get('last') or ticker.get('close') or 0)
+                        if last > 0:
+                            current_price = last
+                        elif bid > 0 and ask > 0:
+                            current_price = (bid + ask) / 2.0
+                            
                         if bid > 0 and ask > 0:
-                            if side.upper() == 'LONG':
+                            if side == 'LONG':
                                 market_pnl = (bid - entry) * contracts
                             else:
                                 market_pnl = (entry - ask) * contracts
                     except Exception:
                         pass
                     
+                    sl_dist_str = ""
+                    tp_dist_str = ""
+                    try:
+                        sl_val = float(sl)
+                        if current_price > 0:
+                            sl_diff = ((sl_val - current_price) / current_price) * 100
+                            sl_dist_str = f" ({sl_diff:+.1f}%)"
+                    except:
+                        pass
+                    try:
+                        tp_val = float(tp)
+                        if current_price > 0:
+                            tp_diff = ((tp_val - current_price) / current_price) * 100
+                            tp_dist_str = f" ({tp_diff:+.1f}%)"
+                    except:
+                        pass
+                        
                     active_pos.append({
                         'symbol': symbol,
-                        'side': side.upper(),
+                        'clean_sym': clean_sym,
+                        'side': side,
                         'entry': entry,
+                        'current_price': current_price,
                         'pnl': unrealized_pnl,
                         'market_pnl': market_pnl,
                         'roe_pct': roe_pct,
                         'sl': sl,
+                        'sl_dist_str': sl_dist_str,
                         'tp': tp,
+                        'tp_dist_str': tp_dist_str,
                         'contracts': contracts
                     })
             self.after(0, lambda pos=active_pos: self._render_positions(pos))
         except Exception as e:
-            err_msg = str(e)
-            self.after(0, lambda err=err_msg: self._render_positions_error(err))
+            self.logger_msg_safe = str(e)
+        finally:
+            self._is_refreshing_positions = False
 
     def _render_positions(self, active_pos):
-        for widget in self.pos_scroll.winfo_children():
-            widget.destroy()
+        if not hasattr(self, 'pos_cards'):
+            self.pos_cards = {}
             
         if not active_pos:
-            lbl = ctk.CTkLabel(self.pos_scroll, text="Нет открытых позиций", text_color="gray")
-            lbl.pack(pady=20)
+            for sym, card in list(self.pos_cards.items()):
+                try:
+                    card['frame'].destroy()
+                except:
+                    pass
+            self.pos_cards.clear()
+            if not hasattr(self, 'lbl_no_pos') or self.lbl_no_pos is None or not self.lbl_no_pos.winfo_exists():
+                self.lbl_no_pos = ctk.CTkLabel(self.pos_scroll, text="Нет открытых позиций", text_color="gray")
+                self.lbl_no_pos.pack(pady=20)
             return
-            
+        else:
+            if hasattr(self, 'lbl_no_pos') and self.lbl_no_pos and self.lbl_no_pos.winfo_exists():
+                self.lbl_no_pos.destroy()
+                self.lbl_no_pos = None
+
+        active_syms = set()
         for p in active_pos:
-            frame = ctk.CTkFrame(self.pos_scroll, fg_color="#2C3E50", corner_radius=8)
-            frame.pack(fill="x", pady=5, padx=2)
+            sym = p['clean_sym']
+            active_syms.add(sym)
             
-            color = "green" if p['side'] == "LONG" else "red"
-            clean_title = p['symbol'].split(':')[0]
-            lbl_sym = ctk.CTkLabel(frame, text=f"{clean_title} [{p['side']}]", font=ctk.CTkFont(weight="bold"), text_color=color)
-            lbl_sym.pack(anchor="w", padx=5, pady=(5,0))
+            color = "#2ECC71" if p['side'] == "LONG" else "#E74C3C"
+            pnl_color = "#2ECC71" if p['pnl'] >= 0 else "#E74C3C"
+            mpnl_color = "#2ECC71" if p['market_pnl'] >= 0 else "#E74C3C"
             
-            lbl_info = ctk.CTkLabel(frame, text=f"Вход: {p['entry']:.4f}\nTP: {p['tp']} | SL: {p['sl']}", justify="left")
-            lbl_info.pack(anchor="w", padx=5)
+            sym_text = f"  {sym} [{p['side']}]"
+            prices_text = f"  Вход: {p['entry']:.4f}  ➔  Тек: {p['current_price']:.4f}"
+            targets_text = f"  TP: {p['tp']}{p['tp_dist_str']}\n  SL: {p['sl']}{p['sl_dist_str']}"
+            pnl_text = f"  PnL: {p['pnl']:+.2f} USDT ({p['roe_pct']:+.2f}%)"
+            mpnl_text = f"  При закрытии: {p['market_pnl']:+.2f} USDT"
             
-            pnl_color = "lightgreen" if p['pnl'] >= 0 else "#E74C3C"
-            lbl_pnl = ctk.CTkLabel(frame, text=f"PnL (Биржа): {p['pnl']:.2f} USDT ({p['roe_pct']:+.2f}%)", text_color=pnl_color, font=ctk.CTkFont(weight="bold"))
-            lbl_pnl.pack(anchor="w", padx=5, pady=(0,0))
-            
-            mpnl_color = "lightgreen" if p['market_pnl'] >= 0 else "#E74C3C"
-            lbl_mpnl = ctk.CTkLabel(frame, text=f"При закрытии сейчас: {p['market_pnl']:.2f} USDT", text_color=mpnl_color, font=ctk.CTkFont(size=11))
-            lbl_mpnl.pack(anchor="w", padx=5, pady=(0,5))
-            
-            btn_close = ctk.CTkButton(frame, text="❌ Закрыть", fg_color="darkred", hover_color="red", height=24,
-                                      command=lambda sym=p['symbol'], s=p['side'], c=p['contracts']: self.close_position_manual(sym, s, c))
-            btn_close.pack(fill="x", padx=5, pady=5)
-            
-    def _render_positions_error(self, err):
-        for widget in self.pos_scroll.winfo_children():
-            widget.destroy()
-        lbl = ctk.CTkLabel(self.pos_scroll, text=f"Ошибка:\n{err}", text_color="red", wraplength=200)
-        lbl.pack(pady=10)
+            if sym in self.pos_cards and self.pos_cards[sym]['frame'].winfo_exists():
+                # Плавное обновление текста без пересоздания и без моргания
+                card = self.pos_cards[sym]
+                card['lbl_sym'].configure(text=sym_text, text_color=color)
+                card['lbl_prices'].configure(text=prices_text)
+                card['lbl_targets'].configure(text=targets_text)
+                card['lbl_pnl'].configure(text=pnl_text, text_color=pnl_color)
+                card['lbl_mpnl'].configure(text=mpnl_text, text_color=mpnl_color)
+                card['btn_close'].configure(
+                    command=lambda s_sym=p['symbol'], s_side=p['side'], s_cnt=p['contracts']: self.close_position_manual(s_sym, s_side, s_cnt)
+                )
+            else:
+                # Создаем новую карточку только если её еще нет
+                frame = ctk.CTkFrame(self.pos_scroll, fg_color="#2C3E50", corner_radius=8)
+                frame.pack(fill="x", pady=5, padx=2)
+                
+                lbl_sym = ctk.CTkLabel(frame, text=sym_text, font=ctk.CTkFont(weight="bold"), text_color=color, anchor="w", justify="left")
+                lbl_sym.pack(anchor="w", padx=6, pady=(6, 2), fill="x")
+                
+                lbl_prices = ctk.CTkLabel(frame, text=prices_text, font=ctk.CTkFont(size=12, weight="bold"), anchor="w", justify="left")
+                lbl_prices.pack(anchor="w", padx=6, pady=(0, 2), fill="x")
+                
+                lbl_targets = ctk.CTkLabel(frame, text=targets_text, font=ctk.CTkFont(size=11), anchor="w", justify="left")
+                lbl_targets.pack(anchor="w", padx=6, pady=(0, 4), fill="x")
+                
+                lbl_pnl = ctk.CTkLabel(frame, text=pnl_text, font=ctk.CTkFont(weight="bold", size=13), text_color=pnl_color, anchor="w", justify="left")
+                lbl_pnl.pack(anchor="w", padx=6, pady=(0, 2), fill="x")
+                
+                lbl_mpnl = ctk.CTkLabel(frame, text=mpnl_text, font=ctk.CTkFont(size=11), text_color=mpnl_color, anchor="w", justify="left")
+                lbl_mpnl.pack(anchor="w", padx=6, pady=(0, 6), fill="x")
+                
+                btn_close = ctk.CTkButton(
+                    frame, text="❌ Закрыть", fg_color="darkred", hover_color="red", height=26,
+                    command=lambda s_sym=p['symbol'], s_side=p['side'], s_cnt=p['contracts']: self.close_position_manual(s_sym, s_side, s_cnt)
+                )
+                btn_close.pack(fill="x", padx=8, pady=(0, 6))
+                
+                self.pos_cards[sym] = {
+                    'frame': frame,
+                    'lbl_sym': lbl_sym,
+                    'lbl_prices': lbl_prices,
+                    'lbl_targets': lbl_targets,
+                    'lbl_pnl': lbl_pnl,
+                    'lbl_mpnl': lbl_mpnl,
+                    'btn_close': btn_close
+                }
+                
+        # Удаляем карточки закрытых сделок
+        for sym in list(self.pos_cards.keys()):
+            if sym not in active_syms:
+                try:
+                    self.pos_cards[sym]['frame'].destroy()
+                except:
+                    pass
+                del self.pos_cards[sym]
         
     def close_position_manual(self, symbol, side, contracts):
         def _close():
