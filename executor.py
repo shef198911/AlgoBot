@@ -232,6 +232,21 @@ class TraderExecutor:
                                     self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
                         except Exception as e:
                             self.logger.warning(f"Не удалось восстановить SL/TP ордера: {e}")
+                            
+                        if not self.positions[symbol].get('sl_order_id'):
+                            try:
+                                market_id = symbol.replace('/', '').split(':')[0]
+                                algo_orders = self.exchange.fapiPrivateGetOpenAlgoOrders({'symbol': market_id})
+                                for ao in algo_orders:
+                                    ao_type = ao.get('orderType', '').lower()
+                                    if 'stop' in ao_type and not self.positions[symbol].get('sl_order_id'):
+                                        self.positions[symbol]['sl_order_id'] = str(ao.get('algoId'))
+                                        self.positions[symbol]['sl_price'] = float(ao.get('triggerPrice') or 0)
+                                    elif 'take_profit' in ao_type and not self.positions[symbol].get('tp_order_id'):
+                                        self.positions[symbol]['tp_order_id'] = str(ao.get('algoId'))
+                                        self.positions[symbol]['tp_price'] = float(ao.get('triggerPrice') or 0)
+                            except Exception:
+                                pass
 
                 
                 if self.positions[symbol]['sl_order_id'] is None:

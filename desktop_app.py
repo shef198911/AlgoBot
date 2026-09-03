@@ -297,10 +297,31 @@ class AlgoBotApp(ctk.CTk):
                     sl, tp = "Нет", "Нет"
                     match_key = clean_sym if clean_sym in st else (symbol if symbol in st else None)
                     if match_key:
-                        sl = str(st[match_key].get('sl_price', sl))
-                        tp = str(st[match_key].get('tp_price', tp))
+                        val_sl = st[match_key].get('sl_price')
+                        val_tp = st[match_key].get('tp_price')
+                        if val_sl and float(val_sl) > 0:
+                            sl = str(val_sl)
+                        if val_tp and float(val_tp) > 0:
+                            tp = str(val_tp)
+                            
+                    # Если стопы не нашлись в live_state, запрашиваем живые Algo Orders с биржи
+                    if sl == "Нет" or tp == "Нет":
+                        try:
+                            market_id = clean_sym.replace('/', '')
+                            algos = fetcher.exchange.fapiPrivateGetOpenAlgoOrders({'symbol': market_id})
+                            for a in algos:
+                                atype = a.get('orderType', '').lower()
+                                t_price = float(a.get('triggerPrice') or 0)
+                                if 'stop' in atype and sl == "Нет" and t_price > 0:
+                                    sl = str(t_price)
+                                elif 'take_profit' in atype and tp == "Нет" and t_price > 0:
+                                    tp = str(t_price)
+                        except:
+                            pass
                         
-                    current_price = entry
+                    # Берем живую биржевую цену маркировки
+                    mark_price = float(pos.get('markPrice') or pos.get('info', {}).get('markPrice') or entry)
+                    current_price = mark_price
                     market_pnl = unrealized_pnl
                     try:
                         ticker = fetcher.exchange.fetch_ticker(symbol)
@@ -324,14 +345,14 @@ class AlgoBotApp(ctk.CTk):
                     tp_dist_str = ""
                     try:
                         sl_val = float(sl)
-                        if current_price > 0:
+                        if current_price > 0 and sl_val > 0:
                             sl_diff = ((sl_val - current_price) / current_price) * 100
                             sl_dist_str = f" ({sl_diff:+.1f}%)"
                     except:
                         pass
                     try:
                         tp_val = float(tp)
-                        if current_price > 0:
+                        if current_price > 0 and tp_val > 0:
                             tp_diff = ((tp_val - current_price) / current_price) * 100
                             tp_dist_str = f" ({tp_diff:+.1f}%)"
                     except:
@@ -388,7 +409,7 @@ class AlgoBotApp(ctk.CTk):
             mpnl_color = "#2ECC71" if p['market_pnl'] >= 0 else "#E74C3C"
             
             sym_text = f"  {sym} [{p['side']}]"
-            prices_text = f"  Вход: {p['entry']:.4f}  ➔  Тек: {p['current_price']:.4f}"
+            prices_text = f"  Вход: {p['entry']:.4f}  ->  Тек: {p['current_price']:.4f}"
             targets_text = f"  TP: {p['tp']}{p['tp_dist_str']}\n  SL: {p['sl']}{p['sl_dist_str']}"
             pnl_text = f"  PnL: {p['pnl']:+.2f} USDT ({p['roe_pct']:+.2f}%)"
             mpnl_text = f"  При закрытии: {p['market_pnl']:+.2f} USDT"
