@@ -25,9 +25,14 @@ def train_ai():
             continue
 
         df_analyzed = ta_bot.generate_features_and_signals(df)
+        if df_analyzed is None or df_analyzed.empty:
+            logger.warning(f"Пропуск {symbol}: недостаточно данных для расчета индикаторов.")
+            continue
         
         from trend_helper import add_global_trend
         df_analyzed = add_global_trend(df_analyzed, fetcher, symbol)
+        if df_analyzed is None or df_analyzed.empty:
+            continue
         
         # Filter TA signals by Global Trend (just like in Live)
         for i in df_analyzed.index:
@@ -35,8 +40,6 @@ def train_ai():
             trend = df_analyzed.at[i, 'global_trend']
             if sig != 0 and trend != 0 and sig != trend:
                 df_analyzed.at[i, 'ta_signal'] = 0
-        if df_analyzed is None or df_analyzed.empty:
-            continue
             
         tp_pct = TAKE_PROFIT_PCT
         sl_pct = STOP_LOSS_PCT

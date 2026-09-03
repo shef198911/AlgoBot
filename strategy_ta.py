@@ -40,15 +40,19 @@ class TAStrategy:
             adx = ADXIndicator(high=data['high'], low=data['low'], close=data['close'], window=14)
             data['ADX'] = adx.adx()
             
-            # Объем (VWAP)
-            vwap = VolumeWeightedAveragePrice(high=data['high'], low=data['low'], close=data['close'], volume=data['volume'], window=14)
-            data['VWAP'] = vwap.volume_weighted_average_price()
+            # Объем (VWAP) и аномалии объема (защита от нулевого объема)
+            if data['volume'].sum() > 0:
+                vwap = VolumeWeightedAveragePrice(high=data['high'], low=data['low'], close=data['close'], volume=data['volume'], window=14)
+                data['VWAP'] = vwap.volume_weighted_average_price().fillna(data['close'])
+                data['VOL_RATIO'] = (data['volume'] / data['volume'].rolling(window=20).mean()).fillna(1.0)
+            else:
+                data['VWAP'] = data['close']
+                data['VOL_RATIO'] = 1.0
             
             # Дополнительные производные признаки
             data['BB_WIDTH'] = (data['BB_UPPER'] - data['BB_LOWER']) / bb.bollinger_mavg()
             data['PRICE_ROC'] = data['close'].pct_change(periods=14)
-            data['VOL_RATIO'] = data['volume'] / data['volume'].rolling(window=20).mean()
-            data['VWAP_DIST'] = (data['close'] - data['VWAP']) / data['VWAP']
+            data['VWAP_DIST'] = ((data['close'] - data['VWAP']) / data['VWAP']).fillna(0.0)
 
             # Очищаем от начальных NaN после rolling индикаторов
             data.dropna(inplace=True)

@@ -3,6 +3,9 @@ from ta.trend import EMAIndicator
 from config import TRADING_MODE, TREND_TIMEFRAME, TIMEFRAME
 
 def add_global_trend(df, fetcher, symbol):
+    if df is None or df.empty:
+        return df
+
     # Fetch historical HTF data
     tf = TREND_TIMEFRAME
     if TRADING_MODE == "SCALPING":
