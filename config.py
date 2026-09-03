@@ -22,13 +22,38 @@ if TRADING_MODE == "NORMAL":
     TIMEFRAME = "15m"
     TREND_TIMEFRAME = "1h"
     ML_HORIZON = 48
+    SWING_K = 3
+    RETEST_MAX_BARS = 8
 else: # SCALPING
     TIMEFRAME = "1m"
     TREND_TIMEFRAME = "15m"
     ML_HORIZON = 60
+    SWING_K = 2
+    RETEST_MAX_BARS = 5
+
 TRADE_SIZE_USDT = 100.0  # Сколько СВОИХ денег (маржи) мы вкладываем в сделку
 LEVERAGE = 20 # Плечо
 MAX_CAPITAL_USDT = 500.0 # Общий лимит выделенных средств на торговлю
+
+# --- Настройки Market Structure & Price Action Engine ---
+SR_ZONE_ATR_MULTIPLIER = 0.75       # Ширина зоны S/R в ATR
+SR_MERGE_TOLERANCE_ATR = 1.0       # Макс. дистанция для объединения близких свингов в одну зону
+BREAKOUT_ATR_MULTIPLIER = 0.3      # Буфер пробоя в ATR
+MIN_BREAKOUT_PCT = 0.0015          # Минимальный пробой в %
+RETEST_TOLERANCE_ATR = 0.8         # Допуск ретеста в ATR
+INVALIDATION_ATR_MULTIPLIER = 1.0  # Буфер инвалидации пробитого уровня
+PINBAR_WICK_RATIO = 0.45           # Минимальная доля тени для пин-бара / отторжения
+ENGULFING_BODY_RATIO = 1.1         # Отношение тела для поглощения
+
+# Веса факторов для расчета SETUP_SCORE (сумма = 100)
+SCORE_WEIGHT_BREAKOUT = 20
+SCORE_WEIGHT_RETEST = 20
+SCORE_WEIGHT_REJECTION = 15
+SCORE_WEIGHT_VOLUME = 10
+SCORE_WEIGHT_STRUCTURE = 15
+SCORE_WEIGHT_TREND = 10
+SCORE_WEIGHT_MOMENTUM = 10
+MIN_SETUP_SCORE = 55               # Минимальный балл сетапа для формирования ta_signal
 
 # --- Про-Фичи (Pro-Trader) ---
 USE_COMPOUNDING = False    # Использовать % от депозита вместо фикс. маржи
@@ -66,6 +91,18 @@ MIN_SR_DISTANCE_PCT = 0.005 # Мин. расстояние (0.5%) до сопр�
 FEATURE_COLUMNS = [
     'EMA_FAST', 'EMA_SLOW', 'RSI', 'ATRr', 'VWAP', 'ADX', 
     'BB_UPPER', 'BB_LOWER', 'BB_WIDTH', 'PRICE_ROC', 'VOL_RATIO', 'VWAP_DIST',
-    # Признаки геометрии и структуры рынка (Market Structure & Price Action)
-    'DIST_RES_PCT', 'DIST_SUP_PCT', 'WICK_LOWER_RATIO', 'WICK_UPPER_RATIO', 'MARKET_STRUCTURE'
+    # Market Structure & Levels
+    'DIST_RES_PCT', 'DIST_SUP_PCT', 'SR_STRENGTH', 'MARKET_STRUCTURE',
+    # BOS & CHOCH
+    'BOS_LONG', 'BOS_SHORT', 'CHOCH_LONG', 'CHOCH_SHORT',
+    # Breakout & Retest Quality
+    'BREAKOUT_STRENGTH', 'BREAKOUT_VOLUME_RATIO',
+    'IS_BREAKOUT_LONG', 'IS_BREAKOUT_SHORT',
+    'IS_RETEST_LONG', 'IS_RETEST_SHORT',
+    # Candle Confirmations & Sweeps
+    'BULLISH_REJECTION', 'BEARISH_REJECTION',
+    'BULLISH_ENGULFING', 'BEARISH_ENGULFING',
+    'LIQUIDITY_SWEEP_HIGH', 'LIQUIDITY_SWEEP_LOW',
+    # Final Setup Score
+    'SETUP_SCORE'
 ]

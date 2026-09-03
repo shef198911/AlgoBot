@@ -118,6 +118,24 @@ def train_ai():
     logger.info(f"Сигналов на монету (в среднем): {signals_per_coin:.1f}")
     logger.info("="*50)
 
+    # Детальная статистика по сетапам
+    logger.info("="*75)
+    logger.info("ДЕТАЛИЗАЦИЯ ПО СЕТАПАМ PRICE ACTION (LONG / SHORT)")
+    logger.info("="*75)
+    logger.info(f"{'СЕТАП':<24} | {'НАПР':<5} | {'СИГНАЛЫ':<7} | {'WIN':<4} | {'LOSS':<4} | {'WIN RATE':<8} | {'СРЕД. ДВИЖЕНИЕ'}")
+    logger.info("-" * 75)
+    
+    if 'ta_setup' in combined_trades.columns:
+        for (setup_name, sig_dir), grp in combined_trades.groupby(['ta_setup', 'ta_signal']):
+            dir_str = "LONG" if sig_dir == 1 else "SHORT"
+            n_sig = len(grp)
+            n_win = int(grp['is_success'].sum())
+            n_loss = n_sig - n_win
+            w_rate = (n_win / n_sig * 100) if n_sig > 0 else 0
+            avg_exc = grp['max_excursion'].mean() * 100 if 'max_excursion' in grp.columns else 0
+            logger.info(f"{setup_name:<24} | {dir_str:<5} | {n_sig:<7} | {n_win:<4} | {n_loss:<4} | {w_rate:>7.1f}% | +{avg_exc:>5.2f}%")
+    logger.info("="*75)
+
     if len(combined_trades) < 20:
         logger.warning(f"Слишком мало сигналов ({len(combined_trades)}) для обучения.")
         return
