@@ -530,14 +530,31 @@ class AlgoBotApp(ctk.CTk):
             
         self.save_config()
         self.btn_train.configure(state="disabled", text="⏳ Идет обучение...")
+        self.log_message("\n" + "="*50)
         self.log_message(f"[СИСТЕМА] Запуск обучения ИИ для режима {self.current_mode}...")
+        self.log_message("="*50)
         
         def run_train():
-            process = subprocess.Popen(["python", "-u", "train_model.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            import sys
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            script_path = os.path.join(base_dir, "train_model.py")
+            process = subprocess.Popen(
+                [sys.executable, "-u", script_path],
+                cwd=base_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
             for line in process.stdout:
                 self.after(0, self.log_message, line.strip())
             process.wait()
-            self.after(0, lambda: self.log_message("[СИСТЕМА] Обучение завершено!"))
+            if process.returncode == 0:
+                self.after(0, lambda: self.log_message("="*50))
+                self.after(0, lambda: self.log_message("[СИСТЕМА] Обучение успешно завершено! Модель сохранена."))
+                self.after(0, lambda: self.log_message("="*50))
+            else:
+                self.after(0, lambda: self.log_message(f"[ОШИБКА] Обучение завершилось с кодом {process.returncode}"))
             self.after(0, lambda: self.btn_train.configure(state="normal", text="🧠 Переобучить ИИ"))
             
         threading.Thread(target=run_train, daemon=True).start()
@@ -639,8 +656,12 @@ class AlgoBotApp(ctk.CTk):
             self.btn_stop.configure(state="normal")
             self.btn_graceful.configure(state="normal")
             
+            import sys
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            main_script = os.path.join(base_dir, "main.py")
             self.bot_process = subprocess.Popen(
-                ["python", "-u", "main.py"],
+                [sys.executable, "-u", main_script],
+                cwd=base_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
