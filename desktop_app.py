@@ -284,15 +284,17 @@ class AlgoBotApp(ctk.CTk):
                     roe_pct = (unrealized_pnl / margin) * 100 if margin > 0 else 0.0
                     
                     sl, tp = "Нет", "Нет"
+                    clean_sym = symbol.split(':')[0]
                     
                     try:
                         import json, os
                         if os.path.exists('live_state.json'):
                             with open('live_state.json', 'r', encoding='utf-8') as f:
                                 st = json.load(f)
-                                if symbol in st:
-                                    sl = str(st[symbol].get('sl_price', sl))
-                                    tp = str(st[symbol].get('tp_price', tp))
+                                match_key = clean_sym if clean_sym in st else (symbol if symbol in st else None)
+                                if match_key:
+                                    sl = str(st[match_key].get('sl_price', sl))
+                                    tp = str(st[match_key].get('tp_price', tp))
                     except Exception:
                         pass
                         
@@ -339,10 +341,11 @@ class AlgoBotApp(ctk.CTk):
             frame.pack(fill="x", pady=5, padx=2)
             
             color = "green" if p['side'] == "LONG" else "red"
-            lbl_sym = ctk.CTkLabel(frame, text=f"{p['symbol']} [{p['side']}]", font=ctk.CTkFont(weight="bold"), text_color=color)
+            clean_title = p['symbol'].split(':')[0]
+            lbl_sym = ctk.CTkLabel(frame, text=f"{clean_title} [{p['side']}]", font=ctk.CTkFont(weight="bold"), text_color=color)
             lbl_sym.pack(anchor="w", padx=5, pady=(5,0))
             
-            lbl_info = ctk.CTkLabel(frame, text=f"Вход: {p['entry']}\nTP: {p['tp']} | SL: {p['sl']}", justify="left")
+            lbl_info = ctk.CTkLabel(frame, text=f"Вход: {p['entry']:.4f}\nTP: {p['tp']} | SL: {p['sl']}", justify="left")
             lbl_info.pack(anchor="w", padx=5)
             
             pnl_color = "lightgreen" if p['pnl'] >= 0 else "#E74C3C"
