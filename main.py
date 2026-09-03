@@ -114,7 +114,8 @@ def main():
                             with open("trade_history.txt", "a", encoding="utf-8") as f:
                                 f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_str.upper()} | Вход: {current_price}\n")
                     else:
-                        logger.warning(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОТКЛОНЕН. Уверенность: {ai_confidence:.2f}.")
+                        breakdown = f" ({ml_bot.last_probs_str})" if getattr(ml_bot, 'last_probs_str', None) else ""
+                        logger.warning(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОТКЛОНЕН. Уверенность: {ai_confidence:.2f}{breakdown}. Порог: {ML_PROBABILITY_THRESHOLD}")
             
             # Ждем перед следующим опросом 
             time.sleep(15)

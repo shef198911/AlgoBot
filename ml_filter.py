@@ -43,8 +43,21 @@ class MLFilter:
             X = pd.DataFrame([current_features[feature_cols]])
             
             # Ансамбль: усредненная вероятность от 3-х моделей
-            prob = self.ensemble.predict_proba(X)[0][1] 
+            prob = float(self.ensemble.predict_proba(X)[0][1])
+            self.last_probs = {}
+            self.last_probs_str = ""
             
+            try:
+                probs_parts = []
+                for name, est in self.ensemble.named_estimators_.items():
+                    p = float(est.predict_proba(X)[0][1])
+                    self.last_probs[name.upper()] = p
+                    probs_parts.append(f"{name.upper()}={p:.2f}")
+                self.last_probs_str = ", ".join(probs_parts)
+                self.logger.info(f"Оценка моделей: {self.last_probs_str}")
+            except Exception as e:
+                self.logger.debug(f"Не удалось получить разбивку по моделям: {e}")
+                
             self.logger.info(f"Оценка ИИ (Ансамбль): уверенность {prob:.2f} (порог {ML_PROBABILITY_THRESHOLD})")
             
             is_approved = prob >= ML_PROBABILITY_THRESHOLD

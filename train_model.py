@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV, TimeSe
 from sklearn.metrics import accuracy_score
 import os
 import joblib
-from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON
+from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON, TRADING_MODE
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
 
@@ -17,8 +17,9 @@ def train_ai():
     ta_bot = TAStrategy()
 
     for symbol in SYMBOLS:
-        logger.info(f"Сбор данных для {symbol}...")
-        df = fetcher.get_historical_klines(symbol, TIMEFRAME, limit=1500)
+        fetch_limit = 1500  # 1500 свечей для контролируемой базовой диагностики
+        logger.info(f"Сбор данных для {symbol}... (лимит {fetch_limit})")
+        df = fetcher.get_historical_klines(symbol, TIMEFRAME, limit=fetch_limit)
         
         if df is None or df.empty:
             continue
@@ -96,6 +97,24 @@ def train_ai():
     combined_trades = pd.concat(all_trades, ignore_index=True)
     if 'timestamp' in combined_trades.columns:
         combined_trades = combined_trades.sort_values('timestamp').reset_index(drop=True)
+        
+    total_signals = len(combined_trades)
+    successful = combined_trades['is_success'].sum()
+    failed = total_signals - successful
+    win_rate = (successful / total_signals * 100) if total_signals > 0 else 0
+    signals_per_coin = total_signals / len(SYMBOLS) if len(SYMBOLS) > 0 else 0
+    
+    logger.info("="*50)
+    logger.info("СТАТИСТИКА ОБУЧЕНИЯ (TRIPLE BARRIER)")
+    logger.info("="*50)
+    logger.info(f"Режим: {TRADING_MODE}")
+    logger.info(f"Всего TA сигналов (после фильтрации трендом): {total_signals}")
+    logger.info(f"Успешных (TP): {successful}")
+    logger.info(f"Неуспешных (SL/Time): {failed}")
+    logger.info(f"Positive Rate (Win-Rate): {win_rate:.2f}%")
+    logger.info(f"Сигналов на монету (в среднем): {signals_per_coin:.1f}")
+    logger.info("="*50)
+
     if len(combined_trades) < 20:
         logger.warning(f"Слишком мало сигналов ({len(combined_trades)}) для обучения.")
         return

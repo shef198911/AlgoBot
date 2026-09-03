@@ -21,7 +21,9 @@ class DataFetcher:
         })
         
         if self.use_testnet:
-            self.logger.info("Включен режим Testnet (Песочница Binance Futures)")
+            if not getattr(DataFetcher, '_testnet_logged', False):
+                self.logger.info("Включен режим Testnet (Песочница Binance Futures)")
+                DataFetcher._testnet_logged = True
             # Заменяем URL вручную, так как ccxt.set_sandbox_mode() больше не работает для фьючерсов
             for k in self.exchange.urls['api']:
                 if type(self.exchange.urls['api'][k]) is str:
@@ -38,7 +40,9 @@ class DataFetcher:
         for attempt in range(max_retries):
             try:
                 self.exchange.load_markets()
-                self.logger.info("Рынки успешно загружены.")
+                if not getattr(DataFetcher, '_markets_logged', False):
+                    self.logger.info("Рынки успешно загружены.")
+                    DataFetcher._markets_logged = True
                 return
             except ccxt.NetworkError as e:
                 self.logger.warning(f"Ошибка сети при загрузке рынков (Попытка {attempt+1}/{max_retries}): {e}")
@@ -50,8 +54,20 @@ class DataFetcher:
     def get_historical_klines(self, symbol, timeframe, limit=100):
         """Получает историю свечей и возвращает pandas DataFrame"""
         try:
-            # Получаем свечи
-            ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+            if limit <= 1500:
+                ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+            else:
+                timeframe_ms = self.exchange.parse_timeframe(timeframe) * 1000
+                now = self.exchange.milliseconds()
+                since = int(now - (limit * timeframe_ms))
+                all_ohlcv = []
+                while since < now:
+                    batch = self.exchange.fetch_ohlcv(symbol, timeframe, since=since, limit=1500)
+                    if not batch:
+                        break
+                    all_ohlcv.extend(batch)
+                    since = batch[-1][0] + timeframe_ms
+                ohlcv = all_ohlcv[-limit:]
             
             # Конвертируем в DataFrame
             df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])

@@ -20,8 +20,8 @@ class AlgoBotApp(ctk.CTk):
         self.bot_process = None
         self.read_config()
         
-        # --- ЛЕВАЯ ПАНЕЛЬ (Настройки) ---
-        self.sidebar = ctk.CTkFrame(self, width=280, corner_radius=0)
+        # --- ЛЕВАЯ ПАНЕЛЬ (Настройки со скроллом) ---
+        self.sidebar = ctk.CTkScrollableFrame(self, width=290, corner_radius=0)
         self.sidebar.pack(side="left", fill="y")
         
         self.logo = ctk.CTkLabel(self.sidebar, text="⚙️ НАСТРОЙКИ БОТА", font=ctk.CTkFont(size=18, weight="bold"))
@@ -107,7 +107,7 @@ class AlgoBotApp(ctk.CTk):
         
         # Кнопка обучения ИИ
         self.btn_train = ctk.CTkButton(self.sidebar, text="🧠 Переобучить ИИ", command=self.train_ai, fg_color="#E67E22", hover_color="#D35400")
-        self.btn_train.pack(pady=5, padx=20, fill="x")
+        self.btn_train.pack(pady=(5, 25), padx=20, fill="x")
         
         # --- ПРАВАЯ ПАНЕЛЬ (Позиции) ---
         self.right_sidebar = ctk.CTkFrame(self, width=250)
@@ -161,12 +161,57 @@ class AlgoBotApp(ctk.CTk):
         self.tabs.add("📊 Аналитика (PRO)")
         
         # Консоль
-        self.console = ctk.CTkTextbox(self.tabs.tab("Консоль (Live)"), state="disabled", font=("Consolas", 12))
+        self.console_tab = self.tabs.tab("Консоль (Live)")
+        
+        # Панель быстрых действий консоли
+        self.console_bar = ctk.CTkFrame(self.console_tab, fg_color="transparent")
+        self.console_bar.pack(fill="x", pady=(0, 5))
+        
+        self.btn_copy_logs = ctk.CTkButton(self.console_bar, text="📋 Скопировать всё", width=140, height=26, command=self._copy_all_console)
+        self.btn_copy_logs.pack(side="left", padx=5)
+        
+        self.btn_clear_logs = ctk.CTkButton(self.console_bar, text="🧹 Очистить", width=90, height=26, fg_color="#555", hover_color="#333", command=self._clear_console)
+        self.btn_clear_logs.pack(side="left", padx=5)
+        
+        self.console = ctk.CTkTextbox(self.console_tab, font=("Consolas", 12))
         self.console.pack(fill="both", expand=True)
         
+        # Контекстное меню ПКМ для консоли
+        import tkinter as tk
+        self.console_menu = tk.Menu(self, tearoff=0)
+        self.console_menu.add_command(label="Копировать (Ctrl+C)", command=self._copy_console_selection)
+        self.console_menu.add_command(label="Выделить всё (Ctrl+A)", command=self._select_all_console)
+        self.console_menu.add_separator()
+        self.console_menu.add_command(label="Очистить", command=self._clear_console)
+        
+        def _show_console_menu(event):
+            try:
+                self.console_menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                self.console_menu.grab_release()
+        self.console.bind("<Button-3>", _show_console_menu)
+        
+        # Блокируем клавиатурный ввод в консоль, но оставляем выделение и горячие клавиши
+        def _block_typing(event):
+            # Ctrl+C, Ctrl+A, Ctrl+Insert
+            if (event.state & 4) and event.keysym.lower() in ['c', 'a', 'insert']:
+                return None
+            # Навигация
+            if event.keysym in ['Up', 'Down', 'Left', 'Right', 'Prior', 'Next', 'Home', 'End']:
+                return None
+            return "break"
+        self.console.bind("<Key>", _block_typing)
+        
         # История
-        self.history_txt = ctk.CTkTextbox(self.tabs.tab("История Сделок"), state="disabled", font=("Consolas", 12))
+        self.history_tab = self.tabs.tab("История Сделок")
+        self.history_bar = ctk.CTkFrame(self.history_tab, fg_color="transparent")
+        self.history_bar.pack(fill="x", pady=(0, 5))
+        self.btn_copy_hist = ctk.CTkButton(self.history_bar, text="📋 Скопировать историю", width=160, height=26, command=self._copy_all_history)
+        self.btn_copy_hist.pack(side="left", padx=5)
+        
+        self.history_txt = ctk.CTkTextbox(self.history_tab, font=("Consolas", 12))
         self.history_txt.pack(fill="both", expand=True)
+        self.history_txt.bind("<Key>", _block_typing)
         
         # Аналитика
         self.analytics_frame = ctk.CTkFrame(self.tabs.tab("📊 Аналитика (PRO)"), fg_color="transparent")
@@ -241,13 +286,26 @@ class AlgoBotApp(ctk.CTk):
                     sl, tp = "Нет", "Нет"
                     
                     try:
-                        open_orders = fetcher.exchange.fetch_open_orders(symbol)
-                        for o in open_orders:
-                            orig_type = o.get('info', {}).get('origType', '') or o.get('info', {}).get('orderType', '')
-                            if orig_type == 'STOP_MARKET':
-                                sl = str(o['stopPrice'] if o.get('stopPrice') else o.get('triggerPrice'))
-                            elif orig_type == 'TAKE_PROFIT_MARKET':
-                                tp = str(o['stopPrice'] if o.get('stopPrice') else o.get('triggerPrice'))
+                        import json, os
+                        if os.path.exists('live_state.json'):
+                            with open('live_state.json', 'r', encoding='utf-8') as f:
+                                st = json.load(f)
+                                if symbol in st:
+                                    sl = str(st[symbol].get('sl_price', sl))
+                                    tp = str(st[symbol].get('tp_price', tp))
+                    except Exception:
+                        pass
+                        
+                    market_pnl = unrealized_pnl
+                    try:
+                        ticker = fetcher.exchange.fetch_ticker(symbol)
+                        bid = float(ticker.get('bid', 0))
+                        ask = float(ticker.get('ask', 0))
+                        if bid > 0 and ask > 0:
+                            if side.upper() == 'LONG':
+                                market_pnl = (bid - entry) * contracts
+                            else:
+                                market_pnl = (entry - ask) * contracts
                     except Exception:
                         pass
                     
@@ -256,6 +314,7 @@ class AlgoBotApp(ctk.CTk):
                         'side': side.upper(),
                         'entry': entry,
                         'pnl': unrealized_pnl,
+                        'market_pnl': market_pnl,
                         'roe_pct': roe_pct,
                         'sl': sl,
                         'tp': tp,
@@ -287,8 +346,12 @@ class AlgoBotApp(ctk.CTk):
             lbl_info.pack(anchor="w", padx=5)
             
             pnl_color = "lightgreen" if p['pnl'] >= 0 else "#E74C3C"
-            lbl_pnl = ctk.CTkLabel(frame, text=f"PnL: {p['pnl']:.2f} USDT ({p['roe_pct']:+.2f}%)", text_color=pnl_color, font=ctk.CTkFont(weight="bold"))
-            lbl_pnl.pack(anchor="w", padx=5, pady=(0,5))
+            lbl_pnl = ctk.CTkLabel(frame, text=f"PnL (Биржа): {p['pnl']:.2f} USDT ({p['roe_pct']:+.2f}%)", text_color=pnl_color, font=ctk.CTkFont(weight="bold"))
+            lbl_pnl.pack(anchor="w", padx=5, pady=(0,0))
+            
+            mpnl_color = "lightgreen" if p['market_pnl'] >= 0 else "#E74C3C"
+            lbl_mpnl = ctk.CTkLabel(frame, text=f"При закрытии сейчас: {p['market_pnl']:.2f} USDT", text_color=mpnl_color, font=ctk.CTkFont(size=11))
+            lbl_mpnl.pack(anchor="w", padx=5, pady=(0,5))
             
             btn_close = ctk.CTkButton(frame, text="❌ Закрыть", fg_color="darkred", hover_color="red", height=24,
                                       command=lambda sym=p['symbol'], s=p['side'], c=p['contracts']: self.close_position_manual(sym, s, c))
@@ -439,11 +502,7 @@ class AlgoBotApp(ctk.CTk):
             elif self.current_risk == "AGGRESSIVE":
                 content = re.sub(r'ML_PROBABILITY_THRESHOLD\s*=\s*[0-9.]+', 'ML_PROBABILITY_THRESHOLD = 0.50', content)
             
-            if self.current_mode == "SCALPING":
-                content = re.sub(r'TIMEFRAME\s*=\s*"[^"]+"', 'TIMEFRAME = "1m"', content)
-            else:
-                content = re.sub(r'TIMEFRAME\s*=\s*"[^"]+"', 'TIMEFRAME = "15m"', content)
-                
+            # Timeframe and other mode settings are handled dynamically inside config.py based on TRADING_MODE
             content = re.sub(r'TRADE_SIZE_USDT\s*=\s*[0-9.]+', f'TRADE_SIZE_USDT = {new_size}', content)
             content = re.sub(r'LEVERAGE\s*=\s*[0-9]+', f'LEVERAGE = {new_lev}', content)
             content = re.sub(r'MAX_CAPITAL_USDT\s*=\s*[0-9.]+', f'MAX_CAPITAL_USDT = {new_cap}', content)
@@ -483,11 +542,54 @@ class AlgoBotApp(ctk.CTk):
             
         threading.Thread(target=run_train, daemon=True).start()
 
+    def _copy_console_selection(self):
+        try:
+            selected = self.console.get("sel.first", "sel.last")
+            if selected:
+                self.clipboard_clear()
+                self.clipboard_append(selected)
+                return
+        except Exception:
+            pass
+        self._copy_all_console()
+
+    def _select_all_console(self):
+        try:
+            self.console.tag_add("sel", "1.0", "end")
+        except Exception:
+            pass
+
+    def _clear_console(self):
+        try:
+            self.console.delete("1.0", "end")
+        except Exception:
+            pass
+
+    def _copy_all_console(self):
+        try:
+            text = self.console.get("1.0", "end-1c")
+            if text:
+                self.clipboard_clear()
+                self.clipboard_append(text)
+                self.btn_copy_logs.configure(text="✅ Скопировано!", fg_color="green")
+                self.after(1500, lambda: self.btn_copy_logs.configure(text="📋 Скопировать всё", fg_color=["#3B8ED0", "#1F6AA5"]))
+        except Exception:
+            pass
+
+    def _copy_all_history(self):
+        try:
+            text = self.history_txt.get("1.0", "end-1c")
+            if text:
+                self.clipboard_clear()
+                self.clipboard_append(text)
+                self.btn_copy_hist.configure(text="✅ Скопировано!", fg_color="green")
+                self.after(1500, lambda: self.btn_copy_hist.configure(text="📋 Скопировать историю", fg_color=["#3B8ED0", "#1F6AA5"]))
+        except Exception:
+            pass
+
     def log_message(self, message):
-        self.console.configure(state="normal")
         self.console.insert("end", message + "\n")
         self.console.see("end")
-        self.console.configure(state="disabled")
         
     def update_analytics(self):
         import json
@@ -514,13 +616,16 @@ class AlgoBotApp(ctk.CTk):
 
     def update_history_loop(self):
         if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                hist = f.read()
-            self.history_txt.configure(state="normal")
-            self.history_txt.delete("1.0", "end")
-            self.history_txt.insert("end", hist)
-            self.history_txt.see("end")
-            self.history_txt.configure(state="disabled")
+            try:
+                with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                    hist = f.read()
+                current_text = self.history_txt.get("1.0", "end-1c")
+                if current_text != hist:
+                    self.history_txt.delete("1.0", "end")
+                    self.history_txt.insert("end", hist)
+                    self.history_txt.see("end")
+            except Exception:
+                pass
         self.after(5000, self.update_history_loop)
 
     def start_bot(self):

@@ -107,7 +107,7 @@ class TraderExecutor:
             
             sl_order_id = None
             try:
-                sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'closePosition': True})
+                sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'reduceOnly': True})
                 sl_order_id = sl_ord['id']
             except Exception as e:
                 self.logger.error(f"Не удалось выставить SL: {e}. Экстренное закрытие позиции!")
@@ -123,7 +123,7 @@ class TraderExecutor:
             try:
 
                 
-                tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, amount_coin, params={'stopPrice': tp_price, 'closePosition': True})
+                tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, amount_coin, params={'stopPrice': tp_price, 'reduceOnly': True})
 
                 
                 tp_order_id = tp_ord['id']
@@ -198,19 +198,32 @@ class TraderExecutor:
             
             if active_pos:
                 if symbol not in self.positions:
-                    self.positions[symbol] = {"side": active_pos['side'].lower(), "entry": float(active_pos['entryPrice']), "max_price": float(active_pos['entryPrice']), "min_price": float(active_pos['entryPrice']), "sl_order_id": None, "sl_price": 0, "amount": abs(float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0))))}
+                    loaded_from_state = False
                     try:
-                        open_orders = self.exchange.fetch_open_orders(symbol)
-                        for o in open_orders:
-                            o_type = o['type'].lower()
-                            if 'stop' in o_type:
-                                self.positions[symbol]['sl_order_id'] = o['id']
-                                self.positions[symbol]['sl_price'] = float(o.get('stopPrice') or 0)
-                            elif 'take_profit' in o_type:
-                                self.positions[symbol]['tp_order_id'] = o['id']
-                                self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
-                    except Exception as e:
-                        self.logger.warning(f"Не удалось восстановить SL/TP ордера: {e}")
+                        import os, json
+                        if os.path.exists("live_state.json"):
+                            with open("live_state.json", "r", encoding="utf-8") as f:
+                                saved_state = json.load(f)
+                                if symbol in saved_state and saved_state[symbol].get('sl_order_id'):
+                                    self.positions[symbol] = saved_state[symbol]
+                                    loaded_from_state = True
+                    except Exception:
+                        pass
+                    
+                    if not loaded_from_state:
+                        self.positions[symbol] = {"side": active_pos['side'].lower(), "entry": float(active_pos['entryPrice']), "max_price": float(active_pos['entryPrice']), "min_price": float(active_pos['entryPrice']), "sl_order_id": None, "sl_price": 0, "tp_order_id": None, "tp_price": 0, "amount": abs(float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0))))}
+                        try:
+                            open_orders = self.exchange.fetch_open_orders(symbol)
+                            for o in open_orders:
+                                o_type = o['type'].lower()
+                                if 'stop' in o_type:
+                                    self.positions[symbol]['sl_order_id'] = o['id']
+                                    self.positions[symbol]['sl_price'] = float(o.get('stopPrice') or 0)
+                                elif 'take_profit' in o_type:
+                                    self.positions[symbol]['tp_order_id'] = o['id']
+                                    self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
+                        except Exception as e:
+                            self.logger.warning(f"Не удалось восстановить SL/TP ордера: {e}")
 
                 
                 if self.positions[symbol]['sl_order_id'] is None:
@@ -222,51 +235,96 @@ class TraderExecutor:
                 # Трейлинг стоп логика
                 if USE_TRAILING:
                     pos_data = self.positions[symbol]
-                    current_price = float(active_pos['markPrice'])
+                    current_price = float(active_pos.get('markPrice', 0)) or float(active_pos.get('entryPrice', 0))
                     entry = pos_data['entry']
-                    side = pos_data['side']
+                    side = pos_data['side'].lower()
+                    is_long = side in ['buy', 'long']
+                    actual_amt = abs(float(active_pos.get('info', {}).get('positionAmt', pos_data.get('amount', 0))))
+                    close_side = 'sell' if is_long else 'buy'
                     
                     needs_trailing_update = False
+                    close_market_now = False
                     new_sl_price = pos_data['sl_price']
                     
-                    if side == 'buy' or side == 'long':
+                    if is_long:
                         if current_price > pos_data['max_price']:
                             pos_data['max_price'] = current_price
                         profit_pct = (pos_data['max_price'] - entry) / entry
                         if profit_pct >= TRAILING_ACTIVATION_PCT:
                             calculated_sl = pos_data['max_price'] * (1 - TRAILING_DISTANCE_PCT)
-                            if calculated_sl > pos_data['sl_price']:
+                            if current_price <= calculated_sl:
+                                close_market_now = True
+                            elif calculated_sl > pos_data['sl_price']:
                                 new_sl_price = calculated_sl
                                 needs_trailing_update = True
-                    else:
+                    else: # short
                         if current_price < pos_data['min_price']:
                             pos_data['min_price'] = current_price
                         profit_pct = (entry - pos_data['min_price']) / entry
                         if profit_pct >= TRAILING_ACTIVATION_PCT:
                             calculated_sl = pos_data['min_price'] * (1 + TRAILING_DISTANCE_PCT)
-                            if calculated_sl < pos_data['sl_price'] or pos_data['sl_price'] == 0:
+                            if current_price >= calculated_sl:
+                                close_market_now = True
+                            elif calculated_sl < pos_data['sl_price'] or pos_data['sl_price'] == 0:
                                 new_sl_price = calculated_sl
                                 needs_trailing_update = True
                                 
-                    if needs_trailing_update:
-                        new_sl_price = float(self.exchange.price_to_precision(symbol, new_sl_price))
-                        close_side = 'sell' if side == 'buy' or side == 'long' else 'buy'
+                    if close_market_now:
+                        self.logger.info(f"⚡ Трейлинг-стоп сработал для {symbol}! Текущая цена {current_price} пробила стоп {calculated_sl:.4f}. Закрытие по маркету...")
                         try:
-                            # Отменяем старый стоп если знаем его ID
-                            if pos_data['sl_order_id']:
-                                try:
-                                    self.exchange.cancel_order(pos_data['sl_order_id'], symbol)
-                                except:
-                                    pass
-                            
-                            # Ставим новый стоп
-                            sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, pos_data['amount'], params={'stopPrice': new_sl_price, 'closePosition': True})
-                            pos_data['sl_order_id'] = sl_ord['id']
-                            pos_data['sl_price'] = new_sl_price
-                            self.logger.info(f"🔄 Трейлинг-стоп передвинут для {symbol}: {new_sl_price}")
-                            tg_notifier.send_message(f"🔄 <b>Трейлинг-стоп сдвинут!</b>\nМонета: {symbol}\nНовый стоп: {new_sl_price}")
-                        except Exception as e:
-                            self.logger.error(f"Ошибка сдвига трейлинга: {e}")
+                            self.exchange.cancel_all_orders(symbol)
+                        except:
+                            pass
+                        try:
+                            self.exchange.create_market_order(symbol, close_side, actual_amt, params={'reduceOnly': True})
+                            self.logger.info(f"✅ Позиция {symbol} успешно закрыта по трейлингу по рыночной цене.")
+                        except Exception as ce:
+                            self.logger.error(f"Ошибка закрытия по маркету при трейлинге: {ce}")
+                    elif needs_trailing_update:
+                        new_sl_price = float(self.exchange.price_to_precision(symbol, new_sl_price))
+                        is_valid_stop = (new_sl_price < current_price) if is_long else (new_sl_price > current_price)
+                        
+                        if not is_valid_stop:
+                            self.logger.info(f"⚡ Цена {current_price} уже пересекла новый стоп {new_sl_price} для {symbol}. Закрываем по маркету!")
+                            try:
+                                self.exchange.cancel_all_orders(symbol)
+                            except:
+                                pass
+                            try:
+                                self.exchange.create_market_order(symbol, close_side, actual_amt, params={'reduceOnly': True})
+                            except Exception as ce:
+                                self.logger.error(f"Ошибка закрытия по маркету: {ce}")
+                        else:
+                            try:
+                                # Ставим новый стоп
+                                sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, actual_amt, params={'stopPrice': new_sl_price, 'reduceOnly': True})
+                                # Если успешно, отменяем старый стоп
+                                old_sl = pos_data.get('sl_order_id')
+                                if old_sl:
+                                    try:
+                                        self.exchange.cancel_order(old_sl, symbol)
+                                    except:
+                                        pass
+                                        
+                                pos_data['sl_order_id'] = sl_ord['id']
+                                pos_data['sl_price'] = new_sl_price
+                                self._save_live_state()
+                                self.logger.info(f"🔄 Трейлинг-стоп передвинут для {symbol}: {new_sl_price}")
+                                tg_notifier.send_message(f"🔄 <b>Трейлинг-стоп сдвинут!</b>\nМонета: {symbol}\nНовый стоп: {new_sl_price}")
+                            except Exception as e:
+                                err_str = str(e)
+                                if "-2021" in err_str or "Order would immediately trigger" in err_str:
+                                    self.logger.warning(f"Стоп {new_sl_price} мгновенно сработал бы для {symbol} (цена {current_price}). Закрываем по маркету!")
+                                    try:
+                                        self.exchange.cancel_all_orders(symbol)
+                                    except:
+                                        pass
+                                    try:
+                                        self.exchange.create_market_order(symbol, close_side, actual_amt, params={'reduceOnly': True})
+                                    except Exception as ce:
+                                        self.logger.error(f"Ошибка закрытия по маркету: {ce}")
+                                else:
+                                    self.logger.error(f"Ошибка сдвига трейлинга: {e}")
 
                 return True
             
