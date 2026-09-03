@@ -118,6 +118,10 @@ def main():
                             # Запись в историю
                             with open("trade_history.txt", "a", encoding="utf-8") as f:
                                 f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_str.upper()} | Вход: {current_price}\n")
+                        else:
+                            err_reason = getattr(executor, 'last_error', 'Неизвестная ошибка биржи')
+                            logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
+                            tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
                     else:
                         breakdown = f" ({ml_bot.last_probs_str})" if getattr(ml_bot, 'last_probs_str', None) else ""
                         logger.warning(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОТКЛОНЕН. Уверенность: {ai_confidence:.2f}{breakdown}. Порог: {ML_PROBABILITY_THRESHOLD}")

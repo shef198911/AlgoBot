@@ -12,6 +12,7 @@ class TraderExecutor:
         self.logger = logger.getChild("TraderExecutor")
         self.exchange = exchange_client
         self.positions = {} # Стейт-менеджмент позиций {symbol: {"side": side, "entry": price, "max_profit": 0, "sl_order_id": id, "amount_coin": amount}}
+        self.last_error = ""
         
         try:
             self.exchange.load_markets()
@@ -151,7 +152,14 @@ class TraderExecutor:
             self.logger.info(f"Сделка {side} по {symbol} открыта. Вход: {current_price}, SL: {sl_price}, TP: {tp_price}")
             return True
         except Exception as e:
+            self.last_error = str(e)
             self.logger.error(f"Ошибка при выполнении execute_trade: {e}")
+            if "-1021" in str(e) or "ahead of the server's time" in str(e):
+                try:
+                    self.exchange.load_time_difference()
+                    self.logger.info("Выполнена авто-пересинхронизация времени с сервером Binance.")
+                except:
+                    pass
             if position_opened:
                 self.logger.critical(f"КРИТИЧЕСКИ: Ошибка ПОСЛЕ открытия позиции {symbol}. Экстренное закрытие!")
                 close_side = 'sell' if side == 'buy' else 'buy'

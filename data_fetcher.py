@@ -16,6 +16,7 @@ class DataFetcher:
             'options': {
                 'defaultType': 'future',
                 'adjustForTimeDifference': True,
+                'recvWindow': 10000,
                 'fetchCurrencies': False
             }
         })
@@ -28,10 +29,11 @@ class DataFetcher:
             for k in self.exchange.urls['api']:
                 if type(self.exchange.urls['api'][k]) is str:
                     self.exchange.urls['api'][k] = self.exchange.urls['api'][k].replace('fapi.binance.com', 'testnet.binancefuture.com')
-            try:
-                self.exchange.load_time_difference()
-            except:
-                pass
+                    
+        try:
+            self.exchange.load_time_difference()
+        except Exception as e:
+            self.logger.warning(f"Предупреждение синхронизации времени: {e}")
             
         self.load_markets()
 
