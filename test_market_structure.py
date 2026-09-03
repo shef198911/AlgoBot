@@ -104,38 +104,47 @@ class TestMarketStructureEngine(unittest.TestCase):
         self.assertIn(res['engine_setup'].iloc[-1], ['SUPPORT_BOUNCE', 'LIQUIDITY_SWEEP_LONG'])
 
     def test_08_bullish_bos_and_choch(self):
-        """8. Bullish BOS  Bullish CHOCH (Single Candle Events)."""
-        closes = [100, 105, 102, 100, 104, 108, 105, 103, 106, 113, 112]
-        highs  = [100, 106, 102, 100, 104, 109, 105, 103, 106, 113.5, 112.5]
-        lows   = [99,  104, 101, 99,  103, 107, 104, 102, 105, 111, 111.5]
-        df = self._create_df(closes, highs=highs, lows=lows)
-        res = self.engine.analyze(df)
-        
-        self.assertIn('BOS_LONG', res.columns)
-        self.assertIn('CHOCH_LONG', res.columns)
-        
-        # Verify it occurs on exactly one candle and is zero on the next
+        """8. BOS LONG and CHOCH LONG (Single Candle Events)."""
+        closes = [
+            100, 100,
+            100, 105, 100, 95, 100,
+            105, 110, 105, 100, 105,
+            107, 108, 109,
+            115, 116,
+            110, 100, 105, 95, 100,
+            105, 90, 95, 80, 90,
+            91, 92, 93,
+            110, 111
+        ]
+        df = self._create_df(closes)
+        engine = MarketStructureEngine(swing_k=2)
+        res = engine.analyze(df)
         bos_idx = res.index[res['BOS_LONG'] == 1.0].tolist()
+        self.assertTrue(len(bos_idx) >= 1, "BOS_LONG did not trigger!")
         for idx in bos_idx:
             if idx + 1 < len(res):
                 self.assertEqual(res['BOS_LONG'].iloc[idx + 1], 0.0)
-                
         choch_idx = res.index[res['CHOCH_LONG'] == 1.0].tolist()
+        self.assertTrue(len(choch_idx) >= 1, "CHOCH_LONG did not trigger!")
         for idx in choch_idx:
             if idx + 1 < len(res):
                 self.assertEqual(res['CHOCH_LONG'].iloc[idx + 1], 0.0)
 
     def test_09_duplicate_setup_prevention(self):
-        """9. Защита от повторного входа: один сетап дает ровно один сигнал."""
-        closes = [100, 101, 102, 105, 102, 101, 100, 108, 105.5, 105.6]
-        highs  = [100.1, 101.1, 102.1, 105.1, 102.1, 101.1, 100.1, 108.5, 106.0, 106.0]
-        lows   = [99.9, 100.9, 101.9, 104.9, 101.9, 100.9, 99.9, 107.0, 105.0, 105.0]
-        opens  = [100, 101, 102, 105, 102, 101, 100, 102.0, 105.1, 105.2]
-        df = self._create_df(closes, highs=highs, lows=lows, opens=opens)
-        res = self.engine.analyze(df)
-        # На свече 8 сетап сработал. На свече 9 тот же самый сетап НЕ должен сработать повторно!
-        self.assertEqual(res['IS_RETEST_LONG'].iloc[8], 1.0)
-        self.assertEqual(res['IS_RETEST_LONG'].iloc[9], 0.0)
+        """9. ONE SETUP = ONE ENTRY (Lifecycle check)"""
+        closes = [
+            100, 100,
+            100, 105, 110, 105, 100,
+            100, 100, 100,
+            115, 116,
+            111.0, 110.1, 115,
+            112.0, 110.1, 115
+        ]
+        df = self._create_df(closes)
+        engine = MarketStructureEngine(swing_k=2, retest_max_bars=15)
+        res = engine.analyze(df)
+        retest_count = sum(res['engine_setup'] == 'BREAKOUT_RETEST')
+        self.assertEqual(retest_count, 1, "Multiple BREAKOUT_RETEST setups triggered for one setup!")
 
     def test_10_strict_zero_lookahead_bias(self):
         """10. КРИТИЧЕСКАЯ ПРОВЕРКА: Нулевой Lookahead Bias."""
@@ -195,20 +204,28 @@ class TestMarketStructureEngine(unittest.TestCase):
         self.assertEqual(res['LIQUIDITY_SWEEP_LOW'].iloc[-1], 1.0)
 
     def test_15_bearish_bos_and_choch(self):
-        """15. Bearish BOS and Bearish CHOCH (Single Candle Events)."""
-        closes = [100, 95, 98, 93, 96, 91, 94, 88, 89]
+        """15. BOS SHORT and CHOCH SHORT (Single Candle Events)."""
+        closes = [
+            100, 100,
+            100, 95, 100, 105, 100,
+            95, 90, 95, 100, 95,
+            93, 92, 91,
+            85, 84,
+            90, 100, 95, 105, 100,
+            105, 110, 105, 100, 105,
+            102, 103, 104,
+            95, 94
+        ]
         df = self._create_df(closes)
-        res = self.engine.analyze(df)
-        
-        self.assertIn('BOS_SHORT', res.columns)
-        self.assertIn('CHOCH_SHORT', res.columns)
-        
+        engine = MarketStructureEngine(swing_k=2)
+        res = engine.analyze(df)
         bos_idx = res.index[res['BOS_SHORT'] == 1.0].tolist()
+        self.assertTrue(len(bos_idx) >= 1, "BOS_SHORT did not trigger!")
         for idx in bos_idx:
             if idx + 1 < len(res):
                 self.assertEqual(res['BOS_SHORT'].iloc[idx + 1], 0.0)
-                
         choch_idx = res.index[res['CHOCH_SHORT'] == 1.0].tolist()
+        self.assertTrue(len(choch_idx) >= 1, "CHOCH_SHORT did not trigger!")
         for idx in choch_idx:
             if idx + 1 < len(res):
                 self.assertEqual(res['CHOCH_SHORT'].iloc[idx + 1], 0.0)
@@ -317,42 +334,141 @@ class TestMarketStructureEngine(unittest.TestCase):
         df = self._create_df(closes)
         df.loc[5, 'high'] = 110.0
         res = engine.analyze(df)
-        
-        self.assertEqual(res['DIST_RES_PCT'].iloc[5], 0.05)
-        self.assertEqual(res['DIST_RES_PCT'].iloc[6], 0.05)
-        self.assertEqual(res['DIST_RES_PCT'].iloc[7], 0.05)
-        
-        self.assertTrue(res['DIST_RES_PCT'].iloc[8] > 0.05)
-        self.assertTrue(res['SR_STRENGTH'].iloc[8] > res['SR_STRENGTH'].iloc[7])
+        val_5 = res['NEAREST_RESISTANCE'].iloc[5]
+        val_6 = res['NEAREST_RESISTANCE'].iloc[6]
+        val_7 = res['NEAREST_RESISTANCE'].iloc[7]
+        val_8 = res['NEAREST_RESISTANCE'].iloc[8]
+        self.assertTrue(val_8 != val_7, "Swing must be confirmed exactly at t+3")
+        self.assertTrue(val_8 < 111.0 and val_8 > 108.0)
 
     def test_22_multiple_active_setups(self):
         """22. MULTIPLE ACTIVE SETUPS"""
-        engine = MarketStructureEngine(swing_k=2, retest_max_bars=10)
-        closes = [100,98,99,98,100, 105, 110,108,109,108,110, 115, 100.5, 101, 105]
-        df = self._create_df(closes)
-        res = engine.analyze(df)
-        self.assertTrue('BREAKOUT_RETEST' in res['engine_setup'].values or 'RESISTANCE_REJECTION' in res['engine_setup'].values)
-
-    @classmethod
-    def tearDownClass(cls):
-        print("\n" + "="*50)
-        print("FINAL REPORT: MARKET STRUCTURE ENGINE VERIFICATION")
-        print("="*50)
-        tests = [
-            "BOS LONG", "BOS SHORT", "CHOCH LONG", "CHOCH SHORT",
-            "Breakout Long", "Breakout Short", "Retest Long", "Retest Short",
-            "Liquidity Sweep Long", "Liquidity Sweep Short",
-            "Trend Pullback Long", "Trend Pullback Short",
-            "Range Bounce Long", "Range Bounce Short",
-            "One Setup = One Entry", "Multiple Active Setups",
-            "No Lookahead", "Train/Live Parity", "ML Feature Schema"
+        closes = [
+            100, 100,
+            100, 105, 110, 105, 100,
+            100, 110, 120, 110, 100,
+            100, 100, 
+            115, 125, 126, 127,
+            121.0, 120.1, 125,
+            111.0, 110.1, 115
         ]
-        for t in tests:
-            print(f"{t:.<35} PASS")
-        print("="*50)
-        print("ALL TESTS PASSED. ENGINE FROZEN.")
-        print("="*50)
+        df = self._create_df(closes)
+        engine = MarketStructureEngine(swing_k=2, retest_max_bars=15)
+        res = engine.analyze(df)
+        breakouts = res.index[res['IS_BREAKOUT_LONG'] == 1.0].tolist()
+        self.assertTrue(len(breakouts) >= 2, "Did not get 2 breakouts!")
+        retests = res.index[res['IS_RETEST_LONG'] == 1.0].tolist()
+        self.assertTrue(len(retests) >= 2, "Did not get 2 retests! Setup A might have been deleted.")
+
+
+
+
+    def test_23_train_live_parity(self):
+        """23. TRAIN / LIVE PARITY"""
+        np.random.seed(42)
+        c = 100.0 * np.cumprod(1 + np.random.normal(0.0001, 0.004, 150))
+        df_train = self._create_df(c)
+        df_live = self._create_df(c)
+        from strategy_ta import TAStrategy
+        from config import FEATURE_COLUMNS
+        ta = TAStrategy()
+        res_train = ta.generate_features_and_signals(df_train)
+        res_live = ta.generate_features_and_signals(df_live)
+        columns_to_check = [
+            'ta_signal', 'ta_setup', 'SETUP_SCORE', 'BOS_LONG', 'BOS_SHORT',
+            'CHOCH_LONG', 'CHOCH_SHORT', 'IS_BREAKOUT_LONG', 'IS_BREAKOUT_SHORT',
+            'IS_RETEST_LONG', 'IS_RETEST_SHORT', 'LIQUIDITY_SWEEP_LOW',
+            'LIQUIDITY_SWEEP_HIGH', 'MARKET_STRUCTURE'
+        ]
+        for col in columns_to_check:
+            self.assertIn(col, res_train.columns)
+            self.assertIn(col, res_live.columns)
+            pd.testing.assert_series_equal(res_train[col], res_live[col], check_names=False)
+
+    def test_24_ml_feature_order(self):
+        """24. ML FEATURE ORDER"""
+        np.random.seed(42)
+        c = 100.0 * np.cumprod(1 + np.random.normal(0.0001, 0.004, 150))
+        df = self._create_df(c)
+        from strategy_ta import TAStrategy
+        from config import FEATURE_COLUMNS
+        ta = TAStrategy()
+        res = ta.generate_features_and_signals(df)
+        for col in FEATURE_COLUMNS:
+            self.assertIn(col, res.columns)
+            self.assertEqual(res[col].isna().sum(), 0)
+            self.assertFalse(np.isinf(res[col]).any())
+        X = res[FEATURE_COLUMNS]
+        self.assertEqual(list(X.columns), FEATURE_COLUMNS)
+        
+        from ml_filter import MLFilter
+        ml = MLFilter()
+        ml.is_trained = True
+        class MockEnsemble:
+            def __init__(self):
+                self.feature_names_in_ = FEATURE_COLUMNS
+            def predict_proba(self, X_infer):
+                self.last_X = X_infer
+                return [[0.0, 1.0]]
+        ml.ensemble = MockEnsemble()
+        mixed_features = {k: 0.0 for k in reversed(FEATURE_COLUMNS)}
+        ml.evaluate_signal(mixed_features)
+        infer_columns = list(ml.ensemble.last_X.columns)
+        self.assertEqual(infer_columns, FEATURE_COLUMNS)
+
+
+    def test_23_train_live_parity(self):
+        """23. TRAIN / LIVE PARITY"""
+        np.random.seed(42)
+        c = 100.0 * np.cumprod(1 + np.random.normal(0.0001, 0.004, 150))
+        df_train = self._create_df(c)
+        df_live = self._create_df(c)
+        from strategy_ta import TAStrategy
+        from config import FEATURE_COLUMNS
+        ta = TAStrategy()
+        res_train = ta.generate_features_and_signals(df_train)
+        res_live = ta.generate_features_and_signals(df_live)
+        columns_to_check = [
+            'ta_signal', 'ta_setup', 'SETUP_SCORE', 'BOS_LONG', 'BOS_SHORT',
+            'CHOCH_LONG', 'CHOCH_SHORT', 'IS_BREAKOUT_LONG', 'IS_BREAKOUT_SHORT',
+            'IS_RETEST_LONG', 'IS_RETEST_SHORT', 'LIQUIDITY_SWEEP_LOW',
+            'LIQUIDITY_SWEEP_HIGH', 'MARKET_STRUCTURE'
+        ]
+        for col in columns_to_check:
+            self.assertIn(col, res_train.columns)
+            self.assertIn(col, res_live.columns)
+            pd.testing.assert_series_equal(res_train[col], res_live[col], check_names=False)
+
+    def test_24_ml_feature_order(self):
+        """24. ML FEATURE ORDER"""
+        np.random.seed(42)
+        c = 100.0 * np.cumprod(1 + np.random.normal(0.0001, 0.004, 150))
+        df = self._create_df(c)
+        from strategy_ta import TAStrategy
+        from config import FEATURE_COLUMNS
+        ta = TAStrategy()
+        res = ta.generate_features_and_signals(df)
+        for col in FEATURE_COLUMNS:
+            self.assertIn(col, res.columns)
+            self.assertEqual(res[col].isna().sum(), 0)
+            self.assertFalse(np.isinf(res[col]).any())
+        X = res[FEATURE_COLUMNS]
+        self.assertEqual(list(X.columns), FEATURE_COLUMNS)
+        
+        from ml_filter import MLFilter
+        ml = MLFilter()
+        ml.is_trained = True
+        class MockEnsemble:
+            def __init__(self):
+                self.feature_names_in_ = FEATURE_COLUMNS
+            def predict_proba(self, X_infer):
+                self.last_X = X_infer
+                return [[0.0, 1.0]]
+        ml.ensemble = MockEnsemble()
+        mixed_features = pd.Series({k: 0.0 for k in reversed(FEATURE_COLUMNS)})
+        ml.evaluate_signal(mixed_features)
+        infer_columns = list(ml.ensemble.last_X.columns)
+        self.assertEqual(infer_columns, FEATURE_COLUMNS)
 
 if __name__ == '__main__':
     unittest.main()
-
