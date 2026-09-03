@@ -1,5 +1,5 @@
 import time
-from config import logger, SYMBOLS, TIMEFRAME, TRADE_SIZE_USDT, API_KEY, API_SECRET, USE_TESTNET
+from config import logger, SYMBOLS, TIMEFRAME, TRADE_SIZE_USDT, API_KEY, API_SECRET, USE_TESTNET, ML_PROBABILITY_THRESHOLD
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
 from ml_filter import MLFilter
