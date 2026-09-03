@@ -38,7 +38,10 @@ class MLFilter:
             return False, 0.0, None 
             
         try:
-            feature_cols = FEATURE_COLUMNS
+            if hasattr(self.ensemble, 'feature_names_in_'):
+                feature_cols = [c for c in self.ensemble.feature_names_in_ if c in current_features]
+            else:
+                feature_cols = [c for c in FEATURE_COLUMNS if c in current_features]
             
             X = pd.DataFrame([current_features[feature_cols]])
             
@@ -50,7 +53,10 @@ class MLFilter:
             try:
                 probs_parts = []
                 for name, est in self.ensemble.named_estimators_.items():
-                    p = float(est.predict_proba(X)[0][1])
+                    # Проверяем признаки конкретного эстиматора
+                    est_cols = getattr(est, 'feature_names_in_', feature_cols)
+                    X_est = pd.DataFrame([current_features[est_cols]])
+                    p = float(est.predict_proba(X_est)[0][1])
                     self.last_probs[name.upper()] = p
                     probs_parts.append(f"{name.upper()}={p:.2f}")
                 self.last_probs_str = ", ".join(probs_parts)
@@ -65,7 +71,9 @@ class MLFilter:
             # Если сделка одобрена, просим регрессор предсказать Тейк-Профит
             predicted_tp_pct = None
             if is_approved and self.regressor is not None:
-                predicted_tp_pct = self.regressor.predict(X)[0]
+                reg_cols = getattr(self.regressor, 'feature_names_in_', feature_cols)
+                X_reg = pd.DataFrame([current_features[reg_cols]])
+                predicted_tp_pct = self.regressor.predict(X_reg)[0]
                 # Ограничиваем неадекватные значения
                 predicted_tp_pct = max(0.005, min(TAKE_PROFIT_PCT * 2.0, predicted_tp_pct))
                 

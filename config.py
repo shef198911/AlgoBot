@@ -61,4 +61,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("AlgoBot")
  
-FEATURE_COLUMNS = ['EMA_FAST', 'EMA_SLOW', 'RSI', 'ATRr', 'VWAP', 'ADX', 'BB_UPPER', 'BB_LOWER', 'BB_WIDTH', 'PRICE_ROC', 'VOL_RATIO', 'VWAP_DIST']
+MIN_SR_DISTANCE_PCT = 0.005 # Мин. расстояние (0.5%) до сопротивления/поддержки перед входом
+
+FEATURE_COLUMNS = [
+    'EMA_FAST', 'EMA_SLOW', 'RSI', 'ATRr', 'VWAP', 'ADX', 
+    'BB_UPPER', 'BB_LOWER', 'BB_WIDTH', 'PRICE_ROC', 'VOL_RATIO', 'VWAP_DIST',
+    # Признаки геометрии и структуры рынка (Market Structure & Price Action)
+    'DIST_RES_PCT', 'DIST_SUP_PCT', 'WICK_LOWER_RATIO', 'WICK_UPPER_RATIO', 'MARKET_STRUCTURE'
+]

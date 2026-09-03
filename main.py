@@ -79,14 +79,19 @@ def main():
                         logger.debug(f"[{symbol}] Сигнал {side_str.upper()} отменен: идет против глобального тренда.")
                         continue
                         
-                    logger.info(f"[{symbol}] [Бот 1 - Теханализ] Сигнал на {side_str.upper()}! Цена: {current_price}")
+                    setup_name = current_state.get('ta_setup', 'Сигнал')
+                    dist_res = current_state.get('DIST_RES_PCT', 0) * 100
+                    dist_sup = current_state.get('DIST_SUP_PCT', 0) * 100
+                    sr_info = f"Запас до сопротивления: +{dist_res:.1f}%" if side_str == 'buy' else f"Запас до поддержки: -{dist_sup:.1f}%"
+                    
+                    logger.info(f"[{symbol}] [Бот 1 - Теханализ] Сигнал {side_str.upper()}! Сетап: {setup_name} ({sr_info}). Цена: {current_price}")
 
                     # Шаг 4: Бот №2 (ИИ) фильтрует сигнал.
                     is_approved, ai_confidence, dynamic_tp = ml_bot.evaluate_signal(current_state)
                     
                     if is_approved:
                         tp_text = f"{dynamic_tp*100:.2f}% (Динамический)" if dynamic_tp else "Стандартный"
-                        msg_approved = f"✅ <b>Сигнал ОДОБРЕН ИИ</b>\nМонета: {symbol}\nТип: {side_str.upper()}\nВход: {current_price}\nУверенность ИИ: {ai_confidence*100:.1f}%\nТейк-Профит ИИ: {tp_text}\n\nОтправляю ордер..."
+                        msg_approved = f"✅ <b>Сигнал ОДОБРЕН ИИ</b>\nМонета: {symbol}\nСетап: {setup_name}\nТип: {side_str.upper()}\nВход: {current_price}\n{sr_info}\nУверенность ИИ: {ai_confidence*100:.1f}%\nТейк-Профит ИИ: {tp_text}\n\nОтправляю ордер..."
                         logger.info(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОДОБРЕН. Уверенность: {ai_confidence:.2f}. TP: {tp_text}")
                         tg.send_message(msg_approved)
                         
