@@ -16,6 +16,7 @@ class AlgoBotApp(ctk.CTk):
         super().__init__()
         self.title("AlgoBot AI - Панель управления (Фьючерсы)")
         self.geometry("1000x700")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         self.bot_process = None
         self.read_config()
@@ -801,11 +802,19 @@ class AlgoBotApp(ctk.CTk):
             self.handle_bot_stop()
 
     def handle_bot_stop(self):
-        self.lbl_status.configure(text="СТАТУС: ОСТАНОВЛЕН", text_color="red")
+        self.lbl_status.configure(text="Статус: Остановлен", text_color="red")
         self.btn_start.configure(state="normal")
         self.btn_stop.configure(state="disabled")
         self.btn_graceful.configure(state="disabled")
         self.bot_process = None
+
+    def on_closing(self):
+        if self.bot_process is not None:
+            try:
+                self.bot_process.kill()
+            except:
+                pass
+        self.destroy()
 
 if __name__ == "__main__":
     app = AlgoBotApp()
