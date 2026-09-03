@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV, TimeSe
 from sklearn.metrics import accuracy_score
 import os
 import joblib
-from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON, TRADING_MODE
+from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON, TRADING_MODE, DATASET_TARGET_BARS
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
 
@@ -17,7 +17,7 @@ def train_ai():
     ta_bot = TAStrategy()
 
     for symbol in SYMBOLS:
-        fetch_limit = 1500  # 1500 свечей для контролируемой базовой диагностики
+        fetch_limit = DATASET_TARGET_BARS  # Конфигурируемый объем выборки (по умолчанию 1500)
         logger.info(f"Сбор данных для {symbol}... (лимит {fetch_limit})")
         df = fetcher.get_historical_klines(symbol, TIMEFRAME, limit=fetch_limit)
         
@@ -118,23 +118,7 @@ def train_ai():
     logger.info(f"Сигналов на монету (в среднем): {signals_per_coin:.1f}")
     logger.info("="*50)
 
-    # Детальная статистика по сетапам
-    logger.info("="*75)
-    logger.info("ДЕТАЛИЗАЦИЯ ПО СЕТАПАМ PRICE ACTION (LONG / SHORT)")
-    logger.info("="*75)
-    logger.info(f"{'СЕТАП':<24} | {'НАПР':<5} | {'СИГНАЛЫ':<7} | {'WIN':<4} | {'LOSS':<4} | {'WIN RATE':<8} | {'СРЕД. ДВИЖЕНИЕ'}")
-    logger.info("-" * 75)
-    
-    if 'ta_setup' in combined_trades.columns:
-        for (setup_name, sig_dir), grp in combined_trades.groupby(['ta_setup', 'ta_signal']):
-            dir_str = "LONG" if sig_dir == 1 else "SHORT"
-            n_sig = len(grp)
-            n_win = int(grp['is_success'].sum())
-            n_loss = n_sig - n_win
-            w_rate = (n_win / n_sig * 100) if n_sig > 0 else 0
-            avg_exc = grp['max_excursion'].mean() * 100 if 'max_excursion' in grp.columns else 0
-            logger.info(f"{setup_name:<24} | {dir_str:<5} | {n_sig:<7} | {n_win:<4} | {n_loss:<4} | {w_rate:>7.1f}% | +{avg_exc:>5.2f}%")
-    logger.info("="*75)
+
 
     if len(combined_trades) < 20:
         logger.warning(f"Слишком мало сигналов ({len(combined_trades)}) для обучения.")
@@ -175,6 +159,29 @@ def train_ai():
     y_pred = ensemble.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
     logger.info(f"Точность Ансамбля ИИ (Triple-Barrier): {acc * 100:.2f}%")
+
+    # Расчет вероятностей ИИ для всех сделок выборки (P1. 15)
+    combined_trades['ml_prob'] = ensemble.predict_proba(combined_trades[feature_cols])[:, 1]
+
+    # Детальная статистика по сетапам с AVG SCORE и AVG ML PROB (P1. 15)
+    logger.info("="*105)
+    logger.info("ДЕТАЛИЗАЦИЯ ПО СЕТАПАМ PRICE ACTION (LONG / SHORT)")
+    logger.info("="*105)
+    logger.info(f"{'СЕТАП':<24} | {'НАПР':<5} | {'СИГНАЛЫ':<7} | {'WIN':<4} | {'LOSS':<4} | {'WIN RATE':<8} | {'СРЕД. ДВИЖ':<10} | {'SCORE':<5} | {'ML PROB':<7}")
+    logger.info("-" * 105)
+    
+    if 'ta_setup' in combined_trades.columns:
+        for (setup_name, sig_dir), grp in combined_trades.groupby(['ta_setup', 'ta_signal']):
+            dir_str = "LONG" if sig_dir == 1 else "SHORT"
+            n_sig = len(grp)
+            n_win = int(grp['is_success'].sum())
+            n_loss = n_sig - n_win
+            w_rate = (n_win / n_sig * 100) if n_sig > 0 else 0
+            avg_exc = grp['max_excursion'].mean() * 100 if 'max_excursion' in grp.columns else 0
+            avg_score = grp['SETUP_SCORE'].mean() if 'SETUP_SCORE' in grp.columns else 0
+            avg_prob = grp['ml_prob'].mean() if 'ml_prob' in grp.columns else 0
+            logger.info(f"{setup_name:<24} | {dir_str:<5} | {n_sig:<7} | {n_win:<4} | {n_loss:<4} | {w_rate:>7.1f}% | +{avg_exc:>6.2f}% | {avg_score:>5.1f} | {avg_prob:>7.2f}")
+    logger.info("="*105)
 
     # Регрессия для предсказания TP
     winning_trades = combined_trades[combined_trades['is_success'] == 1]

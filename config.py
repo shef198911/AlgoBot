@@ -54,6 +54,14 @@ SCORE_WEIGHT_STRUCTURE = 15
 SCORE_WEIGHT_TREND = 10
 SCORE_WEIGHT_MOMENTUM = 10
 MIN_SETUP_SCORE = 55               # Минимальный балл сетапа для формирования ta_signal
+SCORE_ADX_MIN = 20                 # Минимальный ADX для трендового фактора в score
+
+# Параметры Range Detection & Trend Pullback
+RANGE_MAX_EXPANSION_ATR = 3.5      # Максимальная высота коридора в ATR для боковика
+RANGE_MIN_TOUCHES = 2              # Мин. касаний верхней/нижней границ для подтверждения коридора
+PULLBACK_MAX_DEPTH_ATR = 2.0       # Макс. глубина отката по тренду в ATR
+
+DATASET_TARGET_BARS = 1500         # Базовый объем истории для обучения (с возможностью расширения)
 
 # --- Про-Фичи (Pro-Trader) ---
 USE_COMPOUNDING = False    # Использовать % от депозита вместо фикс. маржи

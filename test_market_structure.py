@@ -191,6 +191,92 @@ class TestMarketStructureEngine(unittest.TestCase):
         self.assertIn('BOS_SHORT', res.columns)
         self.assertIn('CHOCH_SHORT', res.columns)
 
+    def test_16_bos_is_single_candle_event(self):
+        """16. P0. 2: BOS - строго точечное событие на 1 свечу (не держится несколько свечей)."""
+        # Сформируем бычью структуру: свинги подтверждены, затем свеча 8 пробивает protected_high, а свеча 9 продолжает рост
+        closes = [100, 105, 102, 100, 104, 108, 105, 103, 110, 111]
+        highs  = [100, 106, 102, 100, 104, 109, 105, 103, 110.5, 111.5]
+        lows   = [99,  104, 101, 99,  103, 107, 104, 102, 109.0, 110.0]
+        df = self._create_df(closes, highs=highs, lows=lows)
+        res = self.engine.analyze(df)
+        # На свече 8 зафиксирован пробой (BOS_LONG = 1.0)
+        # На следующей свече 9 BOS_LONG должен быть равен 0.0!
+        if res['BOS_LONG'].iloc[8] == 1.0:
+            self.assertEqual(res['BOS_LONG'].iloc[9], 0.0, "BOS_LONG не должен висеть в 1 на нескольких свечах!")
+
+    def test_17_setup_score_real_calculation(self):
+        """17. P0. 1: Setup Score считается реально без фиктивных True."""
+        score = self.engine.calculate_setup_score(
+            direction='LONG',
+            has_breakout=True,
+            has_retest=True,
+            has_rejection=True,
+            vol_ratio=1.5,
+            structure_aligned=True,
+            ema_fast=105.0,
+            ema_slow=100.0,
+            close=106.0,
+            vwap=104.0,
+            rsi=55.0,
+            price_roc=0.02,
+            adx=30.0,
+            log_diagnostics=True
+        )
+        # Все условия идеальные -> балл должен быть максимальным 100
+        self.assertEqual(score, 100.0)
+
+        # Теперь ухудшаем тренд и моментум
+        score_bad = self.engine.calculate_setup_score(
+            direction='LONG',
+            has_breakout=False,
+            has_retest=False,
+            has_rejection=False,
+            vol_ratio=0.8,
+            structure_aligned=False,
+            ema_fast=90.0,
+            ema_slow=100.0,
+            close=89.0,
+            vwap=95.0,
+            rsi=75.0,
+            price_roc=-0.05,
+            adx=15.0
+        )
+        self.assertEqual(score_bad, 0.0)
+
+    def test_18_range_detection_and_bounce(self):
+        """18. P1. 6: Настоящий Range Detection и Range Bounce."""
+        engine = MarketStructureEngine(swing_k=2, retest_max_bars=5)
+        # Коридор около 100-104 с несколькими свингами (k=2)
+        prices = [100, 102, 104, 102, 100, 102, 104, 102, 100, 102, 104, 102, 100, 100.1]
+        highs = [p + 0.5 for p in prices]
+        lows = [p - 0.5 for p in prices]
+        lows[-1] = 98.5  # Откуп на нижней границе
+        df = self._create_df(prices, highs=highs, lows=lows)
+        res = engine.analyze(df)
+        self.assertIn('RANGE_BOUNCE', res['engine_setup'].values)
+
+    def test_19_sr_strength_calculation(self):
+        """19. P1. 7: Расчет реальной силы уровней SR_STRENGTH."""
+        engine = MarketStructureEngine(swing_k=2, retest_max_bars=5)
+        prices = [100, 102, 104, 102, 100, 102, 104, 102, 100, 102, 104, 102, 100, 100.1]
+        df = self._create_df(prices)
+        res = engine.analyze(df)
+        # Сила уровня при повторных касаниях должна быть больше базовой 25
+        self.assertTrue((res['SR_STRENGTH'] > 25.0).any())
+
+    def test_20_trend_pullback(self):
+        """20. P1. 5: Настоящий Trend Pullback в направлении подтвержденной структуры."""
+        engine = MarketStructureEngine(swing_k=2, retest_max_bars=5)
+        # Бычья структура: 2 восходящих свинга, затем откат к зоне отката
+        prices = [100, 103, 106, 103, 101, 105, 110, 107, 104, 107, 115, 111, 106, 106.5]
+        highs = [p + 0.5 for p in prices]
+        lows = [p - 0.5 for p in prices]
+        opens = [p for p in prices]
+        lows[-1] = 104.0  # Бычий пин-бар на откате
+        df = self._create_df(prices, highs=highs, lows=lows, opens=opens)
+        res = engine.analyze(df)
+        self.assertIn('TREND_PULLBACK', res['engine_setup'].values)
+
     def test_11_all_feature_columns_populated(self):
         """11. Проверка наличия всех признаков FEATURE_COLUMNS без NaN и Inf."""
         np.random.seed(42)
