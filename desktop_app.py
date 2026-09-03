@@ -267,6 +267,8 @@ class AlgoBotApp(ctk.CTk):
 
     def _fetch_and_render_positions(self):
         try:
+            if hasattr(self, '_cached_tickers'):
+                del self._cached_tickers
             from data_fetcher import DataFetcher
             from config import API_KEY, API_SECRET, USE_TESTNET
             fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
@@ -325,7 +327,9 @@ class AlgoBotApp(ctk.CTk):
                     current_price = mark_price
                     market_pnl = unrealized_pnl
                     try:
-                        ticker = fetcher.exchange.fetch_ticker(symbol)
+                        if not hasattr(self, '_cached_tickers'):
+                            self._cached_tickers = fetcher.exchange.fetch_tickers()
+                        ticker = self._cached_tickers.get(symbol, {})
                         bid = float(ticker.get('bid', 0))
                         ask = float(ticker.get('ask', 0))
                         last = float(ticker.get('last') or ticker.get('close') or 0)
@@ -412,7 +416,7 @@ class AlgoBotApp(ctk.CTk):
             sym_text = f"  {sym} [{p['side']}]"
             prices_text = f"  Вход: {p['entry']:.4f}  ->  Тек: {p['current_price']:.4f}"
             targets_text = f"  TP: {p['tp']}{p['tp_dist_str']}\n  SL: {p['sl']}{p['sl_dist_str']}"
-            pnl_text = f"  PnL: {p['pnl']:+.2f} USDT ({p['roe_pct']:+.2f}%)"
+            pnl_text = f"  PNL: {p['pnl']:+.2f} USDT ({p['roe_pct']:+.2f}%)"
             mpnl_text = f"  При закрытии: {p['market_pnl']:+.2f} USDT"
             
             if sym in self.pos_cards and self.pos_cards[sym]['frame'].winfo_exists():
@@ -735,7 +739,7 @@ class AlgoBotApp(ctk.CTk):
                 
                 pnl_color = "green" if pnl >= 0 else "red"
                 sign = "+" if pnl >= 0 else ""
-                self.lbl_stat_pnl.configure(text=f"Общий PnL: {sign}${pnl:.2f}", text_color=pnl_color)
+                self.lbl_stat_pnl.configure(text=f"PNL: {sign}${pnl:.2f}", text_color=pnl_color)
             except Exception as e:
                 self.log_message(f"Ошибка чтения аналитики: {e}")
 
