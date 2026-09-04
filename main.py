@@ -54,7 +54,9 @@ def main():
                     continue
 
                 # Шаг 2: Бот №1 (Теханализ) генерирует сигнал и признаки
-                analyzed_data = ta_bot.generate_features_and_signals(df)
+                trend_str = fetcher.check_global_trend(symbol)
+                ta_bot.current_symbol = symbol
+                analyzed_data = ta_bot.generate_features_and_signals(df, htf_trend=trend_str)
                 if analyzed_data is None or analyzed_data.empty:
                     continue
 
