@@ -9,6 +9,9 @@ import joblib
 from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON, TRADING_MODE, DATASET_TARGET_BARS
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
+import entry_gate
+
+entry_gate.LOG_ENTRY_GATE = False
 
 def train_ai():
     logger.info("=== Запуск продвинутого обучения ИИ V3 (Triple-Barrier + Ensemble + Regression) ===")
@@ -24,23 +27,17 @@ def train_ai():
         if df is None or df.empty:
             continue
 
+        from trend_helper import add_global_trend
+        df = add_global_trend(df, fetcher, symbol)
+        ta_bot.current_symbol = symbol
         df_analyzed = ta_bot.generate_features_and_signals(df)
+
         if df_analyzed is None or df_analyzed.empty:
             logger.warning(f"Пропуск {symbol}: недостаточно данных для расчета индикаторов.")
             continue
         
-        from trend_helper import add_global_trend
-        df_analyzed = add_global_trend(df_analyzed, fetcher, symbol)
-        if df_analyzed is None or df_analyzed.empty:
-            continue
         
         # Filter TA signals by Global Trend (just like in Live)
-        for i in df_analyzed.index:
-            sig = df_analyzed.at[i, 'ta_signal']
-            trend = df_analyzed.at[i, 'global_trend']
-            if sig != 0 and trend != 0 and sig != trend:
-                df_analyzed.at[i, 'ta_signal'] = 0
-            
         tp_pct = TAKE_PROFIT_PCT
         sl_pct = STOP_LOSS_PCT
         

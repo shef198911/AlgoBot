@@ -12,7 +12,7 @@ class TAStrategy:
     def __init__(self):
         self.logger = logger.getChild("TAStrategy")
 
-    def generate_features_and_signals(self, df, htf_trend="RANGE"):
+    def generate_features_and_signals(self, df, htf_trend=None):
         if df is None or df.empty:
             return None
 
@@ -68,36 +68,14 @@ class TAStrategy:
             min_sr = MIN_SR_DISTANCE_PCT if 'MIN_SR_DISTANCE_PCT' in globals() else 0.005
 
             # 3. Индикаторное подтверждение сетапов от MarketStructureEngine
-            def get_global_trend(row):
-                fast = row.get('EMA_FAST', 0)
-                slow = row.get('EMA_SLOW', 0)
-                close = row.get('close', 0)
-                adx = row.get('ADX', 0)
-                
-                if pd.isna(fast) or pd.isna(slow) or slow == 0:
-                    return "RANGE"
-                    
-                ema_dist = (fast - slow) / slow
-                
-                if fast > slow and close > fast:
-                    if adx > 25 and ema_dist > 0.002:
-                        return "STRONG_BULL"
-                    else:
-                        return "BULL"
-                elif fast < slow and close < fast:
-                    if adx > 25 and ema_dist < -0.002:
-                        return "STRONG_BEAR"
-                    else:
-                        return "BEAR"
-                else:
-                    return "RANGE"
-
-            data['GLOBAL_TREND'] = data.apply(get_global_trend, axis=1)
 
             results = []
             symbol_str = getattr(self, "current_symbol", "UNKNOWN")
-            for _, row in data.iterrows():
-                is_valid, reject_reason = EntryGate.validate(row, htf_trend, symbol_str)
+            total_rows = len(data)
+            for i, (_, row) in enumerate(data.iterrows()):
+                effective_trend = htf_trend if htf_trend is not None else row.get("HTF_TREND", row.get("GLOBAL_TREND", "RANGE"))
+                is_last = (i == total_rows - 1)
+                is_valid, reject_reason = EntryGate.validate(row, effective_trend, symbol_str, do_log=is_last)
                 if is_valid:
                     results.append((row.get('engine_signal', 0), row.get('engine_setup', 'None')))
                 else:

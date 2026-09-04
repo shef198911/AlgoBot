@@ -56,6 +56,8 @@ tests.append(('15', create_row(engine_signal=1, engine_setup='RANGE_BOUNCE', MAR
 
 # 16. RANGE_REJECTION + upper boundary + confirmation -> SHORT
 tests.append(('16', create_row(engine_signal=-1, engine_setup='RANGE_REJECTION', MARKET_STRUCTURE=0.0, close=95, open=100, engine_context={'rejection_high': 101}), 'RANGE', True, 'PASS'))
+tests.append(('16b', create_row(engine_signal=-1, engine_setup='RESISTANCE_REJECTION', MARKET_STRUCTURE=0.0, close=95, open=100, engine_context={'rejection_high': 101}), 'RANGE', True, 'PASS'))
+tests.append(('16c', create_row(engine_signal=1, engine_setup='SUPPORT_BOUNCE', MARKET_STRUCTURE=0.0, engine_context={'rejection_low': 99}), 'RANGE', True, 'PASS'))
 
 # 17. Score < MIN_SETUP_SCORE -> NO TRADE
 tests.append(('17', create_row(engine_signal=1, engine_setup='TREND_PULLBACK', SETUP_SCORE=54, MARKET_STRUCTURE=1.0, engine_context={'rejection_low': 99}), 'BULL', False, 'LOW_SCORE'))

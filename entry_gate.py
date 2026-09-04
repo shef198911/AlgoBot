@@ -1,7 +1,10 @@
-﻿import pandas as pd
+LOG_ENTRY_GATE = True
+import pandas as pd
 from config import MIN_SR_DISTANCE_PCT, MIN_SETUP_SCORE, logger
 
 # Global entry statistics
+last_logged_reject = {}
+
 entry_stats = {
     'TA_CANDIDATES': 0,
     'ENTRY_GATE_PASS': 0,
@@ -20,7 +23,7 @@ entry_stats = {
 
 class EntryGate:
     @staticmethod
-    def validate(row, global_trend, symbol="UNKNOWN"):
+    def validate(row, global_trend, symbol="UNKNOWN", do_log=True):
         eng_sig = row.get('engine_signal', 0)
         eng_setup = row.get('engine_setup', 'None')
         score = row.get('SETUP_SCORE', 0)
@@ -88,6 +91,8 @@ class EntryGate:
                     reject_reason = "NO_BULLISH_CONFIRMATION"
                 elif is_bullish_struct or is_bearish_struct:
                     reject_reason = "NOT_IN_RANGE_STRUCTURE"
+                elif global_trend != "RANGE":
+                    reject_reason = "BAD_GLOBAL_TREND"
                 else:
                     mandatory_pass = True
             else:
@@ -146,6 +151,8 @@ class EntryGate:
                     reject_reason = "NO_BEARISH_CONFIRMATION"
                 elif is_bullish_struct or is_bearish_struct:
                     reject_reason = "NOT_IN_RANGE_STRUCTURE"
+                elif global_trend != "RANGE":
+                    reject_reason = "BAD_GLOBAL_TREND"
                 else:
                     mandatory_pass = True
             else:
@@ -176,28 +183,30 @@ class EntryGate:
             
             direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
             
+            if LOG_ENTRY_GATE and do_log:
+                logger.info(
+                    f"\\n[ENTRY CHECK REJECT]\\n"
+                    f"SYMBOL={symbol} {direction_str}\\n"
+                    f"SETUP={eng_setup}\\n"
+                    f"SCORE={score}\\n"
+                    f"STRUCTURE_BULL={is_bullish_struct} BEAR={is_bearish_struct}\\n"
+                    f"GLOBAL_TREND={global_trend}\\n"
+                    f"ENTRY_GATE=FAIL\\n"
+                    f"REASON={reject_reason}\\n"
+                )
+            return False, reject_reason
+            
+        entry_stats['ENTRY_GATE_PASS'] += 1
+        direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
+        if LOG_ENTRY_GATE and do_log:
             logger.info(
-                f"\\n[ENTRY CHECK REJECT]\\n"
+                f"\\n[ENTRY CHECK PASS]\\n"
                 f"SYMBOL={symbol} {direction_str}\\n"
                 f"SETUP={eng_setup}\\n"
                 f"SCORE={score}\\n"
                 f"STRUCTURE_BULL={is_bullish_struct} BEAR={is_bearish_struct}\\n"
                 f"GLOBAL_TREND={global_trend}\\n"
-                f"ENTRY_GATE=FAIL\\n"
-                f"REASON={reject_reason}\\n"
+                f"ENTRY_GATE=PASS\\n"
             )
-            return False, reject_reason
-            
-        entry_stats['ENTRY_GATE_PASS'] += 1
-        direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
-        logger.info(
-            f"\\n[ENTRY CHECK PASS]\\n"
-            f"SYMBOL={symbol} {direction_str}\\n"
-            f"SETUP={eng_setup}\\n"
-            f"SCORE={score}\\n"
-            f"STRUCTURE_BULL={is_bullish_struct} BEAR={is_bearish_struct}\\n"
-            f"GLOBAL_TREND={global_trend}\\n"
-            f"ENTRY_GATE=PASS\\n"
-        )
         return True, "PASS"
 

@@ -1,45 +1,67 @@
+﻿
 import pandas as pd
-from ta.trend import EMAIndicator
-from config import TRADING_MODE, TREND_TIMEFRAME, TIMEFRAME
+import numpy as np
+from ta.trend import EMAIndicator, ADXIndicator
+from config import TRADING_MODE, TREND_TIMEFRAME
 
 def add_global_trend(df, fetcher, symbol):
     if df is None or df.empty:
         return df
 
-    # Fetch historical HTF data
     tf = TREND_TIMEFRAME
-    if TRADING_MODE == "SCALPING":
+    if TRADING_MODE == 'SCALPING':
         fast_window, slow_window = 21, 50
     else:
         fast_window, slow_window = 9, 21
         
     df_htf = fetcher.get_historical_klines(symbol, tf, limit=1500)
     if df_htf is None or df_htf.empty:
-        df['global_trend'] = 0
+        df['HTF_TREND'] = 'RANGE'
         return df
         
-    df_htf['EMA_FAST_HTF'] = EMAIndicator(close=df_htf['close'], window=fast_window).ema_indicator()
-    df_htf['EMA_SLOW_HTF'] = EMAIndicator(close=df_htf['close'], window=slow_window).ema_indicator()
+    df_htf['EMA_FAST'] = EMAIndicator(close=df_htf['close'], window=fast_window).ema_indicator()
+    df_htf['EMA_SLOW'] = EMAIndicator(close=df_htf['close'], window=slow_window).ema_indicator()
     
-    # -1 means trend is down, 1 means up
-    df_htf['global_trend'] = 0
-    df_htf.loc[df_htf['EMA_FAST_HTF'] > df_htf['EMA_SLOW_HTF'], 'global_trend'] = 1
-    df_htf.loc[df_htf['EMA_FAST_HTF'] < df_htf['EMA_SLOW_HTF'], 'global_trend'] = -1
+    try:
+        adx = ADXIndicator(high=df_htf['high'], low=df_htf['low'], close=df_htf['close'], window=14)
+        df_htf['ADX'] = adx.adx()
+    except:
+        df_htf['ADX'] = 0
+        
+    def get_trend_str(row):
+        fast = row.get('EMA_FAST', 0)
+        slow = row.get('EMA_SLOW', 0)
+        close = row.get('close', 0)
+        adx_val = row.get('ADX', 0)
+        
+        if pd.isna(fast) or pd.isna(slow) or slow == 0:
+            return 'RANGE'
+            
+        ema_dist = (fast - slow) / slow
+        
+        if fast > slow and close > fast:
+            if adx_val > 25 and ema_dist > 0.002:
+                return 'STRONG_BULL'
+            else:
+                return 'BULL'
+        elif fast < slow and close < fast:
+            if adx_val > 25 and ema_dist < -0.002:
+                return 'STRONG_BEAR'
+            else:
+                return 'BEAR'
+        else:
+            return 'RANGE'
+
+    df_htf['HTF_TREND'] = df_htf.apply(get_trend_str, axis=1)
     
-    # We want to match each 15m candle with the LAST CLOSED 1h candle.
-    # To do this without lookahead bias:
-    # merge_asof matches on timestamp.
-    # df_htf['timestamp'] is the open time of the 1h candle.
-    # If a 15m candle opens at 12:15, the last CLOSED 1h candle is the one that OPENED at 11:00.
-    # Its close time was 12:00.
-    
+    # Map back to lower timeframe
     df_htf['close_time'] = df_htf['timestamp'] + pd.to_timedelta(tf)
     
-    # We map df['timestamp'] to df_htf['close_time'] where close_time <= timestamp
-    df_htf = df_htf[['close_time', 'global_trend']].dropna().sort_values('close_time')
+    df_htf = df_htf[['close_time', 'HTF_TREND']].dropna().sort_values('close_time')
     df = df.sort_values('timestamp')
     
     df = pd.merge_asof(df, df_htf, left_on='timestamp', right_on='close_time', direction='backward')
-    df['global_trend'] = df['global_trend'].fillna(0)
+    df['HTF_TREND'] = df['HTF_TREND'].fillna('RANGE')
     
     return df
+

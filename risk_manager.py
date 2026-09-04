@@ -1,4 +1,4 @@
-﻿import numpy as np
+import numpy as np
 from typing import Dict, Optional, Any
 from config import SL_ATR_BUFFER, MIN_SL_ATR, MAX_SL_ATR, MIN_RR, TP_BUFFER_ATR
 
@@ -224,10 +224,15 @@ class StructureRiskEngine:
             "reason": reason
         }
 
-    def calculate_rr(self, entry: float, stop_loss: float, target: float) -> float:
-        risk = abs(entry - stop_loss)
-        reward = abs(target - entry)
-        if risk <= 0:
+    def calculate_rr(self, direction: str, entry: float, stop_loss: float, target: float) -> float:
+        if direction == 'LONG':
+            risk = entry - stop_loss
+            reward = target - entry
+        else:
+            risk = stop_loss - entry
+            reward = entry - target
+            
+        if risk <= 0 or reward <= 0:
             return 0.0
         return reward / risk
 
@@ -253,7 +258,14 @@ class StructureRiskEngine:
         if not tp1:
             return {"valid": False, "reason": "tp_calc_failed"}
 
-        rr = self.calculate_rr(entry, sl, tp1)
+        if direction == 'LONG':
+            if sl >= entry or tp1 <= entry:
+                return {"valid": False, "reason": "invalid_price_geometry"}
+        else:
+            if sl <= entry or tp1 >= entry:
+                return {"valid": False, "reason": "invalid_price_geometry"}
+                
+        rr = self.calculate_rr(direction, entry, sl, tp1)
         if rr < MIN_RR:
             return {"valid": False, "reason": f"rr_too_low_{rr:.2f}", "rr": rr}
 
