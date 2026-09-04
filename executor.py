@@ -1,5 +1,7 @@
 import time
 import json
+from risk_manager import StructureRiskEngine
+from config import STRUCTURE_RISK_ENABLED
 import pandas as pd
 from config import logger, STOP_LOSS_PCT, TAKE_PROFIT_PCT, LEVERAGE, MAX_CAPITAL_USDT, USE_ATR, USE_TRAILING, TRAILING_ACTIVATION_PCT, TRAILING_DISTANCE_PCT
 from analytics import analytics_manager
@@ -10,6 +12,7 @@ tg_notifier = TelegramNotifier()
 class TraderExecutor:
     def __init__(self, exchange_client):
         self.logger = logger.getChild("TraderExecutor")
+        self.risk_engine = StructureRiskEngine()
         self.exchange = exchange_client
         self.positions = {} # Стейт-менеджмент позиций {symbol: {"side": side, "entry": price, "max_profit": 0, "sl_order_id": id, "amount_coin": amount}}
         self.last_error = ""
@@ -19,14 +22,18 @@ class TraderExecutor:
         except:
             pass
 
-    def execute_trade(self, symbol, side, amount_usdt, current_price, atr_value=0.0, dynamic_tp=None):
+    def execute_trade(self, symbol, side, amount_usdt, current_price, atr_value=0.0, dynamic_tp=None, setup_type=None, engine_context=None):
         if self.check_position_status(symbol):
-            self.logger.warning(f"Попытка открыть сделку по {symbol}, но мы уже в позиции!")
+            err = f"Попытка открыть сделку по {symbol}, но мы уже в позиции!"
+            self.logger.warning(err)
+            self.last_error = err
             return False
             
         current_used_capital = len(self.positions) * amount_usdt
         if current_used_capital + amount_usdt > MAX_CAPITAL_USDT:
-            self.logger.warning(f"Достигнут лимит капитала! Выделено {MAX_CAPITAL_USDT} USDT, уже используется {current_used_capital} USDT. Пропускаем {symbol}.")
+            err = f"Достигнут лимит капитала! Выделено {MAX_CAPITAL_USDT} USDT, уже используется {current_used_capital} USDT. Пропускаем {symbol}."
+            self.logger.warning(err)
+            self.last_error = err
             return False
 
         position_opened = False
@@ -40,14 +47,38 @@ class TraderExecutor:
             except Exception as e:
                 pass
                 
-            volume_usdt = amount_usdt * LEVERAGE
-            amount_coin = volume_usdt / current_price
-            amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
+            direction_str = 'LONG' if side == 'buy' else 'SHORT'
+            trade_plan = None
+            if STRUCTURE_RISK_ENABLED and setup_type and engine_context:
+                trade_plan = self.risk_engine.build_trade_plan(direction_str, current_price, setup_type, engine_context, atr_value)
+                if not trade_plan.get('valid'):
+                    err = f"Сделка {symbol} отклонена Risk Engine: {trade_plan.get('reason')}"
+                    self.logger.warning(err)
+                    self.last_error = err
+                    return False
+                
+                # amount_usdt is the risk we are willing to take (how much to lose)
+                risk_distance = trade_plan['risk_distance']
+                amount_coin = amount_usdt / risk_distance
+                amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
+                volume_usdt = amount_coin * current_price
+                margin_required = volume_usdt / LEVERAGE
+                self.logger.info(f"Structure Risk: SL distance {risk_distance:.4f}. Position size {amount_coin} {symbol} (Vol: {volume_usdt:.2f}$, Margin: {margin_required:.2f}$)")
+            else:
+                # Fallback to old logic
+                volume_usdt = amount_usdt * LEVERAGE
+                amount_coin = volume_usdt / current_price
+                amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
             
             if amount_coin <= 0:
+                self.last_error = "Рассчитанный объем позиции (amount_coin) <= 0"
                 return False
 
-            self.logger.info(f"Подготовка {side.upper()} ордера: {amount_coin} {symbol} (Маржа: {amount_usdt}$, Lev: {LEVERAGE}x)")
+            self.logger.info(f"Подготовка {side.upper()} ордера: {amount_coin} {symbol} (Lev: {LEVERAGE}x)")
+
+            # Save plan to use it for protective orders
+            self.last_trade_plan = trade_plan
+            self.last_engine_context = engine_context
 
             order = self.exchange.create_market_order(symbol, side, amount_coin)
             position_opened = True
@@ -100,7 +131,22 @@ class TraderExecutor:
                 
             self.logger.info(f"Ордер исполнен. Запрошенная цена: {current_price}, Фактическая цена (Fill): {actual_price}")
             
-            sl_price, tp_price = self.calculate_sl_tp(side, actual_price, atr_value, dynamic_tp=dynamic_tp)
+            if STRUCTURE_RISK_ENABLED and setup_type and engine_context:
+                direction_str = 'LONG' if side == 'buy' else 'SHORT'
+                # Recalculate based on actual fill price
+                recalc_plan = self.risk_engine.build_trade_plan(direction_str, actual_price, setup_type, engine_context, atr_value)
+                if recalc_plan.get('valid'):
+                    sl_price = recalc_plan['stop_loss']
+                    tp_price = recalc_plan['take_profit']
+                else:
+                    # If actual fill makes RR invalid, we might want to just close it immediately or use fallback!
+                    # For safety, let's use the stop loss from the planned entry if it was valid, or recalculate anyway.
+                    # Wait, SL is structural, so the price level stays the same!
+                    sl_price = self.last_trade_plan['stop_loss']
+                    tp_price = self.last_trade_plan['take_profit']
+            else:
+                sl_price, tp_price = self.calculate_sl_tp(side, actual_price, atr_value, dynamic_tp=dynamic_tp)
+                
             sl_price = float(self.exchange.price_to_precision(symbol, sl_price))
             tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
             
@@ -111,12 +157,21 @@ class TraderExecutor:
                 sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'reduceOnly': True})
                 sl_order_id = sl_ord['id']
             except Exception as e:
-                self.logger.error(f"Не удалось выставить SL: {e}. Экстренное закрытие позиции!")
+                self.logger.error(f"Сбой установки SL: {e}. Пробуем повторить...")
+                import time
+                time.sleep(1)
                 try:
-                    self.exchange.create_market_order(symbol, close_side, amount_coin, params={'reduceOnly': True})
-                except Exception as close_e:
-                    self.logger.critical(f"КРИТИЧЕСКАЯ ОШИБКА: Не удалось закрыть позицию после сбоя SL: {close_e}")
-                return False
+                    sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'reduceOnly': True})
+                    sl_order_id = sl_ord['id']
+                except Exception as e2:
+                    self.logger.error(f"Повторный сбой SL: {e2}. Экстренное закрытие позиции!")
+                    close_amount = actual_position_amount if actual_position_amount else amount_coin
+                    try:
+                        self.exchange.create_market_order(symbol, close_side, close_amount, params={'reduceOnly': True})
+                    except Exception as close_e:
+                        self.logger.critical(f"КРИТИЧЕСКАЯ ОШИБКА: Не удалось закрыть позицию после сбоя SL: {close_e}")
+                    self.last_error = f"Сбой установки SL и сбой экстренного закрытия: {close_e}"
+                    return False
                 
             tp_order_id = None
 
@@ -250,9 +305,52 @@ class TraderExecutor:
 
                 
                 if self.positions[symbol]['sl_order_id'] is None:
-
-                
-                    self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} найдена, но защитный SL не установлен или не найден! ПОТРЕБУЕТСЯ РУЧНОЕ ВМЕШАТЕЛЬСТВО!")
+                    self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} найдена, но защитный SL не найден. Пробуем восстановить...")
+                    
+                    # 1. Get real pos and entry
+                    entry_price = self.positions[symbol]['entry']
+                    side = self.positions[symbol]['side']
+                    direction_str = 'LONG' if side in ['buy', 'long'] else 'SHORT'
+                    
+                    # 2. Get context
+                    ctx = self.positions[symbol].get('engine_context')
+                    setup_type = self.positions[symbol].get('setup_type')
+                    atr_value = self.positions[symbol].get('atr_value', 0.0)
+                    amount_coin = self.positions[symbol]['amount']
+                    close_side = 'sell' if direction_str == 'LONG' else 'buy'
+                    
+                    sl_price, tp_price = 0, 0
+                    if STRUCTURE_RISK_ENABLED and ctx and setup_type:
+                        plan = self.risk_engine.build_trade_plan(direction_str, entry_price, setup_type, ctx, atr_value)
+                        if plan.get('valid'):
+                            sl_price = plan['stop_loss']
+                            tp_price = plan['take_profit']
+                            self.logger.info(f"Восстановлен structural SL/TP: {sl_price} / {tp_price}")
+                        else:
+                            sl_price, tp_price = self.calculate_sl_tp(side, entry_price, atr_value)
+                            self.logger.warning(f"Structural SL/TP invalid. Fallback emergency: {sl_price} / {tp_price}")
+                    else:
+                        sl_price, tp_price = self.calculate_sl_tp(side, entry_price, atr_value)
+                        self.logger.warning(f"Нет контекста структуры. Fallback emergency SL/TP: {sl_price} / {tp_price}")
+                        
+                    sl_price = float(self.exchange.price_to_precision(symbol, sl_price))
+                    tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
+                    
+                    try:
+                        sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'reduceOnly': True})
+                        self.positions[symbol]['sl_order_id'] = sl_ord['id']
+                        self.positions[symbol]['sl_price'] = sl_price
+                    except Exception as e:
+                        self.logger.critical(f"Не удалось восстановить SL: {e}")
+                        
+                    try:
+                        tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, amount_coin, params={'stopPrice': tp_price, 'reduceOnly': True})
+                        self.positions[symbol]['tp_order_id'] = tp_ord['id']
+                        self.positions[symbol]['tp_price'] = tp_price
+                    except Exception as e:
+                        self.logger.critical(f"Не удалось восстановить TP: {e}")
+                        
+                    self._save_live_state()
 
                 
                 # Трейлинг стоп логика
@@ -278,8 +376,10 @@ class TraderExecutor:
                             if current_price <= calculated_sl:
                                 close_market_now = True
                             elif calculated_sl > pos_data['sl_price']:
-                                new_sl_price = calculated_sl
-                                needs_trailing_update = True
+                                formatted_sl = float(self.exchange.price_to_precision(symbol, calculated_sl))
+                                if formatted_sl > pos_data['sl_price']:
+                                    new_sl_price = formatted_sl
+                                    needs_trailing_update = True
                     else: # short
                         if current_price < pos_data['min_price']:
                             pos_data['min_price'] = current_price
@@ -289,8 +389,10 @@ class TraderExecutor:
                             if current_price >= calculated_sl:
                                 close_market_now = True
                             elif calculated_sl < pos_data['sl_price'] or pos_data['sl_price'] == 0:
-                                new_sl_price = calculated_sl
-                                needs_trailing_update = True
+                                formatted_sl = float(self.exchange.price_to_precision(symbol, calculated_sl))
+                                if pos_data['sl_price'] == 0 or formatted_sl < pos_data['sl_price']:
+                                    new_sl_price = formatted_sl
+                                    needs_trailing_update = True
                                 
                     if close_market_now:
                         self.logger.info(f"⚡ Трейлинг-стоп сработал для {symbol}! Текущая цена {current_price} пробила стоп {calculated_sl:.4f}. Закрытие по маркету...")
@@ -366,7 +468,16 @@ class TraderExecutor:
                     if recent_closes:
                         last_close = recent_closes[-1]
                         exit_price = last_close['price']
-                        pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes[-5:])
+                        last_order_id = last_close.get('order')
+                        
+                        # Sum PnL only for the trades that belong to the exact same closing order
+                        if last_order_id:
+                            pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if t.get('order') == last_order_id)
+                        else:
+                            # Fallback: sum trades within 10 seconds of the last close
+                            last_ts = last_close['timestamp']
+                            pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if abs(t['timestamp'] - last_ts) < 10000)
+                            
                         if pnl == 0:
                             pnl = float(last_close.get('info', {}).get('realizedPnl', 0))
                         

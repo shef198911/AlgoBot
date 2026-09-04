@@ -299,6 +299,7 @@ class MarketStructureEngine:
         sweep_low_arr = np.zeros(n)
         setup_score_arr = np.zeros(n)
         engine_setup_arr = ["None"] * n
+        engine_context_arr = [None] * n
         engine_signal_arr = np.zeros(n)
 
         # Активные зоны и свинги
@@ -585,6 +586,7 @@ class MarketStructureEngine:
                             )
                             setup_score_arr[i] = score
                             engine_setup_arr[i] = "BREAKOUT_RETEST"
+                            engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, 'broken_level': setup.get('broken_level')}
                             if score >= MIN_SETUP_SCORE:
                                 engine_signal_arr[i] = 1.0
                             consumed_setup_ids.add(setup['id'])
@@ -616,6 +618,7 @@ class MarketStructureEngine:
                             )
                             setup_score_arr[i] = score
                             engine_setup_arr[i] = "BREAKDOWN_RETEST"
+                            engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, 'broken_level': setup.get('broken_level')}
                             if score >= MIN_SETUP_SCORE:
                                 engine_signal_arr[i] = -1.0
                             consumed_setup_ids.add(setup['id'])
@@ -652,6 +655,7 @@ class MarketStructureEngine:
                         )
                         setup_score_arr[i] = score
                         engine_setup_arr[i] = "TREND_PULLBACK"
+                        engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, }
                         if score >= MIN_SETUP_SCORE:
                             engine_signal_arr[i] = 1.0
 
@@ -677,6 +681,7 @@ class MarketStructureEngine:
                         )
                         setup_score_arr[i] = score
                         engine_setup_arr[i] = "TREND_PULLBACK_DOWN"
+                        engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, }
                         if score >= MIN_SETUP_SCORE:
                             engine_signal_arr[i] = -1.0
 
@@ -707,6 +712,7 @@ class MarketStructureEngine:
                                 )
                                 setup_score_arr[i] = score
                                 engine_setup_arr[i] = "RANGE_BOUNCE"
+                                engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, }
                                 if score >= MIN_SETUP_SCORE:
                                     engine_signal_arr[i] = 1.0
 
@@ -729,6 +735,7 @@ class MarketStructureEngine:
                                 )
                                 setup_score_arr[i] = score
                                 engine_setup_arr[i] = "RANGE_REJECTION"
+                                engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, }
                                 if score >= MIN_SETUP_SCORE:
                                     engine_signal_arr[i] = -1.0
 
@@ -752,6 +759,7 @@ class MarketStructureEngine:
                         )
                         setup_score_arr[i] = score
                         engine_setup_arr[i] = "LIQUIDITY_SWEEP_LONG"
+                        engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, }
                         if score >= MIN_SETUP_SCORE:
                             engine_signal_arr[i] = 1.0
 
@@ -773,6 +781,7 @@ class MarketStructureEngine:
                         )
                         setup_score_arr[i] = score
                         engine_setup_arr[i] = "LIQUIDITY_SWEEP_SHORT"
+                        engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, }
                         if score >= MIN_SETUP_SCORE:
                             engine_signal_arr[i] = -1.0
 
@@ -796,6 +805,7 @@ class MarketStructureEngine:
                         )
                         setup_score_arr[i] = score
                         engine_setup_arr[i] = "SUPPORT_BOUNCE"
+                        engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, }
                         if score >= MIN_SETUP_SCORE:
                             engine_signal_arr[i] = 1.0
 
@@ -817,6 +827,7 @@ class MarketStructureEngine:
                         )
                         setup_score_arr[i] = score
                         engine_setup_arr[i] = "RESISTANCE_REJECTION"
+                        engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, }
                         if score >= MIN_SETUP_SCORE:
                             engine_signal_arr[i] = -1.0
 
@@ -841,6 +852,7 @@ class MarketStructureEngine:
         data['LIQUIDITY_SWEEP_LOW'] = sweep_low_arr
         data['SETUP_SCORE'] = setup_score_arr
         data['engine_setup'] = engine_setup_arr
+        data['engine_context'] = engine_context_arr
         data['engine_signal'] = engine_signal_arr
 
         return data

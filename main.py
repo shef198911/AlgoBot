@@ -68,6 +68,8 @@ def main():
                 ta_signal = current_state['ta_signal']
                 current_price = current_state['close']
                 atr_value = current_state.get('ATRr', 0)
+                setup_type = current_state.get('engine_setup')
+                engine_context = current_state.get('engine_context')
 
                 if ta_signal != 0:
                     last_processed_candle[symbol] = current_time
@@ -108,7 +110,7 @@ def main():
                                 logger.error(f"Ошибка получения баланса для реинвестирования: {e}")
                         
                         # Шаг 5: Исполнение
-                        success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp)
+                        success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp, setup_type=setup_type, engine_context=engine_context)
                         if success:
                             pos = executor.positions.get(symbol, {})
                             sl = pos.get('sl_price', 0)
