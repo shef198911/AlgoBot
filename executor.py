@@ -29,12 +29,6 @@ class TraderExecutor:
             self.last_error = err
             return False
             
-        current_used_capital = len(self.positions) * amount_usdt
-        if current_used_capital + amount_usdt > MAX_CAPITAL_USDT:
-            err = f"Достигнут лимит капитала! Выделено {MAX_CAPITAL_USDT} USDT, уже используется {current_used_capital} USDT. Пропускаем {symbol}."
-            self.logger.warning(err)
-            self.last_error = err
-            return False
 
         position_opened = False
         actual_position_amount = None
@@ -191,15 +185,17 @@ class TraderExecutor:
                 self.logger.warning(f"Не удалось поставить TP: {e}. Позиция оставлена только со SL.")
                 
             self.positions[symbol] = {
-                "side": side,
-                "entry": actual_price,
-                "amount": amount_coin,
-                "max_price": actual_price,
-                "min_price": actual_price,
-                "sl_order_id": sl_order_id,
-                "tp_order_id": tp_order_id,
-                "sl_price": sl_price,
-                "tp_price": tp_price
+                'side': side,
+                'entry_price': actual_position_amount['average'] if actual_position_amount and 'average' in actual_position_amount else current_price,
+                'amount': amount_coin,
+                'margin_required': margin_required,
+                'sl_id': sl_order['id'] if sl_order else None,
+                'tp_id': tp_order['id'] if tp_order else None,
+                'sl_price': sl_price,
+                'tp_price': tp_price,
+                'setup_type': setup_type,
+                'engine_context': engine_context,
+                'atr_value': atr_value
             }
             
             self._save_live_state()

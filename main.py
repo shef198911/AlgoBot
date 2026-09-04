@@ -75,11 +75,7 @@ def main():
                     last_processed_candle[symbol] = current_time
                     side_str = 'buy' if ta_signal == 1 else 'sell'
                     
-                    # Проверка глобального тренда
-                    trend = fetcher.check_global_trend(symbol)
-                    if (ta_signal == 1 and trend == -1) or (ta_signal == -1 and trend == 1):
-                        logger.debug(f"[{symbol}] Сигнал {side_str.upper()} отменен: идет против глобального тренда.")
-                        continue
+
                         
                     setup_name = current_state.get('ta_setup', 'Сигнал')
                     dist_res = current_state.get('DIST_RES_PCT', 0) * 100
