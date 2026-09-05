@@ -88,7 +88,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
                         logger.warning(f"[{symbol}] Позиция уже открыта или статус неизвестен (double-check). Пропуск исполнения.")
                         success = False
                     else:
-                        success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp, setup_type=setup_type, engine_context=engine_context)
+                        success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp, setup_type=setup_type, engine_context=engine_context, ai_confidence=ai_confidence, probs_str=probs_str, ta_setup=setup_name)
                 
                 if success:
                     pos = executor.positions.get(symbol, {})

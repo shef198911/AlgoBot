@@ -26,7 +26,7 @@ class TraderExecutor:
         except:
             pass
 
-    def execute_trade(self, symbol, side, risk_usdt, current_price, atr_value=0.0, dynamic_tp=None, setup_type=None, engine_context=None):
+    def execute_trade(self, symbol, side, risk_usdt, current_price, atr_value=0.0, dynamic_tp=None, setup_type=None, engine_context=None, ai_confidence=0.0, probs_str="", ta_setup=""):
         if self.check_position_status(symbol):
             err = f"Попытка открыть сделку по {symbol}, но мы уже в позиции!"
             self.logger.warning(err)
@@ -152,6 +152,9 @@ class TraderExecutor:
                     'tp_price': float(tp_price),
                     'setup_type': setup_type,
                     'engine_context': engine_context,
+                    'ta_setup': ta_setup,
+                    'ai_confidence': ai_confidence,
+                    'probs_str': probs_str,
                     'timestamp': time.time() * 1000,
                     'atr_value': atr_value,
                     'risk_usdt': risk_usdt,
@@ -196,6 +199,9 @@ class TraderExecutor:
                 'tp_price': float(tp_price),
                 'setup_type': setup_type,
                 'engine_context': engine_context,
+                'ta_setup': ta_setup,
+                'ai_confidence': ai_confidence,
+                'probs_str': probs_str,
                 'timestamp': time.time() * 1000,
                 'atr_value': atr_value,
                 'risk_usdt': risk_usdt,
@@ -517,6 +523,32 @@ class TraderExecutor:
                             direction = 1 if pos_data['side'] in ['buy', 'long'] else -1
                             pnl = (exit_price - entry) * amt * direction
                         self.logger.warning(f"Binance API lag: Could not find recent close trade for {symbol}. Local approximate PnL: {pnl:.2f}")
+
+                    # Detailed Logging
+                    try:
+                        import datetime
+                        report = {
+                            "time_opened": datetime.datetime.fromtimestamp(pos_data.get('timestamp', time.time()*1000)/1000).strftime('%Y-%m-%d %H:%M:%S'),
+                            "time_closed": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            "symbol": symbol,
+                            "side": pos_data['side'].upper(),
+                            "entry_price": pos_data['entry'],
+                            "exit_price": exit_price,
+                            "pnl_usdt": pnl,
+                            "layer1_ta_setup": pos_data.get('ta_setup', 'UNKNOWN'),
+                            "layer1_engine_setup": pos_data.get('setup_type', 'UNKNOWN'),
+                            "layer1_engine_context": pos_data.get('engine_context', {}),
+                            "layer2_ai_confidence": pos_data.get('ai_confidence', 0.0),
+                            "layer2_probs": pos_data.get('probs_str', ""),
+                            "max_price": pos_data.get('max_price', pos_data['entry']),
+                            "min_price": pos_data.get('min_price', pos_data['entry']),
+                            "sl_price": pos_data.get('sl_price', 0),
+                            "tp_price": pos_data.get('tp_price', 0)
+                        }
+                        with open("detailed_trades.jsonl", "a", encoding="utf-8") as df_file:
+                            df_file.write(json.dumps(report, ensure_ascii=False) + "\n")
+                    except Exception as e:
+                        self.logger.error(f"Ошибка сохранения детального отчета: {e}")
 
                     analytics_manager.record_trade(symbol, pos_data['side'], pos_data['entry'], exit_price, pnl)
                     
