@@ -12,7 +12,7 @@ class TAStrategy:
     def __init__(self):
         self.logger = logger.getChild("TAStrategy")
 
-    def generate_features_and_signals(self, df, htf_trend=None):
+    def generate_features_and_signals(self, df, htf_trend=None, symbol="UNKNOWN"):
         if df is None or df.empty:
             return None
 
@@ -70,7 +70,7 @@ class TAStrategy:
             # 3. Индикаторное подтверждение сетапов от MarketStructureEngine
 
             results = []
-            symbol_str = getattr(self, "current_symbol", "UNKNOWN")
+            symbol_str = symbol
             total_rows = len(data)
             for i, (_, row) in enumerate(data.iterrows()):
                 effective_trend = htf_trend if htf_trend is not None else row.get("HTF_TREND", row.get("GLOBAL_TREND", "RANGE"))

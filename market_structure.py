@@ -315,7 +315,7 @@ class MarketStructureEngine:
 
         # P0. 3: Множественная машина состояний Breakout-Retest
         active_breakout_setups: List[Dict] = []
-        consumed_setup_ids = set()
+        consumed_setup_ids = {} # Имитация OrderedSet (Python 3.7+)
 
         k = self.swing_k
 
@@ -589,7 +589,9 @@ class MarketStructureEngine:
                             engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, 'broken_level': setup.get('broken_level')}
                             if score >= MIN_SETUP_SCORE:
                                 engine_signal_arr[i] = 1.0
-                            consumed_setup_ids.add(setup['id'])
+                            consumed_setup_ids[setup['id']] = True
+                            if len(consumed_setup_ids) > 1000:
+                                consumed_setup_ids.pop(next(iter(consumed_setup_ids)))
                             setup['state'] = 'CONSUMED'
                             continue  # Отработан
 
@@ -621,7 +623,9 @@ class MarketStructureEngine:
                             engine_context_arr[i] = {'swing_low': confirmed_swing_lows[-1][1] if confirmed_swing_lows else None, 'swing_high': confirmed_swing_highs[-1][1] if confirmed_swing_highs else None, 'nearest_support': nearest_sup_arr[i], 'nearest_resistance': nearest_res_arr[i], 'atr': curr_atr, 'sweep_low': curr_l if sweep_low_arr[i] == 1.0 else None, 'sweep_high': curr_h if sweep_high_arr[i] == 1.0 else None, 'rejection_low': curr_l if (bull_rej[i] or bull_eng[i]) else None, 'rejection_high': curr_h if (bear_rej[i] or bear_eng[i]) else None, 'broken_level': setup.get('broken_level')}
                             if score >= MIN_SETUP_SCORE:
                                 engine_signal_arr[i] = -1.0
-                            consumed_setup_ids.add(setup['id'])
+                            consumed_setup_ids[setup['id']] = True
+                            if len(consumed_setup_ids) > 1000:
+                                consumed_setup_ids.pop(next(iter(consumed_setup_ids)))
                             setup['state'] = 'CONSUMED'
                             continue
 

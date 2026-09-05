@@ -15,6 +15,8 @@ class TraderExecutor:
         self.risk_engine = StructureRiskEngine()
         self.exchange = exchange_client
         self.positions = {} # Стейт-менеджмент позиций {symbol: {"side": side, "entry": price, "max_profit": 0, "sl_order_id": id, "amount_coin": amount}}
+        import threading
+        self.state_lock = threading.Lock()
         self.last_error = ""
         
         try:
@@ -92,115 +94,66 @@ class TraderExecutor:
             self.last_trade_plan = trade_plan
             self.last_engine_context = engine_context
 
-            order = self.exchange.create_market_order(symbol, side, amount_coin)
-            position_opened = True
-            self.logger.info(f"✅ Ордер исполнен! ID: {order['id']}")
-            
-            actual_price = order.get('average') or order.get('price')
-            actual_position_amount = float(order.get('filled') or order.get('amount') or amount_coin)
-
-            
-            if not actual_price or pd.isna(actual_price) or actual_price == 0:
-
-            
-                try:
-
-            
-                    time.sleep(1)
-
-            
-                    pos = self.exchange.fetch_positions([symbol])
-
-            
-                    if pos and len(pos) > 0 and pos[0].get('entryPrice'):
-                        actual_price = float(pos[0]['entryPrice'])
-                        actual_position_amount = abs(float(pos[0].get('info', {}).get('positionAmt', pos[0].get('contracts', amount_coin))))
-
-            
-                except:
-
-            
-                    pass
-
-            
-            if not actual_price or pd.isna(actual_price) or actual_price == 0:
-
-            
-                self.logger.critical(f"КРИТИЧЕСКИ: Невозможно определить цену исполнения (Fill Price). Экстренное закрытие {symbol}!")
-                close_side = 'sell' if side == 'buy' else 'buy'
-                close_amount = actual_position_amount if actual_position_amount else amount_coin
-                try:
-                    self.exchange.create_market_order(symbol, close_side, close_amount, params={'reduceOnly': True})
-
-            
-                except:
-
-            
-                    pass
-
-            
-                return False
-                
-            self.logger.info(f"Ордер исполнен. Запрошенная цена: {current_price}, Фактическая цена (Fill): {actual_price}")
-            
+            # Рассчитываем SL/TP до отправки запроса
             if STRUCTURE_RISK_ENABLED and setup_type and engine_context:
                 direction_str = 'LONG' if side == 'buy' else 'SHORT'
-                # Recalculate based on actual fill price
-                recalc_plan = self.risk_engine.build_trade_plan(direction_str, actual_price, setup_type, engine_context, atr_value)
+                recalc_plan = self.risk_engine.build_trade_plan(direction_str, current_price, setup_type, engine_context, atr_value)
                 if recalc_plan.get('valid'):
                     sl_price = recalc_plan['stop_loss']
                     tp_price = recalc_plan['take_profit']
                 else:
-                    # If actual fill makes RR invalid, we might want to just close it immediately or use fallback!
-                    # For safety, let's use the stop loss from the planned entry if it was valid, or recalculate anyway.
-                    # Wait, SL is structural, so the price level stays the same!
                     sl_price = self.last_trade_plan['stop_loss']
                     tp_price = self.last_trade_plan['take_profit']
             else:
-                sl_price, tp_price = self.calculate_sl_tp(side, actual_price, atr_value, dynamic_tp=dynamic_tp)
-                
+                sl_price, tp_price = self.calculate_sl_tp(side, current_price, atr_value, dynamic_tp=dynamic_tp)
+
             sl_price = float(self.exchange.price_to_precision(symbol, sl_price))
             tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
-            
             close_side = 'sell' if side == 'buy' else 'buy'
+
+            requests = [
+                {
+                    'symbol': symbol,
+                    'type': 'market',
+                    'side': side,
+                    'amount': amount_coin
+                },
+                {
+                    'symbol': symbol,
+                    'type': 'STOP_MARKET',
+                    'side': close_side,
+                    'amount': amount_coin,
+                    'params': {'stopPrice': sl_price, 'reduceOnly': True}
+                },
+                {
+                    'symbol': symbol,
+                    'type': 'TAKE_PROFIT_MARKET',
+                    'side': close_side,
+                    'amount': amount_coin,
+                    'params': {'stopPrice': tp_price, 'reduceOnly': True}
+                }
+            ]
+
+            self.logger.info(f"Выставляем атомарный batch-ордер (Market + SL + TP)...")
+            results = self.exchange.create_orders(requests)
             
-            sl_order_id = None
-            try:
-                sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'reduceOnly': True})
-                sl_order_id = sl_ord['id']
-            except Exception as e:
-                self.logger.error(f"Ошибка установки SL: {e}. Пробуем повторно...")
-                time.sleep(1)
-                try:
-                    sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'reduceOnly': True})
-                    sl_order_id = sl_ord['id']
-                except Exception as e2:
-                    self.logger.error(f"Повторный сбой SL: {e2}. Экстренное закрытие позиции!")
-                    close_amount = actual_position_amount if actual_position_amount else amount_coin
-                    try:
-                        self.exchange.create_market_order(symbol, close_side, close_amount, params={'reduceOnly': True})
-                        self.last_error = f"Сбой установки SL. Позиция была принудительно закрыта."
-                    except Exception as close_e:
-                        self.logger.critical(f"КРИТИЧЕСКАЯ ОШИБКА: Не удалось закрыть позицию после сбоя SL: {close_e}")
-                        self.last_error = f"Сбой установки SL и сбой закрытия позиции: {close_e}"
-                    return False
-                
-            tp_order_id = None
+            order = results[0]
+            sl_ord = results[1] if len(results) > 1 else None
+            tp_ord = results[2] if len(results) > 2 else None
 
-                
-            try:
+            position_opened = True
+            self.logger.info(f"✅ Базовый ордер исполнен! ID: {order['id']}")
 
+            sl_order_id = sl_ord['id'] if sl_ord and 'id' in sl_ord else None
+            if not sl_order_id:
+                self.logger.warning(f"⚠️ Не удалось получить ID для SL. Проверьте статус на бирже!")
                 
-                tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, amount_coin, params={'stopPrice': tp_price, 'reduceOnly': True})
+            tp_order_id = tp_ord['id'] if tp_ord and 'id' in tp_ord else None
+            if not tp_order_id:
+                self.logger.warning(f"⚠️ Не удалось получить ID для TP.")
 
-                
-                tp_order_id = tp_ord['id']
-
-                
-            except Exception as e:
-
-                
-                self.logger.warning(f"Не удалось поставить TP: {e}. Позиция оставлена только со SL.")
+            actual_price = order.get('average') or order.get('price') or current_price
+            actual_position_amount = float(order.get('filled') or order.get('amount') or amount_coin)
                 
             entry_p = actual_price if actual_price else current_price
             self.positions[symbol] = {
@@ -247,11 +200,12 @@ class TraderExecutor:
             return False
 
     def _save_live_state(self):
-        try:
-            with open("live_state.json", "w", encoding="utf-8") as f:
-                json.dump(self.positions, f, indent=4)
-        except Exception as e:
-            self.logger.error(f"Ошибка сохранения live_state: {e}")
+        with self.state_lock:
+            try:
+                with open("live_state.json", "w", encoding="utf-8") as f:
+                    json.dump(self.positions, f, indent=4)
+            except Exception as e:
+                self.logger.error(f"Ошибка сохранения live_state: {e}")
 
     def calculate_sl_tp(self, side, entry_price, atr_value, dynamic_tp=None):
         if USE_ATR and atr_value > 0:
