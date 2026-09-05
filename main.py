@@ -13,8 +13,9 @@ execute_lock = threading.Lock()
 
 def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance):
     try:
-        if executor.check_position_status(symbol):
-            logger.debug(f"[{symbol}] Бот находится в открытой сделке. Ожидание закрытия...")
+        status = executor.check_position_status(symbol)
+        if status is True or status == "UNKNOWN":
+            logger.debug(f"[{symbol}] Бот находится в открытой сделке или статус неизвестен. Ожидание...")
             return
 
         # Шаг 1: Получаем рыночные данные
@@ -53,7 +54,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             logger.info(f"[{symbol}] [Бот 1 - Теханализ] Сигнал {side_str.upper()}! Сетап: {setup_name} ({sr_info}). Цена: {current_price}")
 
             # Шаг 4: Бот №2 (ИИ) фильтрует сигнал.
-            is_approved, ai_confidence, dynamic_tp = ml_bot.evaluate_signal(current_state)
+            is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
             
             if is_approved:
                 tp_text = f"{dynamic_tp*100:.2f}% (Динамический)" if dynamic_tp else "Стандартный"
@@ -70,7 +71,14 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
                 
                 # Шаг 5: Исполнение
                 with execute_lock:
-                    success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp, setup_type=setup_type, engine_context=engine_context)
+                    # Double-check locking
+                    double_check_status = executor.check_position_status(symbol)
+                    if double_check_status is True or double_check_status == "UNKNOWN":
+                        logger.warning(f"[{symbol}] Позиция уже открыта или статус неизвестен (double-check). Пропуск исполнения.")
+                        success = False
+                    else:
+                        success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp, setup_type=setup_type, engine_context=engine_context)
+                
                 if success:
                     pos = executor.positions.get(symbol, {})
                     sl = pos.get('sl_price', 0)
@@ -85,7 +93,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
                     logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
                     tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
             else:
-                breakdown = f" ({ml_bot.last_probs_str})" if getattr(ml_bot, 'last_probs_str', None) else ""
+                breakdown = f" ({probs_str})" if probs_str else ""
                 logger.warning(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОТКЛОНЕН. Уверенность: {ai_confidence:.2f}{breakdown}. Порог: {ML_PROBABILITY_THRESHOLD}")
     except Exception as e:
         logger.error(f"[{symbol}] Ошибка в потоке обработки: {e}")
@@ -108,14 +116,20 @@ def main():
     last_processed_candle = {sym: None for sym in SYMBOLS}
     logger.info("Бот переходит в цикл мониторинга (Многопоточный режим)...")
 
+    # Создаем единый пул потоков
+    max_workers = min(5, len(SYMBOLS))
+    thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+    logger.info(f"Пул потоков создан с max_workers={max_workers}")
+
     while True:
         try:
             # Проверка флага мягкого завершения
             if os.path.exists("stop.flag"):
-                active_positions = [sym for sym in SYMBOLS if executor.check_position_status(sym)]
+                active_positions = [sym for sym in SYMBOLS if executor.check_position_status(sym) is True]
                 if not active_positions:
                     logger.info("✅ Все сделки закрыты. Бот плавно завершает работу.")
                     os.remove("stop.flag")
+                    thread_executor.shutdown(wait=False)
                     break
                 else:
                     logger.info(f"⏳ Режим завершения. Ожидание закрытия сделок: {active_positions}")
@@ -133,20 +147,19 @@ def main():
                     logger.error(f"Ошибка получения баланса для реинвестирования: {e}")
 
             # Многопоточная обработка пар
-            with concurrent.futures.ThreadPoolExecutor(max_workers=len(SYMBOLS)) as thread_executor:
-                futures = {
-                    thread_executor.submit(
-                        process_symbol, 
-                        sym, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance
-                    ): sym for sym in SYMBOLS
-                }
-                
-                for future in concurrent.futures.as_completed(futures):
-                    sym = futures[future]
-                    try:
-                        future.result()
-                    except Exception as e:
-                        logger.error(f"Необработанная ошибка в потоке для {sym}: {e}")
+            futures = {
+                thread_executor.submit(
+                    process_symbol, 
+                    sym, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance
+                ): sym for sym in SYMBOLS
+            }
+            
+            for future in concurrent.futures.as_completed(futures):
+                sym = futures[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Необработанная ошибка в потоке для {sym}: {e}")
             
             # Ждем перед следующим опросом 
             time.sleep(15)

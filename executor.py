@@ -111,49 +111,49 @@ class TraderExecutor:
             tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
             close_side = 'sell' if side == 'buy' else 'buy'
 
-            requests = [
-                {
-                    'symbol': symbol,
-                    'type': 'market',
-                    'side': side,
-                    'amount': amount_coin
-                },
-                {
-                    'symbol': symbol,
-                    'type': 'STOP_MARKET',
-                    'side': close_side,
-                    'amount': amount_coin,
-                    'params': {'stopPrice': sl_price, 'reduceOnly': True}
-                },
-                {
-                    'symbol': symbol,
-                    'type': 'TAKE_PROFIT_MARKET',
-                    'side': close_side,
-                    'amount': amount_coin,
-                    'params': {'stopPrice': tp_price, 'reduceOnly': True}
-                }
-            ]
-
-            self.logger.info(f"Выставляем атомарный batch-ордер (Market + SL + TP)...")
-            results = self.exchange.create_orders(requests)
+            self.logger.info(f"Выставляем рыночный ордер: {amount_coin} {symbol}...")
+            order = self.exchange.create_market_order(symbol, side, amount_coin)
             
-            order = results[0]
-            sl_ord = results[1] if len(results) > 1 else None
-            tp_ord = results[2] if len(results) > 2 else None
-
             position_opened = True
             self.logger.info(f"✅ Базовый ордер исполнен! ID: {order['id']}")
 
-            sl_order_id = sl_ord['id'] if sl_ord and 'id' in sl_ord else None
-            if not sl_order_id:
-                self.logger.warning(f"⚠️ Не удалось получить ID для SL. Проверьте статус на бирже!")
-                
-            tp_order_id = tp_ord['id'] if tp_ord and 'id' in tp_ord else None
-            if not tp_order_id:
-                self.logger.warning(f"⚠️ Не удалось получить ID для TP.")
-
             actual_price = order.get('average') or order.get('price') or current_price
-            actual_position_amount = float(order.get('filled') or order.get('amount') or amount_coin)
+            actual_position_amount = float(order.get('filled') or order.get('amount') or 0.0)
+            
+            if actual_position_amount <= 0:
+                try:
+                    positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
+                    for pos in positions:
+                        pos_sym = pos.get('symbol', '')
+                        if pos_sym.split(':')[0] == symbol.split(':')[0]:
+                            actual_position_amount = abs(float(pos.get('info', {}).get('positionAmt', pos.get('contracts', 0))))
+                            break
+                except Exception as pos_e:
+                    self.logger.error(f"Не удалось получить фактический объем позиции для {symbol}: {pos_e}")
+            
+            if actual_position_amount <= 0:
+                actual_position_amount = amount_coin
+                self.logger.warning(f"Используем расчетный объем {actual_position_amount}, так как не удалось получить фактический.")
+
+            sl_order_id = None
+            tp_order_id = None
+            
+            try:
+                sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, actual_position_amount, params={'stopPrice': sl_price, 'reduceOnly': True})
+                sl_order_id = sl_ord['id']
+            except Exception as sl_e:
+                self.logger.error(f"⚠️ Ошибка при выставлении SL для {symbol}: {sl_e}")
+
+            try:
+                tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, actual_position_amount, params={'stopPrice': tp_price, 'reduceOnly': True})
+                tp_order_id = tp_ord['id']
+            except Exception as tp_e:
+                self.logger.error(f"⚠️ Ошибка при выставлении TP для {symbol}: {tp_e}")
+
+            if not sl_order_id:
+                self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} открыта без SL. Выполняем экстренное закрытие.")
+                self.emergency_close(symbol)
+                return False
                 
             entry_p = actual_price if actual_price else current_price
             self.positions[symbol] = {
@@ -191,12 +191,7 @@ class TraderExecutor:
                     pass
             if position_opened and not sl_order_id:
                 self.logger.critical(f"КРИТИЧЕСКИ: Ошибка ПОСЛЕ открытия позиции {symbol}. Экстренное закрытие!")
-                close_side = 'sell' if side == 'buy' else 'buy'
-                close_amount = actual_position_amount if actual_position_amount else amount_coin
-                try:
-                    self.exchange.create_market_order(symbol, close_side, close_amount, params={'reduceOnly': True})
-                except Exception as close_e:
-                    self.logger.critical(f"НЕ УДАЛОСЬ ЗАКРЫТЬ ПОЗИЦИЮ: {close_e}")
+                self.emergency_close(symbol)
             return False
 
     def _save_live_state(self):

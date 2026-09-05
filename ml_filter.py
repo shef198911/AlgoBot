@@ -31,11 +31,10 @@ class MLFilter:
             
     def evaluate_signal(self, current_features):
         """
-        Возвращает: (is_approved: bool, ai_confidence: float, predicted_tp_pct: float)
         """
         if not self.is_trained or self.ensemble is None:
             self.logger.warning("ML модель не загружена. Fail-closed активирован: сигнал отклонен.")
-            return False, 0.0, None 
+            return False, 0.0, None, ""
             
         try:
             if hasattr(self.ensemble, 'feature_names_in_'):
@@ -47,8 +46,7 @@ class MLFilter:
             
             # Ансамбль: усредненная вероятность от 3-х моделей
             prob = float(self.ensemble.predict_proba(X)[0][1])
-            self.last_probs = {}
-            self.last_probs_str = ""
+            probs_str = ""
             
             try:
                 probs_parts = []
@@ -57,10 +55,9 @@ class MLFilter:
                     est_cols = getattr(est, 'feature_names_in_', feature_cols)
                     X_est = pd.DataFrame([current_features[est_cols]])
                     p = float(est.predict_proba(X_est)[0][1])
-                    self.last_probs[name.upper()] = p
                     probs_parts.append(f"{name.upper()}={p:.2f}")
-                self.last_probs_str = ", ".join(probs_parts)
-                self.logger.info(f"Оценка моделей: {self.last_probs_str}")
+                probs_str = ", ".join(probs_parts)
+                self.logger.info(f"Оценка моделей: {probs_str}")
             except Exception as e:
                 self.logger.debug(f"Не удалось получить разбивку по моделям: {e}")
                 
@@ -77,8 +74,8 @@ class MLFilter:
                 # Ограничиваем неадекватные значения
                 predicted_tp_pct = max(0.005, min(TAKE_PROFIT_PCT * 2.0, predicted_tp_pct))
                 
-            return is_approved, prob, predicted_tp_pct
+            return is_approved, prob, predicted_tp_pct, probs_str
             
         except Exception as e:
             self.logger.error(f"Ошибка при оценке сигнала: {e}")
-            return False, 0.0, None
+            return False, 0.0, None, ""
