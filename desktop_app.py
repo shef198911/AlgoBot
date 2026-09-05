@@ -125,6 +125,9 @@ class AlgoBotApp(ctk.CTk):
         
         self.btn_refresh_pos = ctk.CTkButton(self.right_sidebar, text="🔄 Обновить", command=self.refresh_positions, fg_color="#3498DB", hover_color="#2980B9")
         self.btn_refresh_pos.pack(pady=10, padx=10, fill="x")
+        
+        self.btn_download_pos = ctk.CTkButton(self.right_sidebar, text="📥 Скачать отчёт", command=self._download_detailed_trades, fg_color="#8E44AD", hover_color="#732D91")
+        self.btn_download_pos.pack(pady=(0, 10), padx=10, fill="x")
 
         # --- ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (Логи и Управление) ---
         self.main_frame = ctk.CTkFrame(self)
@@ -176,6 +179,9 @@ class AlgoBotApp(ctk.CTk):
         
         self.btn_clear_logs = ctk.CTkButton(self.console_bar, text="🧹 Очистить", width=90, height=26, fg_color="#555", hover_color="#333", command=self._clear_console)
         self.btn_clear_logs.pack(side="left", padx=5)
+        
+        self.btn_download_console = ctk.CTkButton(self.console_bar, text="📥 Скачать", width=90, height=26, command=self._download_console)
+        self.btn_download_console.pack(side="left", padx=5)
         
         self.console = ctk.CTkTextbox(self.console_tab, font=("Consolas", 12))
         self.console.pack(fill="both", expand=True)
@@ -715,6 +721,49 @@ class AlgoBotApp(ctk.CTk):
                 self.after(1500, lambda: self.btn_copy_hist.configure(text="📋 Скопировать историю", fg_color=["#3B8ED0", "#1F6AA5"]))
         except Exception:
             pass
+
+    def _download_console(self):
+        try:
+            import tkinter.filedialog as fd
+            text = self.console.get("1.0", "end-1c")
+            if not text.strip():
+                self.log_message("[ОШИБКА] Консоль пуста, нечего скачивать.")
+                return
+            file_path = fd.asksaveasfilename(
+                defaultextension=".txt", 
+                filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
+                title="Сохранить лог консоли"
+            )
+            if file_path:
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(text)
+                self.btn_download_console.configure(text="✅ Успешно!", fg_color="green")
+                self.after(1500, lambda: self.btn_download_console.configure(text="📥 Скачать", fg_color=["#3B8ED0", "#1F6AA5"]))
+        except Exception as e:
+            self.log_message(f"[ОШИБКА] Не удалось сохранить консоль: {e}")
+
+    def _download_detailed_trades(self):
+        try:
+            import tkinter.filedialog as fd
+            import shutil
+            
+            if not os.path.exists("detailed_trades.jsonl"):
+                self.log_message("[ОШИБКА] Файл detailed_trades.jsonl еще не создан (не было закрытых позиций).")
+                return
+            
+            file_path = fd.asksaveasfilename(
+                defaultextension=".jsonl",
+                filetypes=[("JSON Lines", "*.jsonl"), ("Text Files", "*.txt"), ("All Files", "*.*")],
+                title="Сохранить подробный отчёт по сделкам",
+                initialfile="detailed_trades_report.jsonl"
+            )
+            
+            if file_path:
+                shutil.copy("detailed_trades.jsonl", file_path)
+                self.btn_download_pos.configure(text="✅ Успешно!", fg_color="green")
+                self.after(1500, lambda: self.btn_download_pos.configure(text="📥 Скачать отчёт", fg_color="#8E44AD"))
+        except Exception as e:
+            self.log_message(f"[ОШИБКА] Не удалось скачать отчёт: {e}")
 
     def log_message(self, message):
         self.console.insert("end", message + "\n")
