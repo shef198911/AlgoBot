@@ -214,20 +214,27 @@ def train_ai():
     # Final Metrics on Test Set (OOS)
     probs_test = ensemble.predict_proba(X_test)[:, 1]
     final_preds = (probs_test >= best_thresh).astype(int)
-    
+    from sklearn.metrics import confusion_matrix, brier_score_loss
     acc = accuracy_score(y_test, final_preds)
     prec = precision_score(y_test, final_preds, zero_division=0)
     rec = recall_score(y_test, final_preds, zero_division=0)
+    f1 = f1_score(y_test, final_preds, zero_division=0)
     pr_auc = average_precision_score(y_test, probs_test)
+    brier = brier_score_loss(y_test, probs_test)
+    cm = confusion_matrix(y_test, final_preds)
     
-    logger.info("="*50)
-    logger.info("--- ML Metrics (OOS Test Set with Embargo) ---")
-    logger.info(f"Best Threshold (from Val Set): {best_thresh:.2f}")
-    logger.info(f"Accuracy: {acc * 100:.2f}%")
-    logger.info(f"Precision: {prec * 100:.2f}%")
-    logger.info(f"Recall: {rec * 100:.2f}%")
-    logger.info(f"F1 Score: {f1_score(y_test, final_preds, zero_division=0):.4f}")
-    logger.info(f"PR-AUC: {pr_auc:.4f}")
+    logger.info("="*55)
+    logger.info("--- ML METRICS (OOS TEST SET WITH EMBARGO) ---")
+    logger.info(f"Train samples: {len(X_train)} (Pos: {pos_count}, Neg: {neg_count})")
+    logger.info(f"Validation samples: {len(X_val)} | OOS Test samples: {len(X_test)}")
+    logger.info(f"Best Threshold (Selected on Val Set): {best_thresh:.2f}")
+    logger.info(f"Accuracy:        {acc * 100:.2f}%")
+    logger.info(f"Precision:       {prec * 100:.2f}%")
+    logger.info(f"Recall:          {rec * 100:.2f}%")
+    logger.info(f"F1 Score:        {f1:.4f}")
+    logger.info(f"PR-AUC:          {pr_auc:.4f}")
+    logger.info(f"Brier Score:     {brier:.4f} (Calibration)")
+    logger.info(f"Confusion Matrix (TN, FP / FN, TP): \n{cm}")
     
     # LONG / SHORT Specific Metrics
     for direction, sig_val in [("LONG", 1.0), ("SHORT", -1.0)]:
@@ -241,9 +248,11 @@ def train_ai():
             d_prec = precision_score(y_t_dir, preds_dir, zero_division=0)
             d_rec = recall_score(y_t_dir, preds_dir, zero_division=0)
             d_f1 = f1_score(y_t_dir, preds_dir, zero_division=0)
+            d_pos = sum(y_t_dir == 1)
+            d_neg = sum(y_t_dir == 0)
             
-            logger.info(f"[{direction}] Acc: {d_acc*100:.1f}%, Prec: {d_prec*100:.1f}%, Rec: {d_rec*100:.1f}%, F1: {d_f1:.4f}")
-    logger.info("="*50)
+            logger.info(f"[{direction}] Samples: {len(y_t_dir)} (Pos: {d_pos}, Neg: {d_neg}) | Acc: {d_acc*100:.1f}%, Prec: {d_prec*100:.1f}%, Rec: {d_rec*100:.1f}%, F1: {d_f1:.4f}")
+    logger.info("="*55)
 
     # Расчет вероятностей ИИ для всех сделок выборки
     combined_trades['ml_prob'] = ensemble.predict_proba(combined_trades[feature_cols])[:, 1]
@@ -286,7 +295,7 @@ def train_ai():
     }
     
     joblib.dump(model_data, MODEL_FILE)
-    logger.info(f"🧠 ИИ V3 (Ансамбль + TP Регрессор) успешно сохранен в файл: {MODEL_FILE}")
+    logger.info(f"[V] ИИ V3 (Ансамбль + TP Регрессор) успешно сохранен в файл: {MODEL_FILE}")
 
 if __name__ == "__main__":
     train_ai()

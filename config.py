@@ -11,7 +11,7 @@ API_SECRET = os.getenv("BINANCE_TESTNET_API_SECRET", "")
 USE_TESTNET = True  # КРИТИЧНО: Всегда True во время тестов!
 
 TRADING_MODE = "NORMAL" # Режимы: "NORMAL" или "SCALPING"
-RISK_MODE = "BALANCED" # Режимы: "CONSERVATIVE", "BALANCED", "AGGRESSIVE"
+RISK_MODE = "AGGRESSIVE" # Режимы: "CONSERVATIVE", "BALANCED", "AGGRESSIVE"
 AI_ENABLED = True
 SYMBOLS = [
     "BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "ADA/USDT", "XRP/USDT", "DOGE/USDT", "LINK/USDT", "AVAX/USDT",
@@ -61,7 +61,7 @@ RANGE_MAX_EXPANSION_ATR = 3.5      # Максимальная высота ко�
 RANGE_MIN_TOUCHES = 2              # Мин. касаний верхней/нижней границ для подтверждения коридора
 PULLBACK_MAX_DEPTH_ATR = 2.0       # Макс. глубина отката по тренду в ATR
 
-DATASET_TARGET_BARS = 1500         # Базовый объем истории для обучения (с возможностью расширения)
+DATASET_TARGET_BARS = 10000        # Базовый объем истории для обучения (увеличен до 10к свечей)
 
 # --- Про-Фичи (Pro-Trader) ---
 USE_COMPOUNDING = False    # Использовать % от депозита вместо фикс. маржи
@@ -71,11 +71,11 @@ USE_TRAILING = True        # Использовать плавающий сто�
 TRAILING_ACTIVATION_PCT = 0.008  # Активация трейлинга при +0.8% профита
 TRAILING_DISTANCE_PCT = 0.004    # Дистанция трейлинга 0.4%
 
-STOP_LOSS_PCT = 0.02  
-TAKE_PROFIT_PCT = 0.04 
+STOP_LOSS_PCT = 0.03  
+TAKE_PROFIT_PCT = 0.06 
 
 # --- Настройки ИИ (Meta-Labeling) ---
-ML_PROBABILITY_THRESHOLD = 0.55  # Минимальная уверенность ИИ для входа в сделку (от 0 до 1)
+ML_PROBABILITY_THRESHOLD = 0.50  # Минимальная уверенность ИИ для входа в сделку (от 0 до 1)
 MODEL_FILE = f"model_{TRADING_MODE.lower()}.pkl" # Разные файлы для разных режимов
 
 # --- Настройки Telegram ---
@@ -84,13 +84,32 @@ TG_CHAT_ID = os.getenv("TG_CHAT_ID", "") # Будет заполнено поз�
 
 # --- Настройки логирования ---
 LOG_FILE = "bot.log"
+import sys
+
+class SafeStreamHandler(logging.StreamHandler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            try:
+                stream.write(msg + self.terminator)
+                self.flush()
+            except UnicodeEncodeError:
+                safe_msg = msg.encode(stream.encoding or 'utf-8', errors='replace').decode(stream.encoding or 'utf-8')
+                stream.write(safe_msg + self.terminator)
+                self.flush()
+        except Exception:
+            self.handleError(record)
+
+file_handler = logging.FileHandler(LOG_FILE, encoding='utf-8')
+file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+
+stream_handler = SafeStreamHandler(sys.stdout)
+stream_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_FILE, encoding='utf-8'),
-        logging.StreamHandler()
-    ]
+    handlers=[file_handler, stream_handler]
 )
 logger = logging.getLogger("AlgoBot")
  

@@ -1,4 +1,4 @@
-﻿import ccxt
+import ccxt
 import pandas as pd
 from strategy_ta import TAStrategy, entry_stats
 from ml_filter import MLFilter
@@ -19,8 +19,7 @@ ml_rejected = 0
 
 for idx, row in df.iterrows():
     if row.get('ta_signal', 0) != 0:
-        # Check ML
-        is_approved, conf, tp = ml_bot.evaluate_signal(row)
+        is_approved, conf, tp, probs = ml_bot.evaluate_signal(row)
         if is_approved:
             ml_approved += 1
         else:
@@ -35,4 +34,3 @@ print("\n--- REJECTION REASONS ---")
 for k, v in entry_stats.items():
     if k.startswith("REJECT_") and v > 0:
         print(f"{k}: {v}")
-

@@ -92,7 +92,8 @@ class TAStrategy:
         for i, (_, row) in enumerate(df.iterrows()):
             effective_trend = row.get("HTF_TREND", "RANGE")
             is_last = (i == total_rows - 1)
-            is_valid, reject_reason = EntryGate.validate(row, effective_trend, symbol, do_log=is_last, is_live=is_live)
+            is_live_candle = (is_last and is_live)
+            is_valid, reject_reason = EntryGate.validate(row, effective_trend, symbol, do_log=is_live_candle, is_live=is_live_candle)
             if is_valid:
                 results.append((row.get('engine_signal', 0), row.get('engine_setup', 'None'), row.get('engine_context', None)))
             else:

@@ -3,7 +3,7 @@ import pandas as pd
 import threading
 from config import MIN_SR_DISTANCE_PCT, MIN_SETUP_SCORE, logger
 
-# Global entry statistics
+# Global entry statistics & Real-time Signal Funnel
 last_logged_reject = {}
 stats_lock = threading.Lock()
 
@@ -23,6 +23,34 @@ entry_stats = {
     'REJECT_RSI_EXTREME': 0
 }
 
+entry_funnel = {
+    'SIGNAL_FOUND': 0,
+    'GLOBAL_TREND_PASS': 0,
+    'GLOBAL_TREND_FAIL': 0,
+    'STRUCTURE_PASS': 0,
+    'STRUCTURE_FAIL': 0,
+    'CONFIRMATION_PASS': 0,
+    'CONFIRMATION_FAIL': 0,
+    'ENTRY_GATE_PASS': 0,
+    'ENTRY_GATE_FAIL': 0,
+    'ML_PASS': 0,
+    'ML_FAIL': 0,
+    'RISK_PASS': 0,
+    'RISK_FAIL': 0,
+    'ORDER_ATTEMPT': 0,
+    'ORDER_SUCCESS': 0,
+    'ORDER_FAIL': 0
+}
+
+def record_funnel_event(event_name: str, count: int = 1):
+    with stats_lock:
+        if event_name in entry_funnel:
+            entry_funnel[event_name] += count
+
+def get_funnel_summary() -> dict:
+    with stats_lock:
+        return dict(entry_funnel)
+
 class EntryGate:
     @staticmethod
     def validate(row, global_trend, symbol="UNKNOWN", do_log=True, is_live=False):
@@ -37,6 +65,7 @@ class EntryGate:
         if is_live:
             with stats_lock:
                 entry_stats['TA_CANDIDATES'] += 1
+                entry_funnel['SIGNAL_FOUND'] += 1
             
         ctx = row.get('engine_context', {})
         if not isinstance(ctx, dict):
@@ -176,17 +205,32 @@ class EntryGate:
         if not mandatory_pass:
             if is_live:
                 with stats_lock:
-                    if "BROKEN_LEVEL" in reject_reason: entry_stats['REJECT_NO_BROKEN_LEVEL'] += 1
-                    elif "CONFIRMATION" in reject_reason: entry_stats['REJECT_NO_CONFIRMATION'] += 1
-                    elif "STRUCTURE" in reject_reason: entry_stats['REJECT_BAD_STRUCTURE'] += 1
-                    elif "GLOBAL_TREND" in reject_reason: entry_stats['REJECT_BAD_GLOBAL_TREND'] += 1
-                    elif "CANDLE" in reject_reason: entry_stats['REJECT_CANDLE_CLOSE'] += 1
-                    elif "SWEEP" in reject_reason: entry_stats['REJECT_NO_REAL_SWEEP'] += 1
-                    elif "SCORE" in reject_reason: entry_stats['REJECT_LOW_SCORE'] += 1
-                    elif "CLOSE" in reject_reason: entry_stats['REJECT_SR_TOO_CLOSE'] += 1
-                    elif "RSI" in reject_reason: entry_stats['REJECT_RSI_EXTREME'] += 1
-                    elif "NOT_IN_RANGE" in reject_reason: entry_stats['REJECT_NOT_IN_RANGE'] += 1
-                    else: entry_stats['REJECT_UNKNOWN_SETUP'] += 1
+                    entry_funnel['ENTRY_GATE_FAIL'] += 1
+                    if "GLOBAL_TREND" in reject_reason:
+                        entry_funnel['GLOBAL_TREND_FAIL'] += 1
+                        entry_stats['REJECT_BAD_GLOBAL_TREND'] += 1
+                    elif "STRUCTURE" in reject_reason:
+                        entry_funnel['STRUCTURE_FAIL'] += 1
+                        entry_stats['REJECT_BAD_STRUCTURE'] += 1
+                    elif "CONFIRMATION" in reject_reason:
+                        entry_funnel['CONFIRMATION_FAIL'] += 1
+                        entry_stats['REJECT_NO_CONFIRMATION'] += 1
+                    elif "BROKEN_LEVEL" in reject_reason:
+                        entry_stats['REJECT_NO_BROKEN_LEVEL'] += 1
+                    elif "CANDLE" in reject_reason:
+                        entry_stats['REJECT_CANDLE_CLOSE'] += 1
+                    elif "SWEEP" in reject_reason:
+                        entry_stats['REJECT_NO_REAL_SWEEP'] += 1
+                    elif "SCORE" in reject_reason:
+                        entry_stats['REJECT_LOW_SCORE'] += 1
+                    elif "CLOSE" in reject_reason:
+                        entry_stats['REJECT_SR_TOO_CLOSE'] += 1
+                    elif "RSI" in reject_reason:
+                        entry_stats['REJECT_RSI_EXTREME'] += 1
+                    elif "NOT_IN_RANGE" in reject_reason:
+                        entry_stats['REJECT_NOT_IN_RANGE'] += 1
+                    else:
+                        entry_stats['REJECT_UNKNOWN_SETUP'] += 1
             
             direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
             
@@ -197,6 +241,10 @@ class EntryGate:
         if is_live:
             with stats_lock:
                 entry_stats['ENTRY_GATE_PASS'] += 1
+                entry_funnel['GLOBAL_TREND_PASS'] += 1
+                entry_funnel['STRUCTURE_PASS'] += 1
+                entry_funnel['CONFIRMATION_PASS'] += 1
+                entry_funnel['ENTRY_GATE_PASS'] += 1
         direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
         # Успешный проход 1-го слоя будет залогирован в main.py
         return True, "PASS"

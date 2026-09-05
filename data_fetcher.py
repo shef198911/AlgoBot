@@ -1,12 +1,14 @@
 import ccxt
 import pandas as pd
 import time
+import threading
 from config import logger
 
 class DataFetcher:
     def __init__(self, use_testnet=False, api_key="", api_secret=""):
         self.logger = logger.getChild("DataFetcher")
         self.use_testnet = use_testnet
+        self.lock = threading.RLock()
         
         # Настройка клиента ccxt
         self.exchange = ccxt.binanceusdm({
@@ -31,7 +33,8 @@ class DataFetcher:
                     self.exchange.urls['api'][k] = self.exchange.urls['api'][k].replace('fapi.binance.com', 'testnet.binancefuture.com')
                     
         try:
-            self.exchange.load_time_difference()
+            with self.lock:
+                self.exchange.load_time_difference()
         except Exception as e:
             self.logger.warning(f"Предупреждение синхронизации времени: {e}")
             
@@ -41,7 +44,8 @@ class DataFetcher:
         """Пробуем загрузить рынки с повторами при ошибках сети"""
         for attempt in range(max_retries):
             try:
-                self.exchange.load_markets()
+                with self.lock:
+                    self.exchange.load_markets()
                 if not getattr(DataFetcher, '_markets_logged', False):
                     self.logger.info("Рынки успешно загружены.")
                     DataFetcher._markets_logged = True
@@ -56,20 +60,22 @@ class DataFetcher:
     def get_historical_klines(self, symbol, timeframe, limit=100):
         """Получает историю свечей и возвращает pandas DataFrame"""
         try:
-            if limit <= 1500:
-                ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
-            else:
-                timeframe_ms = self.exchange.parse_timeframe(timeframe) * 1000
-                now = self.exchange.milliseconds()
-                since = int(now - (limit * timeframe_ms))
-                all_ohlcv = []
-                while since < now:
-                    batch = self.exchange.fetch_ohlcv(symbol, timeframe, since=since, limit=1500)
-                    if not batch:
-                        break
-                    all_ohlcv.extend(batch)
-                    since = batch[-1][0] + timeframe_ms
-                ohlcv = all_ohlcv[-limit:]
+            with self.lock:
+                if limit <= 1500:
+                    ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+                else:
+                    timeframe_ms = self.exchange.parse_timeframe(timeframe) * 1000
+                    now = self.exchange.milliseconds()
+                    since = int(now - (limit * timeframe_ms))
+                    all_ohlcv = []
+                    while since < now:
+                        batch = self.exchange.fetch_ohlcv(symbol, timeframe, since=since, limit=1500)
+                        if not batch:
+                            break
+                        all_ohlcv.extend(batch)
+                        since = batch[-1][0] + timeframe_ms
+                        time.sleep(0.3) # Защита от лимитов Binance при больших батчах
+                    ohlcv = all_ohlcv[-limit:]
             
             # Конвертируем в DataFrame
             df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])

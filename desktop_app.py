@@ -1,541 +1,87 @@
-import customtkinter as ctk
+import asyncio
+import flet as ft
 import subprocess
 import threading
 import os
 import re
+import json
 import time
-
-ctk.set_appearance_mode("Dark")
-ctk.set_default_color_theme("blue")
 
 CONFIG_FILE = "config.py"
 HISTORY_FILE = "trade_history.txt"
 
-class AlgoBotApp(ctk.CTk):
-    def __init__(self):
-        super().__init__()
-        self.title("AlgoBot AI - Панель управления (Фьючерсы)")
-        self.geometry("1000x700")
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+# ──────────────────────────────────────────────────
+#  Цвета и константы дизайн-системы
+# ──────────────────────────────────────────────────
+C_BG           = "#0D1117"
+C_SURFACE      = "#161B22"
+C_SURFACE2     = "#1C2333"
+C_BORDER       = "#30363D"
+C_TEXT         = "#E6EDF3"
+C_TEXT_DIM     = "#8B949E"
+C_GREEN        = "#3FB950"
+C_RED          = "#F85149"
+C_ORANGE       = "#D29922"
+C_BLUE         = "#58A6FF"
+C_PURPLE       = "#BC8CFF"
+C_CYAN         = "#39D2C0"
+
+class AlgoBotApp:
+    def __init__(self, page: ft.Page):
+        self.page = page
+        self.page.title = "AlgoBot AI"
+        self.page.theme_mode = ft.ThemeMode.DARK
+        self.page.bgcolor = C_BG
+        self.page.theme = ft.Theme(
+            color_scheme_seed=ft.Colors.INDIGO,
+            visual_density=ft.VisualDensity.COMPACT,
+        )
+        self.page.padding = 0
+        self.page.window.width = 1300
+        self.page.window.height = 880
+        self.page.fonts = {"Inter": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"}
         
         self.bot_process = None
-        self.read_config()
-        
-        # --- ЛЕВАЯ ПАНЕЛЬ (Настройки со скроллом) ---
-        self.sidebar = ctk.CTkScrollableFrame(self, width=290, corner_radius=0)
-        self.sidebar.pack(side="left", fill="y")
-        
-        self.logo = ctk.CTkLabel(self.sidebar, text="⚙️ НАСТРОЙКИ БОТА", font=ctk.CTkFont(size=18, weight="bold"))
-        self.logo.pack(pady=20, padx=20)
-        
-        # Режим торговли
-        self.lbl_mode = ctk.CTkLabel(self.sidebar, text="Тип торговли:")
-        self.lbl_mode.pack(pady=(5, 0), padx=20, anchor="w")
-        self.seg_mode = ctk.CTkSegmentedButton(self.sidebar, values=["NORMAL", "SCALPING"], command=self.change_mode)
-        self.seg_mode.pack(pady=5, padx=20, fill="x")
-        self.seg_mode.set(self.current_mode)
-        
-        # Режим Риска
-        self.lbl_risk = ctk.CTkLabel(self.sidebar, text="Риск-менеджмент:")
-        self.lbl_risk.pack(pady=(15, 0), padx=20, anchor="w")
-        self.seg_risk = ctk.CTkSegmentedButton(self.sidebar, values=["ЭКОНОМ", "БАЛАНС", "АГРЕССИВ"], command=self.change_risk)
-        self.seg_risk.pack(pady=5, padx=20, fill="x")
-        
-        # Устанавливаем текущий риск
-        risk_map = {"CONSERVATIVE": "ЭКОНОМ", "BALANCED": "БАЛАНС", "AGGRESSIVE": "АГРЕССИВ"}
-        self.seg_risk.set(risk_map.get(self.current_risk, "БАЛАНС"))
-        
-        # Объем сделки
-        self.lbl_trade_size = ctk.CTkLabel(self.sidebar, text="Маржа на 1 сделку ($):")
-        self.lbl_trade_size.pack(pady=(15, 0), padx=20, anchor="w")
-        self.entry_trade_size = ctk.CTkEntry(self.sidebar)
-        self.entry_trade_size.insert(0, self.current_trade_size)
-        self.entry_trade_size.pack(pady=5, padx=20, fill="x")
-        
-        # Плечо
-        self.lbl_lev = ctk.CTkLabel(self.sidebar, text="Кредитное плечо (x):")
-        self.lbl_lev.pack(pady=(5, 0), padx=20, anchor="w")
-        self.entry_lev = ctk.CTkEntry(self.sidebar)
-        self.entry_lev.insert(0, self.current_lev)
-        self.entry_lev.pack(pady=5, padx=20, fill="x")
-        
-        # Общий лимит
-        self.lbl_cap = ctk.CTkLabel(self.sidebar, text="Торговый лимит ($):")
-        self.lbl_cap.pack(pady=(5, 0), padx=20, anchor="w")
-        self.entry_cap = ctk.CTkEntry(self.sidebar)
-        self.entry_cap.insert(0, self.current_cap)
-        self.entry_cap.pack(pady=5, padx=20, fill="x")
-        
-        # Стоп-лосс
-        self.lbl_sl = ctk.CTkLabel(self.sidebar, text="Stop-Loss (%):")
-        self.lbl_sl.pack(pady=(10, 0), padx=20, anchor="w")
-        self.entry_sl = ctk.CTkEntry(self.sidebar)
-        self.entry_sl.insert(0, str(float(self.current_sl) * 100))
-        self.entry_sl.pack(pady=5, padx=20, fill="x")
-        
-        # Тейк-профит
-        self.lbl_tp = ctk.CTkLabel(self.sidebar, text="Take-Profit (%):")
-        self.lbl_tp.pack(pady=(5, 0), padx=20, anchor="w")
-        self.entry_tp = ctk.CTkEntry(self.sidebar)
-        self.entry_tp.insert(0, str(float(self.current_tp) * 100))
-        self.entry_tp.pack(pady=5, padx=20, fill="x")
-        
-        # --- PRO FEATURES ---
-        self.pro_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
-        self.pro_frame.pack(fill="x", padx=20, pady=10)
-        
-        self.chk_atr = ctk.CTkCheckBox(self.pro_frame, text="Динамический TP/SL (ATR)")
-        self.chk_atr.pack(anchor="w", pady=2)
-        if self.current_use_atr: self.chk_atr.select()
-        
-        self.chk_trail = ctk.CTkCheckBox(self.pro_frame, text="Трейлинг-Стоп")
-        self.chk_trail.pack(anchor="w", pady=2)
-        if self.current_use_trail: self.chk_trail.select()
-        
-        self.chk_comp = ctk.CTkCheckBox(self.pro_frame, text="Авто-Реинвестирование")
-        self.chk_comp.pack(anchor="w", pady=2)
-        if self.current_use_comp: self.chk_comp.select()
-        
-        self.lbl_comp_pct = ctk.CTkLabel(self.pro_frame, text="% от баланса:")
-        self.lbl_comp_pct.pack(anchor="w")
-        self.entry_comp_pct = ctk.CTkEntry(self.pro_frame)
-        self.entry_comp_pct.insert(0, str(self.current_comp_pct))
-        self.entry_comp_pct.pack(fill="x", pady=2)
-        
-        # Кнопка сохранения
-        self.btn_save = ctk.CTkButton(self.sidebar, text="💾 Сохранить", command=self.save_config, fg_color="gray")
-        self.btn_save.pack(pady=5, padx=20, fill="x")
-        
-        # Кнопка обучения ИИ
-        self.btn_train = ctk.CTkButton(self.sidebar, text="🧠 Переобучить ИИ", command=self.train_ai, fg_color="#E67E22", hover_color="#D35400")
-        self.btn_train.pack(pady=(5, 25), padx=20, fill="x")
-        
-        # --- ПРАВАЯ ПАНЕЛЬ (Позиции) ---
-        self.right_sidebar = ctk.CTkFrame(self, width=250)
-        self.right_sidebar.pack(side="right", fill="y", padx=(0, 10), pady=10)
-        
-        lbl_pos_title = ctk.CTkLabel(self.right_sidebar, text="Текущие Позиции", font=ctk.CTkFont(size=16, weight="bold"))
-        lbl_pos_title.pack(pady=10)
-        
-        self.pos_scroll = ctk.CTkScrollableFrame(self.right_sidebar, width=230)
-        self.pos_scroll.pack(fill="both", expand=True, padx=5, pady=5)
-        self.pos_cards = {}
-        self.lbl_no_pos = None
+        self._cached_tickers = None
         self._is_refreshing_positions = False
+        self._log_counter = 0
         
-        self.btn_refresh_pos = ctk.CTkButton(self.right_sidebar, text="🔄 Обновить", command=self.refresh_positions, fg_color="#3498DB", hover_color="#2980B9")
-        self.btn_refresh_pos.pack(pady=10, padx=10, fill="x")
+        # Log store for filtering and deduplication
+        self.raw_logs = []  # list of dicts: {category, icon, icon_bg, symbol, text, color, timestamp, count, raw}
+        self.active_log_filter = "ALL"
         
-        self.btn_download_pos = ctk.CTkButton(self.right_sidebar, text="📥 Скачать отчёт", command=self._download_detailed_trades, fg_color="#8E44AD", hover_color="#732D91")
-        self.btn_download_pos.pack(pady=(0, 10), padx=10, fill="x")
-
-        # --- ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (Логи и Управление) ---
-        self.main_frame = ctk.CTkFrame(self)
-        self.main_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        self.read_config()
+        self.build_ui()
         
-        # Баланс
-        self.top_bar = ctk.CTkFrame(self.main_frame)
-        self.top_bar.pack(fill="x", pady=5, padx=5)
-        
-        self.lbl_balance = ctk.CTkLabel(self.top_bar, text="Баланс Фьючерсов: Загрузка...", font=ctk.CTkFont(size=16, weight="bold"))
-        self.lbl_balance.pack(side="left", padx=10)
-        
-        self.btn_refresh_bal = ctk.CTkButton(self.top_bar, text="🔄 Обновить", width=100, command=self.fetch_balance)
-        self.btn_refresh_bal.pack(side="right", padx=10, pady=5)
-        
-        # Статус
-        self.lbl_status = ctk.CTkLabel(self.main_frame, text="СТАТУС: ОСТАНОВЛЕН", font=ctk.CTkFont(size=18, weight="bold"), text_color="red")
-        self.lbl_status.pack(pady=10)
-        
-        # Кнопки управления
-        self.controls = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.controls.pack(fill="x", pady=5)
-        
-        self.btn_start = ctk.CTkButton(self.controls, text="▶️ ЗАПУСТИТЬ ТОРГОВЛЮ", command=self.start_bot, fg_color="green", hover_color="darkgreen")
-        self.btn_start.pack(side="left", expand=True, padx=5)
-        
-        self.btn_graceful = ctk.CTkButton(self.controls, text="🏁 Доработать и выключить", command=self.graceful_stop, fg_color="#F39C12", hover_color="#D68910", state="disabled")
-        self.btn_graceful.pack(side="left", expand=True, padx=5)
-        
-        self.btn_stop = ctk.CTkButton(self.controls, text="⏹ ЭКСТРЕННЫЙ СТОП", command=self.stop_bot, fg_color="red", hover_color="darkred", state="disabled")
-        self.btn_stop.pack(side="left", expand=True, padx=5)
-        
-        # Вкладки (Логи / История / Аналитика)
-        self.tabs = ctk.CTkTabview(self.main_frame)
-        self.tabs.pack(fill="both", expand=True, padx=5, pady=5)
-        self.tabs.add("Консоль (Live)")
-        self.tabs.add("История Сделок")
-        self.tabs.add("📊 Аналитика (PRO)")
-        
-        # Консоль
-        self.console_tab = self.tabs.tab("Консоль (Live)")
-        
-        # Панель быстрых действий консоли
-        self.console_bar = ctk.CTkFrame(self.console_tab, fg_color="transparent")
-        self.console_bar.pack(fill="x", pady=(0, 5))
-        
-        self.btn_copy_logs = ctk.CTkButton(self.console_bar, text="📋 Скопировать всё", width=140, height=26, command=self._copy_all_console)
-        self.btn_copy_logs.pack(side="left", padx=5)
-        
-        self.btn_clear_logs = ctk.CTkButton(self.console_bar, text="🧹 Очистить", width=90, height=26, fg_color="#555", hover_color="#333", command=self._clear_console)
-        self.btn_clear_logs.pack(side="left", padx=5)
-        
-        self.btn_download_console = ctk.CTkButton(self.console_bar, text="📥 Скачать", width=90, height=26, command=self._download_console)
-        self.btn_download_console.pack(side="left", padx=5)
-        
-        self.console = ctk.CTkTextbox(self.console_tab, font=("Consolas", 12))
-        self.console.pack(fill="both", expand=True)
-        
-        # Контекстное меню ПКМ для консоли
-        import tkinter as tk
-        self.console_menu = tk.Menu(self, tearoff=0)
-        self.console_menu.add_command(label="Копировать (Ctrl+C)", command=self._copy_console_selection)
-        self.console_menu.add_command(label="Выделить всё (Ctrl+A)", command=self._select_all_console)
-        self.console_menu.add_separator()
-        self.console_menu.add_command(label="Очистить", command=self._clear_console)
-        
-        def _show_console_menu(event):
-            try:
-                self.console_menu.tk_popup(event.x_root, event.y_root)
-            finally:
-                self.console_menu.grab_release()
-        self.console.bind("<Button-3>", _show_console_menu)
-        
-        # Блокируем клавиатурный ввод в консоль, но оставляем выделение и горячие клавиши
-        def _block_typing(event):
-            # Ctrl+C, Ctrl+A, Ctrl+Insert
-            if (event.state & 4) and event.keysym.lower() in ['c', 'a', 'insert']:
-                return None
-            # Навигация
-            if event.keysym in ['Up', 'Down', 'Left', 'Right', 'Prior', 'Next', 'Home', 'End']:
-                return None
-            return "break"
-        self.console.bind("<Key>", _block_typing)
-        
-        # История
-        self.history_tab = self.tabs.tab("История Сделок")
-        self.history_bar = ctk.CTkFrame(self.history_tab, fg_color="transparent")
-        self.history_bar.pack(fill="x", pady=(0, 5))
-        self.btn_copy_hist = ctk.CTkButton(self.history_bar, text="📋 Скопировать историю", width=160, height=26, command=self._copy_all_history)
-        self.btn_copy_hist.pack(side="left", padx=5)
-        
-        self.history_txt = ctk.CTkTextbox(self.history_tab, font=("Consolas", 12))
-        self.history_txt.pack(fill="both", expand=True)
-        self.history_txt.bind("<Key>", _block_typing)
-        
-        # Аналитика
-        self.analytics_frame = ctk.CTkFrame(self.tabs.tab("📊 Аналитика (PRO)"), fg_color="transparent")
-        self.analytics_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        
-        self.lbl_stat_trades = ctk.CTkLabel(self.analytics_frame, text="Всего сделок: 0", font=("Consolas", 16))
-        self.lbl_stat_trades.pack(anchor="w", pady=5)
-        
-        self.lbl_stat_winrate = ctk.CTkLabel(self.analytics_frame, text="Win-Rate: 0%", font=("Consolas", 16, "bold"))
-        self.lbl_stat_winrate.pack(anchor="w", pady=5)
-        
-        self.lbl_stat_pnl = ctk.CTkLabel(self.analytics_frame, text="Общий PnL: $0.00", font=("Consolas", 16, "bold"))
-        self.lbl_stat_pnl.pack(anchor="w", pady=5)
-        
-        self.btn_refresh_analytics = ctk.CTkButton(self.analytics_frame, text="🔄 Обновить статистику", command=self.update_analytics)
-        self.btn_refresh_analytics.pack(anchor="w", pady=15)
-        
-        self.update_history_loop()
-        self.update_analytics()
         threading.Thread(target=self.fetch_balance, daemon=True).start()
-        
-        # Запускаем авто-обновление позиций
-        self.update_positions_loop()
+        self.page.run_task(self.update_positions_loop)
+        self.page.run_task(self.update_history_loop)
+        self.update_analytics()
 
-    def update_positions_loop(self):
-        self.refresh_positions()
-        # Обновляем позиции каждые 5 секунд (в фоне, плавно и без моргания)
-        self.after(5000, self.update_positions_loop)
-
-    def fetch_balance(self):
-        try:
-            self.lbl_balance.configure(text="Баланс Фьючерсов: Загрузка...")
-            from data_fetcher import DataFetcher
-            from config import API_KEY, API_SECRET, USE_TESTNET
-            fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
-            balance = fetcher.exchange.fetch_balance()
-            usdt = balance['total'].get('USDT', 0.0)
-            self.lbl_balance.configure(text=f"Баланс Фьючерсов: {usdt:.2f} USDT")
-        except Exception as e:
-            self.lbl_balance.configure(text="Ошибка загрузки баланса")
-            self.log_message(f"[ОШИБКА АПИ] Не удалось получить баланс: {e}")
-
-    def refresh_positions(self):
-        # Фоновое обновление без удаления карточек и без моргания
-        if getattr(self, '_is_refreshing_positions', False):
-            return
-        self._is_refreshing_positions = True
-        threading.Thread(target=self._fetch_and_render_positions, daemon=True).start()
-
-    def _fetch_and_render_positions(self):
-        try:
-            if hasattr(self, '_cached_tickers'):
-                del self._cached_tickers
-            from data_fetcher import DataFetcher
-            from config import API_KEY, API_SECRET, USE_TESTNET
-            fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
-            positions = fetcher.exchange.fetch_positions()
-            
-            import json, os
-            st = {}
-            if os.path.exists('live_state.json'):
-                try:
-                    with open('live_state.json', 'r', encoding='utf-8') as f:
-                        st = json.load(f)
-                except:
-                    pass
-            
-            active_pos = []
-            for pos in positions:
-                contracts = float(pos.get('contracts', 0))
-                if contracts > 0:
-                    symbol = pos['symbol']
-                    clean_sym = symbol.split(':')[0]
-                    side = pos['side'].upper()
-                    entry = float(pos['entryPrice'])
-                    unrealized_pnl = float(pos.get('unrealizedPnl', 0))
-                    
-                    leverage = float(pos.get('info', {}).get('leverage', 1))
-                    margin = (entry * contracts) / leverage if leverage else (entry * contracts)
-                    roe_pct = (unrealized_pnl / margin) * 100 if margin > 0 else 0.0
-                    
-                    sl, tp = "Нет", "Нет"
-                    match_key = clean_sym if clean_sym in st else (symbol if symbol in st else None)
-                    if match_key:
-                        val_sl = st[match_key].get('sl_price')
-                        val_tp = st[match_key].get('tp_price')
-                        if val_sl and float(val_sl) > 0:
-                            sl = str(val_sl)
-                        if val_tp and float(val_tp) > 0:
-                            tp = str(val_tp)
-                            
-                    # Если стопы не нашлись в live_state, запрашиваем живые Algo Orders с биржи
-                    if sl == "Нет" or tp == "Нет":
-                        try:
-                            market_id = clean_sym.replace('/', '')
-                            algos = fetcher.exchange.fapiPrivateGetOpenAlgoOrders({'symbol': market_id})
-                            for a in algos:
-                                atype = a.get('orderType', '').lower()
-                                t_price = float(a.get('triggerPrice') or 0)
-                                if 'stop' in atype and sl == "Нет" and t_price > 0:
-                                    sl = str(t_price)
-                                elif 'take_profit' in atype and tp == "Нет" and t_price > 0:
-                                    tp = str(t_price)
-                        except:
-                            pass
-                        
-                    # Берем живую биржевую цену маркировки
-                    mark_price = float(pos.get('markPrice') or pos.get('info', {}).get('markPrice') or entry)
-                    current_price = mark_price
-                    market_pnl = unrealized_pnl
-                    try:
-                        if not hasattr(self, '_cached_tickers'):
-                            self._cached_tickers = fetcher.exchange.fetch_tickers()
-                        ticker = self._cached_tickers.get(symbol, {})
-                        bid = float(ticker.get('bid', 0))
-                        ask = float(ticker.get('ask', 0))
-                        last = float(ticker.get('last') or ticker.get('close') or 0)
-                        if last > 0:
-                            current_price = last
-                        elif bid > 0 and ask > 0:
-                            current_price = (bid + ask) / 2.0
-                            
-                        if bid > 0 and ask > 0:
-                            if side == 'LONG':
-                                market_pnl = (bid - entry) * contracts
-                            else:
-                                market_pnl = (entry - ask) * contracts
-                    except Exception:
-                        pass
-                    
-                    sl_dist_str = ""
-                    tp_dist_str = ""
-                    try:
-                        sl_val = float(sl)
-                        if current_price > 0 and sl_val > 0:
-                            sl_diff = ((sl_val - current_price) / current_price) * 100
-                            sl_dist_str = f" ({sl_diff:+.1f}%)"
-                    except:
-                        pass
-                    try:
-                        tp_val = float(tp)
-                        if current_price > 0 and tp_val > 0:
-                            tp_diff = ((tp_val - current_price) / current_price) * 100
-                            tp_dist_str = f" ({tp_diff:+.1f}%)"
-                    except:
-                        pass
-                        
-                    active_pos.append({
-                        'symbol': symbol,
-                        'clean_sym': clean_sym,
-                        'side': side,
-                        'entry': entry,
-                        'current_price': current_price,
-                        'pnl': unrealized_pnl,
-                        'market_pnl': market_pnl,
-                        'roe_pct': roe_pct,
-                        'sl': sl,
-                        'sl_dist_str': sl_dist_str,
-                        'tp': tp,
-                        'tp_dist_str': tp_dist_str,
-                        'contracts': contracts
-                    })
-            self.after(0, lambda pos=active_pos: self._render_positions(pos))
-        except Exception as e:
-            self.logger_msg_safe = str(e)
-        finally:
-            self._is_refreshing_positions = False
-
-    def _render_positions(self, active_pos):
-        if not hasattr(self, 'pos_cards'):
-            self.pos_cards = {}
-            
-        if not active_pos:
-            for sym, card in list(self.pos_cards.items()):
-                try:
-                    card['frame'].destroy()
-                except:
-                    pass
-            self.pos_cards.clear()
-            if not hasattr(self, 'lbl_no_pos') or self.lbl_no_pos is None or not self.lbl_no_pos.winfo_exists():
-                self.lbl_no_pos = ctk.CTkLabel(self.pos_scroll, text="Нет открытых позиций", text_color="gray")
-                self.lbl_no_pos.pack(pady=20)
-            return
-        else:
-            if hasattr(self, 'lbl_no_pos') and self.lbl_no_pos and self.lbl_no_pos.winfo_exists():
-                self.lbl_no_pos.destroy()
-                self.lbl_no_pos = None
-
-        active_syms = set()
-        for p in active_pos:
-            sym = p['clean_sym']
-            active_syms.add(sym)
-            
-            color = "#2ECC71" if p['side'] == "LONG" else "#E74C3C"
-            pnl_color = "#2ECC71" if p['pnl'] >= 0 else "#E74C3C"
-            mpnl_color = "#2ECC71" if p['market_pnl'] >= 0 else "#E74C3C"
-            
-            sym_text = f"  {sym} [{p['side']}]"
-            prices_text = f"  Вход: {p['entry']:.4f}  ->  Тек: {p['current_price']:.4f}"
-            targets_text = f"  TP: {p['tp']}{p['tp_dist_str']}\n  SL: {p['sl']}{p['sl_dist_str']}"
-            pnl_text = f"  PNL: {p['pnl']:+.2f} USDT ({p['roe_pct']:+.2f}%)"
-            mpnl_text = f"  При закрытии: {p['market_pnl']:+.2f} USDT"
-            
-            if sym in self.pos_cards and self.pos_cards[sym]['frame'].winfo_exists():
-                # Плавное обновление текста без пересоздания и без моргания
-                card = self.pos_cards[sym]
-                card['lbl_sym'].configure(text=sym_text, text_color=color)
-                card['lbl_prices'].configure(text=prices_text)
-                card['lbl_targets'].configure(text=targets_text)
-                card['lbl_pnl'].configure(text=pnl_text, text_color=pnl_color)
-                card['lbl_mpnl'].configure(text=mpnl_text, text_color=mpnl_color)
-                card['btn_close'].configure(
-                    command=lambda s_sym=p['symbol'], s_side=p['side'], s_cnt=p['contracts']: self.close_position_manual(s_sym, s_side, s_cnt)
-                )
-            else:
-                # Создаем новую карточку только если её еще нет
-                frame = ctk.CTkFrame(self.pos_scroll, fg_color="#2C3E50", corner_radius=8)
-                frame.pack(fill="x", pady=5, padx=2)
-                
-                lbl_sym = ctk.CTkLabel(frame, text=sym_text, font=ctk.CTkFont(weight="bold"), text_color=color, anchor="w", justify="left")
-                lbl_sym.pack(anchor="w", padx=6, pady=(6, 2), fill="x")
-                
-                lbl_prices = ctk.CTkLabel(frame, text=prices_text, font=ctk.CTkFont(size=12, weight="bold"), anchor="w", justify="left")
-                lbl_prices.pack(anchor="w", padx=6, pady=(0, 2), fill="x")
-                
-                lbl_targets = ctk.CTkLabel(frame, text=targets_text, font=ctk.CTkFont(size=11), anchor="w", justify="left")
-                lbl_targets.pack(anchor="w", padx=6, pady=(0, 4), fill="x")
-                
-                lbl_pnl = ctk.CTkLabel(frame, text=pnl_text, font=ctk.CTkFont(weight="bold", size=13), text_color=pnl_color, anchor="w", justify="left")
-                lbl_pnl.pack(anchor="w", padx=6, pady=(0, 2), fill="x")
-                
-                lbl_mpnl = ctk.CTkLabel(frame, text=mpnl_text, font=ctk.CTkFont(size=11), text_color=mpnl_color, anchor="w", justify="left")
-                lbl_mpnl.pack(anchor="w", padx=6, pady=(0, 6), fill="x")
-                
-                btn_close = ctk.CTkButton(
-                    frame, text="❌ Закрыть", fg_color="darkred", hover_color="red", height=26,
-                    command=lambda s_sym=p['symbol'], s_side=p['side'], s_cnt=p['contracts']: self.close_position_manual(s_sym, s_side, s_cnt)
-                )
-                btn_close.pack(fill="x", padx=8, pady=(0, 6))
-                
-                self.pos_cards[sym] = {
-                    'frame': frame,
-                    'lbl_sym': lbl_sym,
-                    'lbl_prices': lbl_prices,
-                    'lbl_targets': lbl_targets,
-                    'lbl_pnl': lbl_pnl,
-                    'lbl_mpnl': lbl_mpnl,
-                    'btn_close': btn_close
-                }
-                
-        # Удаляем карточки закрытых сделок
-        for sym in list(self.pos_cards.keys()):
-            if sym not in active_syms:
-                try:
-                    self.pos_cards[sym]['frame'].destroy()
-                except:
-                    pass
-                del self.pos_cards[sym]
-        
-    def close_position_manual(self, symbol, side, contracts):
-        def _close():
-            try:
-                from data_fetcher import DataFetcher
-                from config import API_KEY, API_SECRET, USE_TESTNET
-                fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
-                close_side = "sell" if side.upper() == "LONG" else "buy"
-                self.log_message(f"🔒 Ручное закрытие позиции {symbol}...")
-                
-                try:
-                    fetcher.exchange.cancel_all_orders(symbol)
-                except:
-                    pass
-                
-                fetcher.exchange.create_market_order(symbol, close_side, contracts, params={'reduceOnly': True})
-                self.log_message(f"✅ Позиция {symbol} успешно закрыта вручную!")
-                
-                # Обновляем позиции и баланс сразу после закрытия
-                self.after(2000, self.refresh_positions)
-                self.after(2000, self.fetch_balance)
-            except Exception as e:
-                self.log_message(f"[ОШИБКА] Не удалось закрыть позицию {symbol}: {e}")
-                
-        threading.Thread(target=_close, daemon=True).start()
-
+    # ──────────────────────────────────────────────
+    #  Config I/O
+    # ──────────────────────────────────────────────
     def read_config(self):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 content = f.read()
-                
             mode_match = re.search(r'TRADING_MODE\s*=\s*"([^"]+)"', content)
             self.current_mode = mode_match.group(1) if mode_match else "SCALPING"
-            
             risk_match = re.search(r'RISK_MODE\s*=\s*"([^"]+)"', content)
             self.current_risk = risk_match.group(1) if risk_match else "BALANCED"
-            
             self.current_trade_size = re.search(r'TRADE_SIZE_USDT\s*=\s*([0-9.]+)', content).group(1)
-            
             lev_match = re.search(r'LEVERAGE\s*=\s*([0-9]+)', content)
             self.current_lev = lev_match.group(1) if lev_match else "20"
-            
             cap_match = re.search(r'MAX_CAPITAL_USDT\s*=\s*([0-9.]+)', content)
             self.current_cap = cap_match.group(1) if cap_match else "500.0"
-            
             self.current_sl = re.search(r'STOP_LOSS_PCT\s*=\s*([0-9.]+)', content).group(1)
             self.current_tp = re.search(r'TAKE_PROFIT_PCT\s*=\s*([0-9.]+)', content).group(1)
-            
             self.current_use_atr = "USE_ATR = True" in content
             self.current_use_trail = "USE_TRAILING = True" in content
             self.current_use_comp = "USE_COMPOUNDING = True" in content
-            
             comp_match = re.search(r'COMPOUND_PCT\s*=\s*([0-9.]+)', content)
             self.current_comp_pct = comp_match.group(1) if comp_match else "2.0"
-            
-        except Exception as e:
+        except Exception:
             self.current_mode = "SCALPING"
             self.current_risk = "BALANCED"
             self.current_trade_size = "100.0"
@@ -548,327 +94,905 @@ class AlgoBotApp(ctk.CTk):
             self.current_use_comp = False
             self.current_comp_pct = "2.0"
 
-    def apply_auto_settings(self):
-        # Очищаем
-        self.entry_sl.delete(0, 'end')
-        self.entry_tp.delete(0, 'end')
-        
-        mode = self.seg_mode.get()
-        risk = self.seg_risk.get()
-        
+    def apply_auto_settings(self, e=None):
+        mode = self.dd_mode.value
+        risk = self.dd_risk.value
         if mode == "SCALPING":
-            if risk == "ЭКОНОМ":
-                self.entry_sl.insert(0, "0.3")
-                self.entry_tp.insert(0, "0.6")
-            elif risk == "БАЛАНС":
-                self.entry_sl.insert(0, "0.5")
-                self.entry_tp.insert(0, "1.0")
-            elif risk == "АГРЕССИВ":
-                self.entry_sl.insert(0, "1.0")
-                self.entry_tp.insert(0, "2.0")
-        else: # NORMAL
-            if risk == "ЭКОНОМ":
-                self.entry_sl.insert(0, "1.0")
-                self.entry_tp.insert(0, "2.0")
-            elif risk == "БАЛАНС":
-                self.entry_sl.insert(0, "2.0")
-                self.entry_tp.insert(0, "4.0")
-            elif risk == "АГРЕССИВ":
-                self.entry_sl.insert(0, "3.0")
-                self.entry_tp.insert(0, "6.0")
-
-    def change_mode(self, value):
-        self.current_mode = value
-        self.apply_auto_settings()
-        self.log_message(f"[ВНИМАНИЕ] Выбран тип торговли: {value}. Не забудь сохранить и переобучить ИИ!")
-
-    def change_risk(self, value):
-        risk_map = {"ЭКОНОМ": "CONSERVATIVE", "БАЛАНС": "BALANCED", "АГРЕССИВ": "AGGRESSIVE"}
-        self.current_risk = risk_map[value]
-        self.apply_auto_settings()
-        if value == "АГРЕССИВ":
-            self.log_message("[ВНИМАНИЕ] АГРЕССИВНЫЙ РИСК: ИИ не отключается полностью (чтобы не слить депозит), но его требования к сделке снижаются до 50%. Сделок будет больше!")
-        elif value == "ЭКОНОМ":
-            self.log_message("[ВНИМАНИЕ] РЕЖИМ ЭКОНОМ: Строгий отбор. ИИ зайдет в сделку только при уверенности > 65%.")
+            presets = {"ЭКОНОМ": ("0.3","0.6"), "БАЛАНС": ("0.5","1.0"), "АГРЕССИВ": ("1.0","2.0")}
         else:
-            self.log_message(f"[ВНИМАНИЕ] Риск-менеджмент: {value}. Оптимальные параметры ИИ.")
+            presets = {"ЭКОНОМ": ("1.0","2.0"), "БАЛАНС": ("2.0","4.0"), "АГРЕССИВ": ("3.0","6.0")}
+        sl, tp = presets.get(risk, ("2.0","4.0"))
+        self.input_sl.value = sl
+        self.input_tp.value = tp
+        self.page.update()
+        self.log_message(f"[ВНИМАНИЕ] Режим {mode}, Риск {risk}. Сохрани и переобучи ИИ!", "warning")
 
-    def save_config(self):
+    def save_config(self, e=None):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 content = f.read()
-                
-            new_size = float(self.entry_trade_size.get())
-            new_lev = int(self.entry_lev.get())
-            new_cap = float(self.entry_cap.get())
-            new_sl = float(self.entry_sl.get()) / 100
-            new_tp = float(self.entry_tp.get()) / 100
-            
-            new_atr = "True" if self.chk_atr.get() else "False"
-            new_trail = "True" if self.chk_trail.get() else "False"
-            new_comp = "True" if self.chk_comp.get() else "False"
-            new_comp_pct = float(self.entry_comp_pct.get())
-            
-            content = re.sub(r'TRADING_MODE\s*=\s*"[^"]+"', f'TRADING_MODE = "{self.current_mode}"', content)
-            content = re.sub(r'RISK_MODE\s*=\s*"[^"]+"', f'RISK_MODE = "{self.current_risk}"', content)
-            
-            # Меняем порог уверенности ИИ в зависимости от риска
-            if self.current_risk == "CONSERVATIVE":
-                content = re.sub(r'ML_PROBABILITY_THRESHOLD\s*=\s*[0-9.]+', 'ML_PROBABILITY_THRESHOLD = 0.65', content)
-            elif self.current_risk == "BALANCED":
-                content = re.sub(r'ML_PROBABILITY_THRESHOLD\s*=\s*[0-9.]+', 'ML_PROBABILITY_THRESHOLD = 0.55', content)
-            elif self.current_risk == "AGGRESSIVE":
-                content = re.sub(r'ML_PROBABILITY_THRESHOLD\s*=\s*[0-9.]+', 'ML_PROBABILITY_THRESHOLD = 0.50', content)
-            
-            # Timeframe and other mode settings are handled dynamically inside config.py based on TRADING_MODE
+            new_size = float(self.input_trade_size.value)
+            new_lev = int(self.input_lev.value)
+            new_cap = float(self.input_cap.value)
+            new_sl = float(self.input_sl.value) / 100
+            new_tp = float(self.input_tp.value) / 100
+            new_atr = "True" if self.sw_atr.value else "False"
+            new_trail = "True" if self.sw_trail.value else "False"
+            new_comp = "True" if self.sw_comp.value else "False"
+            new_comp_pct = float(self.input_comp_pct.value)
+            risk_map = {"ЭКОНОМ": "CONSERVATIVE", "БАЛАНС": "BALANCED", "АГРЕССИВ": "AGGRESSIVE"}
+            current_risk_eng = risk_map.get(self.dd_risk.value, "BALANCED")
+            content = re.sub(r'TRADING_MODE\s*=\s*"[^"]+"', f'TRADING_MODE = "{self.dd_mode.value}"', content)
+            content = re.sub(r'RISK_MODE\s*=\s*"[^"]+"', f'RISK_MODE = "{current_risk_eng}"', content)
+            ml_thresholds = {"CONSERVATIVE": "0.65", "BALANCED": "0.55", "AGGRESSIVE": "0.50"}
+            content = re.sub(r'ML_PROBABILITY_THRESHOLD\s*=\s*[0-9.]+', f'ML_PROBABILITY_THRESHOLD = {ml_thresholds[current_risk_eng]}', content)
             content = re.sub(r'TRADE_SIZE_USDT\s*=\s*[0-9.]+', f'TRADE_SIZE_USDT = {new_size}', content)
             content = re.sub(r'LEVERAGE\s*=\s*[0-9]+', f'LEVERAGE = {new_lev}', content)
             content = re.sub(r'MAX_CAPITAL_USDT\s*=\s*[0-9.]+', f'MAX_CAPITAL_USDT = {new_cap}', content)
             content = re.sub(r'STOP_LOSS_PCT\s*=\s*[0-9.]+', f'STOP_LOSS_PCT = {new_sl}', content)
             content = re.sub(r'TAKE_PROFIT_PCT\s*=\s*[0-9.]+', f'TAKE_PROFIT_PCT = {new_tp}', content)
-            
             content = re.sub(r'USE_ATR\s*=\s*(True|False)', f'USE_ATR = {new_atr}', content)
             content = re.sub(r'USE_TRAILING\s*=\s*(True|False)', f'USE_TRAILING = {new_trail}', content)
             content = re.sub(r'USE_COMPOUNDING\s*=\s*(True|False)', f'USE_COMPOUNDING = {new_comp}', content)
             content = re.sub(r'COMPOUND_PCT\s*=\s*[0-9.]+', f'COMPOUND_PCT = {new_comp_pct}', content)
-            
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 f.write(content)
-                
-            self.log_message(f"[СИСТЕМА] Настройки ({self.current_mode} | {self.current_risk}) успешно сохранены.")
-            self.btn_save.configure(text="✅ Сохранено", fg_color="green")
-            self.after(2000, lambda: self.btn_save.configure(text="💾 Сохранить", fg_color="gray"))
+            self.log_message("[СИСТЕМА] Настройки сохранены.", "info")
+            self.btn_save.text = "Сохранено"
+            self.btn_save.bgcolor = C_GREEN
+            self.page.update()
+            time.sleep(2)
+            self.btn_save.text = "Сохранить"
+            self.btn_save.bgcolor = C_BLUE
+            self.page.update()
         except Exception as e:
-            self.log_message(f"[ОШИБКА] Не удалось сохранить: {e}")
+            self.log_message(f"[ОШИБКА] Не удалось сохранить: {e}", "error")
 
-    def train_ai(self):
+    def train_ai(self, e=None):
         if self.bot_process is not None:
-            self.log_message("[ОШИБКА] Сначала останови торговлю перед переобучением!")
+            self.log_message("[ОШИБКА] Сначала останови торговлю!", "error")
             return
-            
-        self.save_config()
-        self.btn_train.configure(state="disabled", text="⏳ Идет обучение...")
-        self.log_message("\n" + "="*50)
-        self.log_message(f"[СИСТЕМА] Запуск обучения ИИ для режима {self.current_mode}...")
-        self.log_message("="*50)
-        
+        threading.Thread(target=self.save_config).start()
+        self.btn_train.disabled = True
+        self.btn_train.text = "Обучение..."
+        self.page.update()
+        self.log_message("[СИСТЕМА] Запуск обучения ИИ...", "info")
         def run_train():
             import sys
             base_dir = os.path.dirname(os.path.abspath(__file__))
             script_path = os.path.join(base_dir, "train_model.py")
             process = subprocess.Popen(
-                [sys.executable, "-u", script_path],
-                cwd=base_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
+                [sys.executable, "-u", script_path], cwd=base_dir,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
             for line in process.stdout:
-                self.after(0, self.log_message, line.strip())
+                self.log_message(line.strip())
             process.wait()
             if process.returncode == 0:
-                self.after(0, lambda: self.log_message("="*50))
-                self.after(0, lambda: self.log_message("[СИСТЕМА] Обучение успешно завершено! Модель сохранена."))
-                self.after(0, lambda: self.log_message("="*50))
+                self.log_message("[СИСТЕМА] Обучение завершено! Модель сохранена.", "success")
             else:
-                self.after(0, lambda: self.log_message(f"[ОШИБКА] Обучение завершилось с кодом {process.returncode}"))
-            self.after(0, lambda: self.btn_train.configure(state="normal", text="🧠 Переобучить ИИ"))
-            
+                self.log_message(f"[ОШИБКА] Обучение завершилось с кодом {process.returncode}", "error")
+            self.btn_train.disabled = False
+            self.btn_train.text = "Обучить ИИ"
+            self.page.update()
         threading.Thread(target=run_train, daemon=True).start()
 
-    def _copy_console_selection(self):
+    # ──────────────────────────────────────────────
+    #  UI helpers
+    # ──────────────────────────────────────────────
+    def _section_label(self, text, icon=None):
+        children = []
+        if icon:
+            children.append(ft.Icon(icon, size=14, color=C_CYAN))
+        children.append(ft.Text(text, size=10, weight=ft.FontWeight.W_600, color=C_TEXT_DIM))
+        return ft.Container(
+            content=ft.Row(children, spacing=4),
+            margin=ft.margin.only(top=4, bottom=2)
+        )
+
+    def _styled_field(self, label, value, width=None):
+        return ft.TextField(
+            label=label, value=value,
+            width=width,
+            dense=True,
+            border_color=C_BORDER,
+            focused_border_color=C_CYAN,
+            cursor_color=C_CYAN,
+            text_size=13,
+            content_padding=8,
+            label_style=ft.TextStyle(size=11, color=C_TEXT_DIM),
+        )
+
+    def _action_button(self, text, bgcolor, on_click, icon=None, **kwargs):
+        return ft.Container(
+            content=ft.Row(
+                [
+                    *(([ft.Icon(icon, size=15, color="#FFFFFF")] if icon else [])),
+                    ft.Text(text, size=12, weight=ft.FontWeight.W_600, color="#FFFFFF"),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=5,
+            ),
+            bgcolor=bgcolor,
+            border_radius=6,
+            padding=ft.padding.symmetric(horizontal=12, vertical=8),
+            on_click=on_click,
+            animate=ft.Animation(200, ft.AnimationCurve.EASE_IN_OUT),
+            **kwargs,
+        )
+
+    # ──────────────────────────────────────────────
+    #  BUILD UI
+    # ──────────────────────────────────────────────
+    def build_ui(self):
+        risk_map_rev = {"CONSERVATIVE": "ЭКОНОМ", "BALANCED": "БАЛАНС", "AGGRESSIVE": "АГРЕССИВ"}
+
+        # Sidebar fields
+        self.dd_mode = ft.Dropdown(
+            label="Тип торговли",
+            options=[ft.dropdown.Option("NORMAL"), ft.dropdown.Option("SCALPING")],
+            value=self.current_mode,
+            on_select=self.apply_auto_settings, on_text_change=self.apply_auto_settings,
+            dense=True, border_color=C_BORDER, focused_border_color=C_CYAN,
+            text_size=13, label_style=ft.TextStyle(size=11, color=C_TEXT_DIM),
+        )
+        self.dd_risk = ft.Dropdown(
+            label="Риск-режим",
+            options=[ft.dropdown.Option("ЭКОНОМ"), ft.dropdown.Option("БАЛАНС"), ft.dropdown.Option("АГРЕССИВ")],
+            value=risk_map_rev.get(self.current_risk, "БАЛАНС"),
+            on_select=self.apply_auto_settings, on_text_change=self.apply_auto_settings,
+            dense=True, border_color=C_BORDER, focused_border_color=C_CYAN,
+            text_size=13, label_style=ft.TextStyle(size=11, color=C_TEXT_DIM),
+        )
+
+        self.input_trade_size = self._styled_field("Маржа ($)", self.current_trade_size)
+        self.input_lev = self._styled_field("Плечо (x)", self.current_lev)
+        self.input_cap = self._styled_field("Лимит ($)", self.current_cap)
+        self.input_sl = self._styled_field("Stop-Loss %", str(float(self.current_sl)*100))
+        self.input_tp = self._styled_field("Take-Profit %", str(float(self.current_tp)*100))
+        self.input_comp_pct = self._styled_field("% от баланса", self.current_comp_pct)
+
+        self.sw_atr = ft.Switch(label="ATR (динам. TP/SL)", value=self.current_use_atr, active_color=C_CYAN, scale=0.85)
+        self.sw_trail = ft.Switch(label="Трейлинг-Стоп", value=self.current_use_trail, active_color=C_CYAN, scale=0.85)
+        self.sw_comp = ft.Switch(label="Реинвестирование", value=self.current_use_comp, active_color=C_CYAN, scale=0.85)
+
+        self.btn_save = ft.Container(
+            content=ft.Text("Сохранить", size=12, weight=ft.FontWeight.W_600, color="#FFFFFF", text_align=ft.TextAlign.CENTER),
+            bgcolor=C_BLUE, border_radius=6, padding=8,
+            on_click=lambda e: threading.Thread(target=self.save_config).start(),
+            alignment=ft.alignment.Alignment(0, 0),
+        )
+        self.btn_train = ft.Container(
+            content=ft.Text("Обучить ИИ", size=12, weight=ft.FontWeight.W_600, color="#FFFFFF", text_align=ft.TextAlign.CENTER),
+            bgcolor=C_ORANGE, border_radius=6, padding=8,
+            on_click=self.train_ai,
+            alignment=ft.alignment.Alignment(0, 0),
+        )
+
+        sidebar = ft.Container(
+            content=ft.Column([
+                ft.Text("AlgoBot AI", size=20, weight=ft.FontWeight.W_700, color=C_CYAN),
+                ft.Text("Панель управления", size=11, color=C_TEXT_DIM),
+                self._section_label("ТОРГОВЛЯ", ft.Icons.CANDLESTICK_CHART),
+                self.dd_mode,
+                self.dd_risk,
+                self._section_label("КАПИТАЛ", ft.Icons.ACCOUNT_BALANCE_WALLET),
+                ft.Row([self.input_trade_size, self.input_lev], spacing=6),
+                self.input_cap,
+                self._section_label("РИСК", ft.Icons.SHIELD),
+                ft.Row([self.input_sl, self.input_tp], spacing=6),
+                self._section_label("PRO ОПЦИИ", ft.Icons.AUTO_AWESOME),
+                self.sw_atr,
+                self.sw_trail,
+                self.sw_comp,
+                self.input_comp_pct,
+                ft.Container(height=6),
+                self.btn_save,
+                ft.Container(height=2),
+                self.btn_train,
+            ], scroll=ft.ScrollMode.AUTO, spacing=4),
+            width=240,
+            padding=12,
+            bgcolor=C_SURFACE,
+        )
+
+        # ── CENTER ──
+        self.lbl_balance = ft.Text("Баланс: загрузка...", size=13, weight=ft.FontWeight.W_600, color=C_TEXT)
+        self.lbl_status = ft.Container(
+            content=ft.Text("ОСТАНОВЛЕН", size=11, weight=ft.FontWeight.W_700, color=C_RED),
+            bgcolor=ft.Colors.with_opacity(0.15, C_RED),
+            border_radius=4,
+            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+        )
+
+        header_row = ft.Container(
+            content=ft.Row([
+                ft.Row([
+                    ft.Icon(ft.Icons.ACCOUNT_BALANCE_WALLET, size=16, color=C_CYAN),
+                    self.lbl_balance
+                ], spacing=6),
+                ft.Row([
+                    self.lbl_status,
+                    ft.IconButton(ft.Icons.REFRESH, icon_size=16, icon_color=C_TEXT_DIM,
+                                  on_click=lambda e: threading.Thread(target=self.fetch_balance).start()),
+                ], spacing=6),
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+            bgcolor=C_SURFACE,
+        )
+
+        # Control buttons (Reduced gap)
+        self.btn_start = self._action_button("Запустить", C_GREEN, self.start_bot, ft.Icons.PLAY_ARROW)
+        self.btn_graceful = self._action_button("Доработать", C_ORANGE, self.graceful_stop, ft.Icons.FLAG)
+        self.btn_stop = self._action_button("Стоп", C_RED, self.stop_bot, ft.Icons.STOP)
+
+        controls_row = ft.Container(
+            content=ft.Row([self.btn_start, self.btn_graceful, self.btn_stop], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
+            padding=ft.padding.symmetric(vertical=4),
+        )
+
+        # Console toolbar with quick filter chips
+        self.filter_chips_row = ft.Row(spacing=4)
+        self._build_filter_chips()
+
+        console_toolbar = ft.Container(
+            content=ft.Row([
+                self.filter_chips_row,
+                ft.Row([
+                    ft.IconButton(ft.Icons.COPY, icon_size=15, icon_color=C_TEXT_DIM, tooltip="Скопировать",
+                                  on_click=lambda e: self._copy_console()),
+                    ft.IconButton(ft.Icons.DELETE_OUTLINE, icon_size=15, icon_color=C_TEXT_DIM, tooltip="Очистить",
+                                  on_click=lambda e: self._clear_console()),
+                    ft.IconButton(ft.Icons.DOWNLOAD, icon_size=15, icon_color=C_TEXT_DIM, tooltip="Скачать лог",
+                                  on_click=self.download_console),
+                ], spacing=0),
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            padding=ft.padding.symmetric(horizontal=10, vertical=4),
+            bgcolor=C_SURFACE2,
+            border_radius=ft.BorderRadius(top_left=8, top_right=8, bottom_left=0, bottom_right=0),
+        )
+
+        self.console_list = ft.ListView(expand=1, spacing=2, auto_scroll=True, padding=6)
+        console_body = ft.Container(
+            content=self.console_list,
+            expand=True,
+            bgcolor=C_BG,
+            border_radius=ft.BorderRadius(top_left=0, top_right=0, bottom_left=8, bottom_right=8),
+        )
+
+        # History & Analytics
+        self.history_list = ft.ListView(expand=1, spacing=3, auto_scroll=True, padding=8)
+
+        self.lbl_stat_trades = ft.Text("Сделок: 0", size=24, weight=ft.FontWeight.W_700, color=C_TEXT)
+        self.lbl_stat_winrate = ft.Text("Win-Rate: 0%", size=20, weight=ft.FontWeight.W_600, color=C_TEXT_DIM)
+        self.lbl_stat_pnl = ft.Text("PnL: $0.00", size=20, weight=ft.FontWeight.W_600, color=C_TEXT_DIM)
+        self.lbl_stat_funnel = ft.Text("Воронка сигналов: загрузка...", size=13, color=C_TEXT_DIM)
+
+        t1_content = ft.Column([console_toolbar, console_body], spacing=0, expand=True)
+
+        t2_content = ft.Container(
+            content=self.history_list,
+            bgcolor=C_BG, border_radius=8, margin=6, expand=True,
+        )
+
+        t3_content = ft.Container(
+            content=ft.Column([
+                self.lbl_stat_trades,
+                ft.Divider(color=C_BORDER),
+                self.lbl_stat_winrate,
+                self.lbl_stat_pnl,
+                ft.Divider(color=C_BORDER),
+                self.lbl_stat_funnel,
+                ft.Container(height=6),
+                self._action_button("Обновить статистику", C_BLUE, lambda e: self.update_analytics(), ft.Icons.REFRESH),
+            ], spacing=8),
+            padding=16,
+        )
+
+        tabs = ft.Tabs(
+            selected_index=0, length=3,
+            content=ft.Column([
+                ft.TabBar(
+                    tabs=[
+                        ft.Tab(label="Консоль"),
+                        ft.Tab(label="История"),
+                        ft.Tab(label="Аналитика"),
+                    ],
+                    indicator_color=C_CYAN,
+                    label_color=C_TEXT,
+                    unselected_label_color=C_TEXT_DIM,
+                ),
+                ft.TabBarView(expand=True, controls=[t1_content, t2_content, t3_content])
+            ]),
+            expand=1,
+        )
+
+        center = ft.Column([header_row, controls_row, ft.Container(content=tabs, expand=True, padding=ft.padding.symmetric(horizontal=8))], expand=True, spacing=2)
+
+        # ── RIGHT SIDEBAR (POSITIONS) ──
+        self.positions_col = ft.Column(spacing=6, scroll=ft.ScrollMode.AUTO, expand=True)
+
+        right_sidebar = ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Text("Позиции", size=15, weight=ft.FontWeight.W_700, color=C_TEXT),
+                    ft.Container(
+                        content=ft.Text("Отчёт", size=11, color=C_BLUE),
+                        on_click=self.download_detailed_trades,
+                    )
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Divider(color=C_BORDER),
+                self.positions_col,
+            ], expand=True, spacing=6),
+            width=270,
+            padding=12,
+            bgcolor=C_SURFACE,
+        )
+
+        self.page.add(ft.Row([sidebar, ft.Container(content=center, expand=True), right_sidebar], expand=True, spacing=0))
+
+    # ──────────────────────────────────────────────
+    #  LOG FILTERING & COMPACT LOG CARDS
+    # ──────────────────────────────────────────────
+    def _build_filter_chips(self):
+        filters = [
+            ("ALL", "Все"),
+            ("SIGNALS", "Сигналы"),
+            ("REJECTS", "Отказы"),
+            ("TRADES", "Сделки"),
+            ("ERRORS", "Ошибки"),
+            ("RECOVERY", "Recovery")
+        ]
+        self.filter_chips_row.controls.clear()
+        for code, label in filters:
+            is_active = (self.active_log_filter == code)
+            chip = ft.Container(
+                content=ft.Text(label, size=10, weight=ft.FontWeight.W_600, color=C_TEXT if is_active else C_TEXT_DIM),
+                bgcolor=ft.Colors.with_opacity(0.2, C_CYAN) if is_active else ft.Colors.TRANSPARENT,
+                border=ft.border.all(1, C_CYAN if is_active else C_BORDER),
+                border_radius=4,
+                padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                on_click=lambda e, f_code=code: self._set_log_filter(f_code),
+            )
+            self.filter_chips_row.controls.append(chip)
+
+    def _set_log_filter(self, filter_code):
+        self.active_log_filter = filter_code
+        self._build_filter_chips()
+        self._render_filtered_console()
         try:
-            selected = self.console.get("sel.first", "sel.last")
-            if selected:
-                self.clipboard_clear()
-                self.clipboard_append(selected)
-                return
+            self.page.update()
         except Exception:
             pass
-        self._copy_all_console()
 
-    def _select_all_console(self):
+    def _categorize_log(self, message):
+        msg_upper = message.upper()
+        if "[GO]" in message or "ОТКРЫТА" in msg_upper or "ЗАКРЫТА" in msg_upper or "СДЕЛКА" in msg_upper:
+            return "TRADES"
+        elif "RECOVERY" in msg_upper or "ТРЕЙЛИНГ" in msg_upper or "EMERGENCY" in msg_upper or "UNKNOWN" in msg_upper:
+            return "RECOVERY"
+        elif "[ОШИБКА" in message or "ERROR" in msg_upper or "CRITICAL" in msg_upper or "СБОЙ" in msg_upper:
+            return "ERRORS"
+        elif "[V]" in message or "ОДОБРЕН" in msg_upper or "1-Й СЛОЙ: ДА" in msg_upper:
+            return "SIGNALS"
+        elif "[X]" in message or "1-Й СЛОЙ: НЕТ" in msg_upper or "2-Й СЛОЙ: НЕТ" in msg_upper:
+            return "REJECTS"
+        else:
+            return "ALL"
+
+    def _parse_log_entry(self, message):
+        category = self._categorize_log(message)
+        symbol = self._extract_symbol(message)
+        
+        if "[GO]" in message:
+            return (category, "🚀", C_GREEN, symbol, message.replace("[GO]","").strip(), C_GREEN)
+        elif "[V]" in message:
+            return (category, "✓", C_CYAN, symbol, message.replace("[V]","").strip(), C_CYAN)
+        elif "[X]" in message:
+            return (category, "✕", C_TEXT_DIM, symbol, message.replace("[X]","").strip(), C_TEXT_DIM)
+        elif category == "RECOVERY":
+            return (category, "⚡", C_PURPLE, symbol, message.replace("[СИСТЕМА]","").strip(), C_PURPLE)
+        elif category == "ERRORS":
+            return (category, "⚠", C_RED, symbol, message, C_RED)
+        elif "[ВНИМАНИЕ]" in message or "WARNING" in message.upper():
+            return (category, "⚡", C_ORANGE, symbol, message.replace("[ВНИМАНИЕ]","").strip(), C_ORANGE)
+        elif "[СИСТЕМА]" in message or "[INFO]" in message:
+            return (category, "ℹ", C_BLUE, symbol, message.replace("[СИСТЕМА]","").replace("[INFO]","").strip(), C_BLUE)
+        else:
+            return (category, None, None, symbol, message, C_TEXT_DIM)
+
+    def _extract_symbol(self, msg):
+        m = re.search(r'([A-Z0-9]{2,10}/USDT)', msg)
+        return m.group(1) if m else None
+
+    def _build_log_card(self, log_item):
+        icon = log_item.get('icon')
+        icon_bg = log_item.get('icon_bg', C_SURFACE2)
+        symbol = log_item.get('symbol')
+        text = log_item.get('text', '')
+        color = log_item.get('color', C_TEXT_DIM)
+        ts = log_item.get('timestamp', '')
+        count = log_item.get('count', 1)
+
+        # Extract rejection reason for compact chip
+        reason_match = re.search(r'\(([^)]+)\)', text)
+        clean_text = text
+        reason_tag = None
+        if reason_match:
+            reason_tag = reason_match.group(1).replace("1-й слой: ", "").replace("2-й слой: ", "").strip()
+            clean_text = re.sub(r'\([^)]+\)', '', text).strip()
+
+        row_elements = []
+
+        if icon:
+            row_elements.append(
+                ft.Container(
+                    content=ft.Text(icon, size=11, weight=ft.FontWeight.W_700, color=color, text_align=ft.TextAlign.CENTER),
+                    width=20, height=20,
+                    border_radius=4,
+                    bgcolor=ft.Colors.with_opacity(0.15, icon_bg),
+                    alignment=ft.alignment.Alignment(0, 0),
+                )
+            )
+
+        row_elements.append(ft.Text(ts, size=10, color=C_TEXT_DIM))
+
+        if symbol:
+            row_elements.append(ft.Text(symbol, size=11, weight=ft.FontWeight.W_700, color=C_TEXT))
+
+        if reason_tag:
+            chip_color = C_RED if "ERROR" in reason_tag or "FAIL" in reason_tag else (C_ORANGE if "TREND" in reason_tag else C_TEXT_DIM)
+            row_elements.append(
+                ft.Container(
+                    content=ft.Text(reason_tag, size=9, weight=ft.FontWeight.W_600, color=chip_color),
+                    bgcolor=ft.Colors.with_opacity(0.12, chip_color),
+                    border_radius=3,
+                    padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                )
+            )
+
+        # Truncated details
+        if clean_text:
+            row_elements.append(
+                ft.Text(clean_text, size=11, color=color, overflow=ft.TextOverflow.ELLIPSIS, max_lines=1, expand=True)
+            )
+
+        # Repeating count multiplier badge (Requirement 18)
+        if count > 1:
+            row_elements.append(
+                ft.Container(
+                    content=ft.Text(f"×{count}", size=10, weight=ft.FontWeight.W_700, color=C_ORANGE),
+                    bgcolor=ft.Colors.with_opacity(0.2, C_ORANGE),
+                    border_radius=3,
+                    padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                )
+            )
+
+        return ft.Container(
+            content=ft.Row(row_elements, spacing=6, alignment=ft.MainAxisAlignment.START),
+            bgcolor=C_SURFACE2,
+            border_radius=4,
+            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+        )
+
+    def _render_filtered_console(self):
+        self.console_list.controls.clear()
+        f = self.active_log_filter
+        for item in self.raw_logs:
+            if f == "ALL" or item.get('category') == f:
+                self.console_list.controls.append(self._build_log_card(item))
+
+    def log_message(self, message, force_tag=None):
+        message = re.sub(r'\x1b\[.*?m', '', message)
+        message = re.sub(r'^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2},\d+\s\[.*?\]\s.*?:\s', '', message)
+        message = re.sub(r'^\[\d{2}/\d{2}/\d{2}\s\d{2}:\d{2}:\d{2}\]\s\w+\s+', '', message)
+
+        if not message.strip():
+            return
+        if message.startswith("===") or message.startswith("---"):
+            return
+
+        if force_tag == "success":
+            message = "[V] " + message if "[V]" not in message and "[GO]" not in message else message
+        elif force_tag == "error":
+            message = "[X] " + message if "[X]" not in message and "[ОШИБКА" not in message else message
+        elif force_tag == "warning":
+            message = "[ВНИМАНИЕ] " + message if "[ВНИМАНИЕ]" not in message else message
+        elif force_tag == "info":
+            message = "[СИСТЕМА] " + message if "[СИСТЕМА]" not in message else message
+
+        category, icon, icon_bg, symbol, text, color = self._parse_log_entry(message)
+        ts = time.strftime("%H:%M:%S")
+
+        # Repeating reject deduplication (Requirement 18)
+        if category == "REJECTS" and self.raw_logs and self.raw_logs[-1].get('category') == "REJECTS":
+            last_item = self.raw_logs[-1]
+            if last_item.get('symbol') == symbol and last_item.get('text') == text:
+                last_item['count'] += 1
+                last_item['timestamp'] = ts
+                if self.active_log_filter in ["ALL", "REJECTS"] and self.console_list.controls:
+                    self.console_list.controls[-1] = self._build_log_card(last_item)
+                    try:
+                        self.page.update()
+                    except Exception:
+                        pass
+                return
+
+        log_item = {
+            'category': category,
+            'icon': icon,
+            'icon_bg': icon_bg,
+            'symbol': symbol,
+            'text': text,
+            'color': color,
+            'timestamp': ts,
+            'count': 1,
+            'raw': message
+        }
+        self.raw_logs.append(log_item)
+        if len(self.raw_logs) > 600:
+            self.raw_logs = self.raw_logs[-600:]
+
+        if self.active_log_filter == "ALL" or self.active_log_filter == category:
+            self.console_list.controls.append(self._build_log_card(log_item))
+            if len(self.console_list.controls) > 300:
+                self.console_list.controls = self.console_list.controls[-300:]
+
         try:
-            self.console.tag_add("sel", "1.0", "end")
+            self.page.update()
         except Exception:
             pass
 
     def _clear_console(self):
+        self.raw_logs.clear()
+        self.console_list.controls.clear()
         try:
-            self.console.delete("1.0", "end")
+            self.page.update()
         except Exception:
             pass
 
-    def _copy_all_console(self):
-        try:
-            text = self.console.get("1.0", "end-1c")
-            if text:
-                self.clipboard_clear()
-                self.clipboard_append(text)
-                self.btn_copy_logs.configure(text="✅ Скопировано!", fg_color="green")
-                self.after(1500, lambda: self.btn_copy_logs.configure(text="📋 Скопировать всё", fg_color=["#3B8ED0", "#1F6AA5"]))
-        except Exception:
-            pass
+    def _copy_console(self):
+        lines = [item.get('raw', '') for item in self.raw_logs]
+        self.page.set_clipboard("\n".join(lines))
+        self.log_message("[СИСТЕМА] Лог скопирован в буфер обмена.", "info")
 
-    def _copy_all_history(self):
-        try:
-            text = self.history_txt.get("1.0", "end-1c")
-            if text:
-                self.clipboard_clear()
-                self.clipboard_append(text)
-                self.btn_copy_hist.configure(text="✅ Скопировано!", fg_color="green")
-                self.after(1500, lambda: self.btn_copy_hist.configure(text="📋 Скопировать историю", fg_color=["#3B8ED0", "#1F6AA5"]))
-        except Exception:
-            pass
+    def _extract_text(self, control):
+        parts = []
+        if isinstance(control, ft.Text) and control.value:
+            parts.append(control.value)
+        if hasattr(control, 'content') and control.content:
+            parts.append(self._extract_text(control.content))
+        if hasattr(control, 'controls'):
+            for c in control.controls:
+                parts.append(self._extract_text(c))
+        return " ".join(p for p in parts if p)
 
-    def _download_console(self):
+    # ──────────────────────────────────────────────
+    #  Бизнес-логика и рендеринг позиций
+    # ──────────────────────────────────────────────
+    def fetch_balance(self):
         try:
-            import tkinter.filedialog as fd
-            text = self.console.get("1.0", "end-1c")
-            if not text.strip():
-                self.log_message("[ОШИБКА] Консоль пуста, нечего скачивать.")
-                return
-            file_path = fd.asksaveasfilename(
-                defaultextension=".txt", 
-                filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
-                title="Сохранить лог консоли"
-            )
-            if file_path:
-                with open(file_path, "w", encoding="utf-8") as f:
-                    f.write(text)
-                self.btn_download_console.configure(text="✅ Успешно!", fg_color="green")
-                self.after(1500, lambda: self.btn_download_console.configure(text="📥 Скачать", fg_color=["#3B8ED0", "#1F6AA5"]))
+            self.lbl_balance.value = "Баланс: загрузка..."
+            self.page.update()
+            from data_fetcher import DataFetcher
+            from config import API_KEY, API_SECRET, USE_TESTNET
+            fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
+            balance = fetcher.exchange.fetch_balance()
+            usdt = balance['total'].get('USDT', 0.0)
+            self.lbl_balance.value = f"{usdt:,.2f} USDT"
         except Exception as e:
-            self.log_message(f"[ОШИБКА] Не удалось сохранить консоль: {e}")
+            self.lbl_balance.value = "Ошибка загрузки"
+            self.log_message(f"[ОШИБКА] Баланс: {e}", "error")
+        finally:
+            try:
+                self.page.update()
+            except Exception:
+                pass
 
-    def _download_detailed_trades(self):
+    async def update_positions_loop(self):
+        while True:
+            if not self._is_refreshing_positions:
+                self._is_refreshing_positions = True
+                threading.Thread(target=self._fetch_and_render_positions, daemon=True).start()
+            await asyncio.sleep(5)
+
+    def _fetch_and_render_positions(self):
         try:
-            import tkinter.filedialog as fd
-            import shutil
+            from data_fetcher import DataFetcher
+            from config import API_KEY, API_SECRET, USE_TESTNET
+            fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
+            positions = fetcher.exchange.fetch_positions()
             
-            if not os.path.exists("detailed_trades.jsonl"):
-                self.log_message("[ОШИБКА] Файл detailed_trades.jsonl еще не создан (не было закрытых позиций).")
-                return
+            st = {}
+            if os.path.exists('live_state.json'):
+                try:
+                    with open('live_state.json', 'r', encoding='utf-8') as f:
+                        st = json.load(f)
+                except Exception:
+                    pass
             
-            file_path = fd.asksaveasfilename(
-                defaultextension=".jsonl",
-                filetypes=[("JSON Lines", "*.jsonl"), ("Text Files", "*.txt"), ("All Files", "*.*")],
-                title="Сохранить подробный отчёт по сделкам",
-                initialfile="detailed_trades_report.jsonl"
-            )
-            
-            if file_path:
-                shutil.copy("detailed_trades.jsonl", file_path)
-                self.btn_download_pos.configure(text="✅ Успешно!", fg_color="green")
-                self.after(1500, lambda: self.btn_download_pos.configure(text="📥 Скачать отчёт", fg_color="#8E44AD"))
-        except Exception as e:
-            self.log_message(f"[ОШИБКА] Не удалось скачать отчёт: {e}")
+            active_pos = []
+            for pos in (positions or []):
+                contracts = float(pos.get('contracts', 0))
+                if contracts > 0:
+                    symbol = pos['symbol']
+                    clean_sym = symbol.split(':')[0]
+                    side = pos['side'].upper()
+                    entry = float(pos.get('entryPrice', 0.0))
+                    unrealized_pnl = float(pos.get('unrealizedPnl', 0.0))
+                    leverage = float(pos.get('info', {}).get('leverage', 1))
+                    margin = (entry * contracts) / leverage if leverage else (entry * contracts)
+                    roe_pct = (unrealized_pnl / margin) * 100 if margin > 0 else 0.0
+                    
+                    sl, tp = None, None
+                    sl_ok = False
+                    tp_ok = False
+                    match_key = clean_sym if clean_sym in st else (symbol if symbol in st else None)
+                    if match_key:
+                        val_sl = st[match_key].get('sl_price')
+                        val_tp = st[match_key].get('tp_price')
+                        if val_sl and float(val_sl) > 0:
+                            sl = str(val_sl)
+                            sl_ok = bool(st[match_key].get('sl_order_id'))
+                        if val_tp and float(val_tp) > 0:
+                            tp = str(val_tp)
+                            tp_ok = bool(st[match_key].get('tp_order_id'))
+                    
+                    mark_price = float(pos.get('markPrice') or pos.get('info', {}).get('markPrice') or entry)
+                    current_price = mark_price
 
-    def log_message(self, message):
-        self.console.insert("end", message + "\n")
-        self.console.see("end")
-        
+                    active_pos.append({
+                        'symbol': symbol, 'clean_sym': clean_sym, 'side': side,
+                        'entry': entry, 'current_price': current_price,
+                        'pnl': unrealized_pnl, 'roe_pct': roe_pct,
+                        'sl': sl or "—", 'tp': tp or "—", 
+                        'sl_ok': sl_ok, 'tp_ok': tp_ok,
+                        'contracts': contracts, 'leverage': leverage,
+                        'margin': margin
+                    })
+            
+            self.positions_col.controls.clear()
+            if not active_pos:
+                self.positions_col.controls.append(
+                    ft.Container(
+                        content=ft.Row([
+                            ft.Icon(ft.Icons.INBOX, size=18, color=C_TEXT_DIM),
+                            ft.Text("Нет активных позиций", size=11, color=C_TEXT_DIM),
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=6),
+                        alignment=ft.alignment.Alignment(0, 0),
+                        padding=12,
+                        bgcolor=C_SURFACE2,
+                        border_radius=6
+                    )
+                )
+            else:
+                for p in active_pos:
+                    side_color = C_GREEN if p['side'] == "LONG" else C_RED
+                    pnl_color = C_GREEN if p['pnl'] >= 0 else C_RED
+                    sl_badge_color = C_GREEN if p['sl_ok'] else C_RED
+                    tp_badge_color = C_GREEN if p['tp_ok'] else C_ORANGE
+                    
+                    card = ft.Container(
+                        content=ft.Column([
+                            ft.Row([
+                                ft.Row([
+                                    ft.Text(p['clean_sym'], size=13, weight=ft.FontWeight.W_700, color=C_TEXT),
+                                    ft.Text(f"{int(p['leverage'])}x", size=10, color=C_TEXT_DIM),
+                                ], spacing=4),
+                                ft.Container(
+                                    content=ft.Text(p['side'], size=9, weight=ft.FontWeight.W_700, color=side_color),
+                                    bgcolor=ft.Colors.with_opacity(0.15, side_color),
+                                    border_radius=3, padding=ft.padding.symmetric(horizontal=5, vertical=2),
+                                ),
+                            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                            ft.Row([
+                                ft.Text(f"Вход: {p['entry']:.4f}", size=10, color=C_TEXT_DIM),
+                                ft.Icon(ft.Icons.ARROW_FORWARD, size=10, color=C_TEXT_DIM),
+                                ft.Text(f"{p['current_price']:.4f}", size=10, color=C_TEXT),
+                            ], spacing=4),
+                            ft.Row([
+                                ft.Container(
+                                    content=ft.Text(f"SL: {p['sl']} ({'OK' if p['sl_ok'] else 'RECOVERY'})", size=9, color=sl_badge_color),
+                                    bgcolor=ft.Colors.with_opacity(0.12, sl_badge_color),
+                                    border_radius=3, padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                                ),
+                                ft.Container(
+                                    content=ft.Text(f"TP: {p['tp']} ({'OK' if p['tp_ok'] else '...' })", size=9, color=tp_badge_color),
+                                    bgcolor=ft.Colors.with_opacity(0.12, tp_badge_color),
+                                    border_radius=3, padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                                ),
+                            ], spacing=6),
+                            ft.Row([
+                                ft.Text(f"{p['pnl']:+.2f} $ ({p['roe_pct']:+.1f}%)", size=12, weight=ft.FontWeight.W_700, color=pnl_color),
+                                ft.Container(
+                                    content=ft.Text("Закрыть", size=10, color=C_RED, weight=ft.FontWeight.W_600),
+                                    padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                                    bgcolor=ft.Colors.with_opacity(0.12, C_RED),
+                                    border_radius=4,
+                                    on_click=lambda e, sym=p['symbol'], side=p['side'], cnt=p['contracts']: threading.Thread(target=self.close_position_manual, args=(sym, side, cnt)).start(),
+                                ),
+                            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                        ], spacing=4),
+                        bgcolor=C_SURFACE2,
+                        border_radius=8,
+                        padding=8,
+                    )
+                    self.positions_col.controls.append(card)
+            
+            try:
+                self.page.update()
+            except Exception:
+                pass
+        except Exception:
+            pass
+        finally:
+            self._is_refreshing_positions = False
+
+    def close_position_manual(self, symbol, side, contracts):
+        try:
+            from data_fetcher import DataFetcher
+            from config import API_KEY, API_SECRET, USE_TESTNET
+            fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
+            close_side = "sell" if side.upper() == "LONG" else "buy"
+            self.log_message(f"[СИСТЕМА] Закрытие позиции {symbol}...", "info")
+            try:
+                fetcher.exchange.cancel_all_orders(symbol)
+            except Exception:
+                pass
+            fetcher.exchange.create_market_order(symbol, close_side, contracts, params={'reduceOnly': True})
+            self.log_message(f"[V] Позиция {symbol} закрыта!", "success")
+            self._fetch_and_render_positions()
+            self.fetch_balance()
+        except Exception as e:
+            self.log_message(f"[ОШИБКА] {symbol}: {e}", "error")
+
     def update_analytics(self):
-        import json
         if os.path.exists("analytics_data.json"):
             try:
                 with open("analytics_data.json", "r", encoding="utf-8") as f:
                     trades = json.load(f)
-                
                 total = len(trades)
                 wins = sum(1 for t in trades if t.get('is_win', False))
                 pnl = sum(t.get('profit_usdt', t.get('pnl', 0)) for t in trades)
                 win_rate = (wins / total * 100) if total > 0 else 0
-                
-                self.lbl_stat_trades.configure(text=f"Всего закрытых сделок: {total} (➕ {wins} | ➖ {total-wins})")
-                
-                wr_color = "green" if win_rate >= 50 else "red"
-                self.lbl_stat_winrate.configure(text=f"Win-Rate: {win_rate:.1f}%", text_color=wr_color)
-                
-                pnl_color = "green" if pnl >= 0 else "red"
+                self.lbl_stat_trades.value = f"Сделок: {total}"
+                self.lbl_stat_winrate.value = f"Win-Rate: {win_rate:.1f}%"
+                self.lbl_stat_winrate.color = C_GREEN if win_rate >= 50 else C_RED
                 sign = "+" if pnl >= 0 else ""
-                self.lbl_stat_pnl.configure(text=f"PNL: {sign}${pnl:.2f}", text_color=pnl_color)
+                self.lbl_stat_pnl.value = f"PnL: {sign}${pnl:.2f}"
+                self.lbl_stat_pnl.color = C_GREEN if pnl >= 0 else C_RED
+                
+                from entry_gate import get_funnel_summary
+                funnel = get_funnel_summary()
+                funnel_text = (
+                    f"Воронка: Сигналы={funnel.get('SIGNAL_FOUND',0)} "
+                    f"-> Gate={funnel.get('ENTRY_GATE_PASS',0)}/{funnel.get('ENTRY_GATE_FAIL',0)} "
+                    f"-> ML={funnel.get('ML_PASS',0)}/{funnel.get('ML_FAIL',0)} "
+                    f"-> Ордера={funnel.get('ORDER_SUCCESS',0)}/{funnel.get('ORDER_FAIL',0)}"
+                )
+                self.lbl_stat_funnel.value = funnel_text
+                self.page.update()
             except Exception as e:
-                self.log_message(f"Ошибка чтения аналитики: {e}")
+                self.log_message(f"Ошибка аналитики: {e}")
 
-    def update_history_loop(self):
-        if os.path.exists(HISTORY_FILE):
+    async def update_history_loop(self):
+        last_hist = ""
+        while True:
+            if os.path.exists(HISTORY_FILE):
+                try:
+                    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                        hist = f.read()
+                    if hist != last_hist:
+                        last_hist = hist
+                        self.history_list.controls.clear()
+                        for line in hist.split('\n'):
+                            if line.strip():
+                                color = C_TEXT_DIM
+                                if "[V]" in line or "Успешно" in line: color = C_GREEN
+                                elif "[X]" in line or "ОШИБКА" in line: color = C_RED
+                                self.history_list.controls.append(
+                                    ft.Container(
+                                        content=ft.Text(line, size=11, color=color, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS),
+                                        padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                                        bgcolor=C_SURFACE2,
+                                        border_radius=4,
+                                    )
+                                )
+                        self.page.update()
+                except Exception:
+                    pass
+            await asyncio.sleep(5)
+
+    def start_bot(self, e=None):
+        if os.path.exists("stop.flag"):
             try:
-                with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                    hist = f.read()
-                current_text = self.history_txt.get("1.0", "end-1c")
-                if current_text != hist:
-                    self.history_txt.delete("1.0", "end")
-                    self.history_txt.insert("end", hist)
-                    self.history_txt.see("end")
+                os.remove("stop.flag")
             except Exception:
                 pass
-        self.after(5000, self.update_history_loop)
-
-    def start_bot(self):
-        if os.path.exists("stop.flag"):
-            os.remove("stop.flag")
-            
         if self.bot_process is None:
-            self.log_message("[СИСТЕМА] Запуск торгового ядра (Фьючерсы)...")
-            self.lbl_status.configure(text="СТАТУС: АКТИВЕН", text_color="green")
-            self.btn_start.configure(state="disabled")
-            self.btn_stop.configure(state="normal")
-            self.btn_graceful.configure(state="normal")
-            
+            self.log_message("[СИСТЕМА] Запуск торгового ядра...", "info")
+            self.lbl_status.content = ft.Text("АКТИВЕН", size=11, weight=ft.FontWeight.W_700, color=C_GREEN)
+            self.lbl_status.bgcolor = ft.Colors.with_opacity(0.15, C_GREEN)
+            self.btn_start.visible = False
+            self.btn_graceful.visible = True
+            self.btn_stop.visible = True
+            self.page.update()
             import sys
             base_dir = os.path.dirname(os.path.abspath(__file__))
             main_script = os.path.join(base_dir, "main.py")
             self.bot_process = subprocess.Popen(
-                [sys.executable, "-u", main_script],
-                cwd=base_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
+                [sys.executable, "-u", main_script], cwd=base_dir,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
-            
             threading.Thread(target=self.read_output, daemon=True).start()
 
     def read_output(self):
         while self.bot_process is not None:
-            line = self.bot_process.stdout.readline()
-            if not line:
+            try:
+                line = self.bot_process.stdout.readline()
+                if not line:
+                    break
+                self.log_message(line.strip())
+            except Exception:
                 break
-            self.after(0, self.log_message, line.strip())
-            
-        self.after(0, self.handle_bot_stop)
+        self.handle_bot_stop()
 
-    def graceful_stop(self):
-        self.log_message("[СИСТЕМА] Запущен режим плавного завершения. Бот не будет открывать новые сделки и закроется после отработки текущих.")
+    def graceful_stop(self, e=None):
+        self.log_message("[ВНИМАНИЕ] Режим плавного завершения. Ожидаем закрытия открытых сделок.", "warning")
         with open("stop.flag", "w") as f:
             f.write("stop")
-        self.lbl_status.configure(text="СТАТУС: ЗАВЕРШЕНИЕ...", text_color="orange")
-        self.btn_graceful.configure(state="disabled")
+        self.lbl_status.content = ft.Text("ЗАВЕРШЕНИЕ...", size=11, weight=ft.FontWeight.W_700, color=C_ORANGE)
+        self.lbl_status.bgcolor = ft.Colors.with_opacity(0.15, C_ORANGE)
+        self.btn_graceful.visible = False
+        self.page.update()
 
-    def stop_bot(self):
+    def stop_bot(self, e=None):
+        """Emergency Stop: Stops local process without closing positions on exchange."""
         if self.bot_process is not None:
-            self.log_message("[СИСТЕМА] Экстренная остановка бота...")
+            self.log_message("[СИСТЕМА] Экстренная остановка бота. Позиции на бирже остаются защищенными SL/TP.", "warning")
             self.bot_process.kill()
             self.bot_process = None
             self.handle_bot_stop()
 
     def handle_bot_stop(self):
-        self.lbl_status.configure(text="Статус: Остановлен", text_color="red")
-        self.btn_start.configure(state="normal")
-        self.btn_stop.configure(state="disabled")
-        self.btn_graceful.configure(state="disabled")
-        self.bot_process = None
+        self.lbl_status.content = ft.Text("ОСТАНОВЛЕН", size=11, weight=ft.FontWeight.W_700, color=C_RED)
+        self.lbl_status.bgcolor = ft.Colors.with_opacity(0.15, C_RED)
+        self.btn_start.visible = True
+        self.btn_graceful.visible = False
+        self.btn_stop.visible = False
+        try:
+            self.page.update()
+        except Exception:
+            pass
 
-    def on_closing(self):
-        if self.bot_process is not None:
-            try:
-                self.bot_process.kill()
-            except:
-                pass
-        self.destroy()
+    def download_console(self, e=None):
+        lines = [item.get('raw', '') for item in self.raw_logs]
+        if lines:
+            out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloaded_console_log.txt")
+            with open(out, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines))
+            self.log_message(f"[СИСТЕМА] Лог сохранён: {out}", "info")
+        else:
+            self.log_message("[ОШИБКА] Лог пуст.", "error")
+
+    def download_detailed_trades(self, e=None):
+        import shutil
+        base = os.path.dirname(os.path.abspath(__file__))
+        if os.path.exists("detailed_trades.jsonl"):
+            out = os.path.join(base, "downloaded_detailed_trades.jsonl")
+            shutil.copy("detailed_trades.jsonl", out)
+            self.log_message(f"[СИСТЕМА] Отчёт сохранён: {out}", "info")
+        elif os.path.exists("trade_history.txt"):
+            out = os.path.join(base, "downloaded_trade_report.txt")
+            shutil.copy("trade_history.txt", out)
+            self.log_message(f"[СИСТЕМА] Отчёт сохранён: {out}", "info")
+        else:
+            self.log_message("[ОШИБКА] Отчёт не создан.", "error")
+
+def main(page: ft.Page):
+    app = AlgoBotApp(page)
 
 if __name__ == "__main__":
-    app = AlgoBotApp()
-    app.mainloop()
+    ft.run(main)

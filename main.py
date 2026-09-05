@@ -2,27 +2,34 @@ import time
 import os
 import concurrent.futures
 import threading
-from config import logger, SYMBOLS, TIMEFRAME, TRADE_SIZE_USDT, API_KEY, API_SECRET, USE_TESTNET, ML_PROBABILITY_THRESHOLD
+from config import (
+    logger, SYMBOLS, TIMEFRAME, TRADE_SIZE_USDT, 
+    API_KEY, API_SECRET, USE_TESTNET, USE_COMPOUNDING, COMPOUND_PCT
+)
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
 from ml_filter import MLFilter
 from executor import TraderExecutor
 from telegram_notifier import TelegramNotifier
 from trend_helper import get_global_trend
+from entry_gate import record_funnel_event, get_funnel_summary
 
 execute_lock = threading.Lock()
-processed_signals = {}
+signal_tracker_lock = threading.Lock()
+# Signal state machine: sig_key -> {'status': str, 'candle_time': timestamp, 'attempts': int}
+# States: CANDIDATE, ML_REJECTED, EXECUTION_FAILED, EXECUTED, UNKNOWN
+signal_states = {}
 
-def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance):
+def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance, positions_snapshot):
     try:
-        status = executor.check_position_status(symbol)
+        status = executor.check_position_status(symbol, cached_positions=positions_snapshot)
         if status is True or status == "UNKNOWN":
             logger.debug(f"[{symbol}] Бот находится в открытой сделке или статус неизвестен. Ожидание...")
             return
 
         # Шаг 1: Получаем рыночные данные
         df = fetcher.get_historical_klines(symbol, TIMEFRAME, limit=1000)
-        if df is None:
+        if df is None or df.empty:
             return
 
         # Шаг 2: Бот №1 (Теханализ) генерирует сигнал и признаки
@@ -33,78 +40,117 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
 
         current_state = analyzed_data.iloc[-1]
         
-        ta_signal = current_state['ta_signal']
+        ta_signal = current_state.get('ta_signal', 0)
         if ta_signal == 0:
             return
             
-        current_time = current_state['timestamp']
+        current_time = current_state.get('timestamp')
         side_str = 'buy' if ta_signal == 1 else 'sell'
         setup_name = current_state.get('ta_setup', 'Сигнал')
         
-        # Duplicate Signal Protection
+        # Signal State Machine (Requirement 6)
         sig_key = f"{symbol}_{current_time}_{side_str}_{setup_name}"
-        with execute_lock:
-            if sig_key in processed_signals:
-                return
-            processed_signals[sig_key] = True
-            if len(processed_signals) > 1000:
-                first_key = next(iter(processed_signals))
-                del processed_signals[first_key]
-            last_processed_candle[symbol] = current_time
+        with signal_tracker_lock:
+            state_info = signal_states.get(sig_key)
+            if state_info:
+                st = state_info.get('status')
+                if st == 'EXECUTED':
+                    return
+                elif st == 'ML_REJECTED':
+                    return
+                elif st == 'UNKNOWN':
+                    return
+                elif st == 'EXECUTION_FAILED':
+                    # Retry allowed only if attempts < 3 and candle is still active
+                    if state_info.get('attempts', 0) >= 3:
+                        return
+                    state_info['attempts'] += 1
+            else:
+                signal_states[sig_key] = {'status': 'CANDIDATE', 'candle_time': current_time, 'attempts': 1}
+                if len(signal_states) > 1000:
+                    first_key = next(iter(signal_states))
+                    del signal_states[first_key]
+                last_processed_candle[symbol] = current_time
 
-        current_price = current_state['close']
-        atr_value = current_state.get('ATRr', 0)
+        current_price = float(current_state.get('close', 0.0))
+        atr_value = float(current_state.get('ATRr', 0.0))
         setup_type = current_state.get('engine_setup')
         engine_context = current_state.get('engine_context')
             
-        setup_name = current_state.get('ta_setup', 'Сигнал')
-        dist_res = current_state.get('DIST_RES_PCT', 0) * 100
-        dist_sup = current_state.get('DIST_SUP_PCT', 0) * 100
+        dist_res = float(current_state.get('DIST_RES_PCT', 0.0)) * 100
+        dist_sup = float(current_state.get('DIST_SUP_PCT', 0.0)) * 100
         sr_info = f"Запас до сопротивления: +{dist_res:.1f}%" if side_str == 'buy' else f"Запас до поддержки: -{dist_sup:.1f}%"
-        
         logger.info(f"[V] {symbol} - 1-й слой: ДА ({setup_name}, {side_str.upper()}) -> Передаю на 2-й слой")
 
-        # Шаг 4: Бот №2 (ИИ) фильтрует сигнал.
+        # Шаг 4: Бот №2 (ИИ) фильтрует сигнал
         is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
         
-        if is_approved:
-            tp_text = f"{dynamic_tp*100:.2f}% (Динамический)" if dynamic_tp else "Стандартный"
-            msg_approved = f"✅ <b>Сигнал ОДОБРЕН ИИ</b>\nМонета: {symbol}\nСетап: {setup_name}\nТип: {side_str.upper()}\nВход: {current_price}\n{sr_info}\nУверенность ИИ: {ai_confidence*100:.1f}%\nТейк-Профит ИИ: {tp_text}\n\nОтправляю ордер..."
-            logger.info(f"[GO] {symbol} - 2-й слой: ДА (уверенность {ai_confidence*100:.1f}%) -> ОТКРЫВАЮ СДЕЛКУ")
-            tg.send_message(msg_approved)
-            
-            # Расчет суммы входа (Авто-реинвестирование)
-            trade_amount = TRADE_SIZE_USDT
-            from config import USE_COMPOUNDING, COMPOUND_PCT
-            if USE_COMPOUNDING and current_usdt_balance is not None:
-                trade_amount = current_usdt_balance * (COMPOUND_PCT / 100.0)
-                logger.info(f"[{symbol}] Авто-реинвестирование: {COMPOUND_PCT}% от {current_usdt_balance:.2f} = {trade_amount:.2f} USDT")
-            
-            # Шаг 5: Исполнение
-            with execute_lock:
-                # Double-check locking
-                double_check_status = executor.check_position_status(symbol)
-                if double_check_status is True or double_check_status == "UNKNOWN":
-                    logger.warning(f"[{symbol}] Позиция уже открыта или статус неизвестен (double-check). Пропуск исполнения.")
-                    success = False
+        if not is_approved:
+            with signal_tracker_lock:
+                if sig_key in signal_states:
+                    signal_states[sig_key]['status'] = 'ML_REJECTED'
+            record_funnel_event('ML_FAIL')
+            logger.warning(f"[X] {symbol} - 1-й слой: ДА - 2-й слой: НЕТ (уверенность {ai_confidence*100:.1f}%)")
+            return
+
+        record_funnel_event('ML_PASS')
+        tp_text = f"{dynamic_tp*100:.2f}% (Динамический)" if dynamic_tp else "Стандартный"
+        msg_approved = f"✅ <b>Сигнал ОДОБРЕН ИИ</b>\nМонета: {symbol}\nСетап: {setup_name}\nТип: {side_str.upper()}\nВход: {current_price}\n{sr_info}\nУверенность ИИ: {ai_confidence*100:.1f}%\nТейк-Профит ИИ: {tp_text}\n\nОтправляю ордер..."
+        logger.info(f"[GO] {symbol} - 1-й слой: ДА - 2-й слой: ДА (уверенность {ai_confidence*100:.1f}%) -> ОТКРЫВАЮ СДЕЛКУ")
+        tg.send_message(msg_approved)
+        
+        # Расчет суммы входа (Авто-реинвестирование)
+        trade_amount = TRADE_SIZE_USDT
+        if USE_COMPOUNDING and current_usdt_balance is not None:
+            trade_amount = current_usdt_balance * (COMPOUND_PCT / 100.0)
+            logger.info(f"[{symbol}] Авто-реинвестирование: {COMPOUND_PCT}% от {current_usdt_balance:.2f} = {trade_amount:.2f} USDT")
+        
+        # Шаг 5: Исполнение
+        record_funnel_event('ORDER_ATTEMPT')
+        with execute_lock:
+            # Double-check locking with fresh position check
+            double_check_status = executor.check_position_status(symbol, force_fetch=True)
+            if double_check_status is True or double_check_status == "UNKNOWN":
+                logger.warning(f"[{symbol}] Позиция уже открыта или статус неизвестен (double-check). Пропуск исполнения.")
+                with signal_tracker_lock:
+                    if sig_key in signal_states:
+                        signal_states[sig_key]['status'] = 'UNKNOWN'
+                record_funnel_event('ORDER_FAIL')
+                return
+
+            record_funnel_event('RISK_PASS')
+            success = executor.execute_trade(
+                symbol, side_str, trade_amount, current_price, 
+                atr_value=atr_value, dynamic_tp=dynamic_tp, 
+                setup_type=setup_type, engine_context=engine_context, 
+                ai_confidence=ai_confidence, probs_str=probs_str, 
+                ta_setup=setup_name
+            )
+        
+        with signal_tracker_lock:
+            if sig_key in signal_states:
+                if success:
+                    signal_states[sig_key]['status'] = 'EXECUTED'
+                elif getattr(executor, 'last_error', '') == 'UNKNOWN_AMOUNT':
+                    signal_states[sig_key]['status'] = 'UNKNOWN'
                 else:
-                    success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp, setup_type=setup_type, engine_context=engine_context, ai_confidence=ai_confidence, probs_str=probs_str, ta_setup=setup_name)
-            
-            if success:
-                pos = executor.positions.get(symbol, {})
-                sl = pos.get('sl_price', 0)
-                tp = pos.get('tp_price', 0)
-                logger.info(f"[{symbol}] Сделка и защитные ордера успешно выставлены на бирже.")
-                tg.send_message(f"💰 <b>Сделка {side_str.upper()} по {symbol} открыта!</b>\nВход: {current_price}\nСтоп-Лосс: {sl}\nТейк-Профит: {tp}")
-                # Запись в историю
-                with open("trade_history.txt", "a", encoding="utf-8") as f:
-                    f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_str.upper()} | Вход: {current_price}\n")
-            else:
-                err_reason = getattr(executor, 'last_error', 'Неизвестная ошибка биржи')
-                logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
-                tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
+                    signal_states[sig_key]['status'] = 'EXECUTION_FAILED'
+
+        if success:
+            record_funnel_event('ORDER_SUCCESS')
+            pos = executor.positions.get(symbol, {})
+            sl = pos.get('sl_price', 0)
+            tp = pos.get('tp_price', 0)
+            logger.info(f"[{symbol}] Сделка и защитные ордера успешно выставлены на бирже.")
+            tg.send_message(f"💰 <b>Сделка {side_str.upper()} по {symbol} открыта!</b>\nВход: {current_price}\nСтоп-Лосс: {sl}\nТейк-Профит: {tp}")
+            with open("trade_history.txt", "a", encoding="utf-8") as f:
+                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_str.upper()} | Вход: {current_price}\n")
         else:
-            logger.warning(f"[X] {symbol} - 2-й слой: НЕТ (уверенность {ai_confidence*100:.1f}%)")
+            record_funnel_event('ORDER_FAIL')
+            err_reason = getattr(executor, 'last_error', 'Неизвестная ошибка биржи')
+            logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
+            tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
+
     except Exception as e:
         logger.error(f"[{symbol}] Ошибка в потоке обработки: {e}")
 
@@ -133,7 +179,7 @@ def main():
 
     while True:
         try:
-            # Проверка флага мягкого завершения
+            # Проверка флага мягкого завершения (Graceful Stop)
             if os.path.exists("stop.flag"):
                 active_positions = [sym for sym in SYMBOLS if executor.check_position_status(sym) is True]
                 if not active_positions:
@@ -148,7 +194,6 @@ def main():
 
             # Получение баланса ОДИН раз за цикл, если включено авто-реинвестирование
             current_usdt_balance = None
-            from config import USE_COMPOUNDING
             if USE_COMPOUNDING:
                 try:
                     balance = fetcher.exchange.fetch_balance()
@@ -156,11 +201,15 @@ def main():
                 except Exception as e:
                     logger.error(f"Ошибка получения баланса для реинвестирования: {e}")
 
+            # Single Position Snapshot per cycle for all 25 coins (Requirement 7)
+            positions_snapshot = executor.fetch_all_positions()
+
             # Многопоточная обработка пар
             futures = {
                 thread_executor.submit(
                     process_symbol, 
-                    sym, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance
+                    sym, fetcher, ta_bot, ml_bot, executor, tg, 
+                    last_processed_candle, current_usdt_balance, positions_snapshot
                 ): sym for sym in SYMBOLS
             }
             
