@@ -191,31 +191,12 @@ class EntryGate:
             direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
             
             if LOG_ENTRY_GATE and do_log:
-                logger.info(
-                    f"\\n[ENTRY CHECK REJECT]\\n"
-                    f"SYMBOL={symbol} {direction_str}\\n"
-                    f"SETUP={eng_setup}\\n"
-                    f"SCORE={score}\\n"
-                    f"STRUCTURE_BULL={is_bullish_struct} BEAR={is_bearish_struct}\\n"
-                    f"GLOBAL_TREND={global_trend}\\n"
-                    f"ENTRY_GATE=FAIL\\n"
-                    f"REASON={reject_reason}\\n"
-                )
+                logger.info(f"{symbol} - 1-й слой: НЕТ ({reject_reason})")
             return False, reject_reason
             
         if is_live:
             with stats_lock:
                 entry_stats['ENTRY_GATE_PASS'] += 1
         direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
-        if LOG_ENTRY_GATE and do_log:
-            logger.info(
-                f"\\n[ENTRY CHECK PASS]\\n"
-                f"SYMBOL={symbol} {direction_str}\\n"
-                f"SETUP={eng_setup}\\n"
-                f"SCORE={score}\\n"
-                f"STRUCTURE_BULL={is_bullish_struct} BEAR={is_bearish_struct}\\n"
-                f"GLOBAL_TREND={global_trend}\\n"
-                f"ENTRY_GATE=PASS\\n"
-            )
+        # Успешный проход 1-го слоя будет залогирован в main.py
         return True, "PASS"
-
