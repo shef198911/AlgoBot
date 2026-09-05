@@ -62,7 +62,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         dist_sup = current_state.get('DIST_SUP_PCT', 0) * 100
         sr_info = f"Запас до сопротивления: +{dist_res:.1f}%" if side_str == 'buy' else f"Запас до поддержки: -{dist_sup:.1f}%"
         
-        logger.info(f"✅ {symbol} - 1-й слой: ДА ({setup_name}, {side_str.upper()}) -> Передаю на 2-й слой")
+        logger.info(f"[V] {symbol} - 1-й слой: ДА ({setup_name}, {side_str.upper()}) -> Передаю на 2-й слой")
 
         # Шаг 4: Бот №2 (ИИ) фильтрует сигнал.
         is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
@@ -70,7 +70,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         if is_approved:
             tp_text = f"{dynamic_tp*100:.2f}% (Динамический)" if dynamic_tp else "Стандартный"
             msg_approved = f"✅ <b>Сигнал ОДОБРЕН ИИ</b>\nМонета: {symbol}\nСетап: {setup_name}\nТип: {side_str.upper()}\nВход: {current_price}\n{sr_info}\nУверенность ИИ: {ai_confidence*100:.1f}%\nТейк-Профит ИИ: {tp_text}\n\nОтправляю ордер..."
-            logger.info(f"🚀 {symbol} - 2-й слой: ДА (уверенность {ai_confidence*100:.1f}%) -> ОТКРЫВАЮ СДЕЛКУ")
+            logger.info(f"[GO] {symbol} - 2-й слой: ДА (уверенность {ai_confidence*100:.1f}%) -> ОТКРЫВАЮ СДЕЛКУ")
             tg.send_message(msg_approved)
             
             # Расчет суммы входа (Авто-реинвестирование)
@@ -104,7 +104,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
                 logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
                 tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
         else:
-            logger.warning(f"❌ {symbol} - 2-й слой: НЕТ (уверенность {ai_confidence*100:.1f}%)")
+            logger.warning(f"[X] {symbol} - 2-й слой: НЕТ (уверенность {ai_confidence*100:.1f}%)")
     except Exception as e:
         logger.error(f"[{symbol}] Ошибка в потоке обработки: {e}")
 

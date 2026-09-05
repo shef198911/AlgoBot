@@ -6,7 +6,7 @@ from ta.volume import VolumeWeightedAveragePrice
 from config import logger, TRADING_MODE, MIN_SR_DISTANCE_PCT, MIN_SETUP_SCORE
 from market_structure import MarketStructureEngine, enrich_with_market_structure
 
-
+pd.set_option('future.no_silent_downcasting', True)
 from entry_gate import EntryGate, entry_stats
 class TAStrategy:
     def __init__(self):

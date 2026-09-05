@@ -191,7 +191,7 @@ class EntryGate:
             direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
             
             if LOG_ENTRY_GATE and do_log:
-                logger.info(f"❌ {symbol} - 1-й слой: НЕТ ({reject_reason})")
+                logger.info(f"[X] {symbol} - 1-й слой: НЕТ ({reject_reason})")
             return False, reject_reason
             
         if is_live:
