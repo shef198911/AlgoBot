@@ -1,9 +1,11 @@
 LOG_ENTRY_GATE = True
 import pandas as pd
+import threading
 from config import MIN_SR_DISTANCE_PCT, MIN_SETUP_SCORE, logger
 
 # Global entry statistics
 last_logged_reject = {}
+stats_lock = threading.Lock()
 
 entry_stats = {
     'TA_CANDIDATES': 0,
@@ -23,7 +25,7 @@ entry_stats = {
 
 class EntryGate:
     @staticmethod
-    def validate(row, global_trend, symbol="UNKNOWN", do_log=True):
+    def validate(row, global_trend, symbol="UNKNOWN", do_log=True, is_live=False):
         eng_sig = row.get('engine_signal', 0)
         eng_setup = row.get('engine_setup', 'None')
         score = row.get('SETUP_SCORE', 0)
@@ -32,7 +34,9 @@ class EntryGate:
         if eng_sig == 0 or eng_setup == "None":
             return False, "NO_SIGNAL"
             
-        entry_stats['TA_CANDIDATES'] += 1
+        if is_live:
+            with stats_lock:
+                entry_stats['TA_CANDIDATES'] += 1
             
         ctx = row.get('engine_context', {})
         if not isinstance(ctx, dict):
@@ -170,16 +174,19 @@ class EntryGate:
                     reject_reason = "RSI_OVERSOLD"
 
         if not mandatory_pass:
-            if "BROKEN_LEVEL" in reject_reason: entry_stats['REJECT_NO_BROKEN_LEVEL'] += 1
-            elif "CONFIRMATION" in reject_reason: entry_stats['REJECT_NO_CONFIRMATION'] += 1
-            elif "STRUCTURE" in reject_reason: entry_stats['REJECT_BAD_STRUCTURE'] += 1
-            elif "GLOBAL_TREND" in reject_reason: entry_stats['REJECT_BAD_GLOBAL_TREND'] += 1
-            elif "CANDLE" in reject_reason: entry_stats['REJECT_CANDLE_CLOSE'] += 1
-            elif "SWEEP" in reject_reason: entry_stats['REJECT_NO_REAL_SWEEP'] += 1
-            elif "SCORE" in reject_reason: entry_stats['REJECT_LOW_SCORE'] += 1
-            elif "CLOSE" in reject_reason: entry_stats['REJECT_SR_TOO_CLOSE'] += 1
-            elif "RSI" in reject_reason: entry_stats['REJECT_RSI_EXTREME'] += 1
-            else: entry_stats['REJECT_UNKNOWN_SETUP'] += 1
+            if is_live:
+                with stats_lock:
+                    if "BROKEN_LEVEL" in reject_reason: entry_stats['REJECT_NO_BROKEN_LEVEL'] += 1
+                    elif "CONFIRMATION" in reject_reason: entry_stats['REJECT_NO_CONFIRMATION'] += 1
+                    elif "STRUCTURE" in reject_reason: entry_stats['REJECT_BAD_STRUCTURE'] += 1
+                    elif "GLOBAL_TREND" in reject_reason: entry_stats['REJECT_BAD_GLOBAL_TREND'] += 1
+                    elif "CANDLE" in reject_reason: entry_stats['REJECT_CANDLE_CLOSE'] += 1
+                    elif "SWEEP" in reject_reason: entry_stats['REJECT_NO_REAL_SWEEP'] += 1
+                    elif "SCORE" in reject_reason: entry_stats['REJECT_LOW_SCORE'] += 1
+                    elif "CLOSE" in reject_reason: entry_stats['REJECT_SR_TOO_CLOSE'] += 1
+                    elif "RSI" in reject_reason: entry_stats['REJECT_RSI_EXTREME'] += 1
+                    elif "NOT_IN_RANGE" in reject_reason: entry_stats['REJECT_NOT_IN_RANGE'] += 1
+                    else: entry_stats['REJECT_UNKNOWN_SETUP'] += 1
             
             direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
             
@@ -196,7 +203,9 @@ class EntryGate:
                 )
             return False, reject_reason
             
-        entry_stats['ENTRY_GATE_PASS'] += 1
+        if is_live:
+            with stats_lock:
+                entry_stats['ENTRY_GATE_PASS'] += 1
         direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
         if LOG_ENTRY_GATE and do_log:
             logger.info(

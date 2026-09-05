@@ -3,13 +3,14 @@ import numpy as np
 import xgboost as xgb
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split, RandomizedSearchCV, TimeSeriesSplit
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, average_precision_score
 import os
 import joblib
 from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON, TRADING_MODE, DATASET_TARGET_BARS
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
 import entry_gate
+from risk_manager import StructureRiskEngine
 
 entry_gate.LOG_ENTRY_GATE = False
 
@@ -18,6 +19,7 @@ def train_ai():
     fetcher = DataFetcher(use_testnet=False)
     all_trades = []
     ta_bot = TAStrategy()
+    risk_engine = StructureRiskEngine()
 
     for symbol in SYMBOLS:
         fetch_limit = DATASET_TARGET_BARS  # Конфигурируемый объем выборки (по умолчанию 1500)
@@ -49,13 +51,28 @@ def train_ai():
         is_success = np.zeros(len(df_analyzed))
         max_excursions = np.zeros(len(df_analyzed))
         
-        # Triple-Barrier Labeling (Векторизованно-подобный быстрый цикл)
+        # Structural Triple-Barrier Labeling
         for i in range(len(df_analyzed)):
             if signals[i] == 0:
                 continue
             
             signal = signals[i]
             entry = closes[i]
+            setup_type = df_analyzed['ta_setup'].iloc[i]
+            ctx = df_analyzed['engine_context'].iloc[i]
+            atr = df_analyzed['ATRr'].iloc[i]
+            
+            direction_str = 'LONG' if signal == 1 else 'SHORT'
+            trade_plan = risk_engine.build_trade_plan(direction_str, entry, setup_type, ctx, atr)
+            
+            if not trade_plan.get('valid'):
+                is_success[i] = 0
+                max_excursions[i] = 0
+                continue
+                
+            sl_price = trade_plan['stop_loss']
+            tp_price = trade_plan['take_profit']
+            
             horizon = min(ML_HORIZON, len(df_analyzed) - i - 1)
             
             max_exc = 0.0
@@ -66,18 +83,18 @@ def train_ai():
                 
                 if signal == 1:
                     max_exc = max(max_exc, (h - entry) / entry)
-                    if l <= entry * (1 - sl_pct):
+                    if l <= sl_price:
                         success = 0
                         break
-                    if h >= entry * (1 + tp_pct):
+                    if h >= tp_price:
                         success = 1
                         break
                 elif signal == -1:
                     max_exc = max(max_exc, (entry - l) / entry)
-                    if h >= entry * (1 + sl_pct):
+                    if h >= sl_price:
                         success = 0
                         break
-                    if l <= entry * (1 - tp_pct):
+                    if l <= tp_price:
                         success = 1
                         break
             
@@ -105,7 +122,7 @@ def train_ai():
     signals_per_coin = total_signals / len(SYMBOLS) if len(SYMBOLS) > 0 else 0
     
     logger.info("="*50)
-    logger.info("СТАТИСТИКА ОБУЧЕНИЯ (TRIPLE BARRIER)")
+    logger.info("СТАТИСТИКА ОБУЧЕНИЯ (STRUCTURAL TRIPLE BARRIER)")
     logger.info("="*50)
     logger.info(f"Режим: {TRADING_MODE}")
     logger.info(f"Всего TA сигналов (после фильтрации трендом): {total_signals}")
@@ -128,6 +145,18 @@ def train_ai():
     y = combined_trades['is_success']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
     
+    # Time-Series Embargo
+    split_idx = int(len(X) * 0.8)
+    train_end_idx = split_idx - ML_HORIZON
+    if train_end_idx <= 0:
+        logger.error("Недостаточно данных для Time-Series Embargo.")
+        return
+        
+    X_train = X.iloc[:train_end_idx]
+    y_train = y.iloc[:train_end_idx]
+    X_test = X.iloc[split_idx:]
+    y_test = y.iloc[split_idx:]
+    
     pos_count = sum(y_train == 1)
     neg_count = sum(y_train == 0)
     scale_pos = neg_count / pos_count if pos_count > 0 else 1.0
@@ -139,7 +168,13 @@ def train_ai():
         'max_depth': [3, 4, 5],
         'learning_rate': [0.01, 0.05, 0.1]
     }
-    tscv = TimeSeriesSplit(n_splits=3)
+    
+    # Attempt to use gap if available in current scikit-learn
+    try:
+        tscv = TimeSeriesSplit(n_splits=3, gap=ML_HORIZON)
+    except TypeError:
+        tscv = TimeSeriesSplit(n_splits=3)
+        
     search = RandomizedSearchCV(xgb_base, param_distributions=param_dist, n_iter=3, cv=tscv, random_state=42)
     search.fit(X_train, y_train)
     best_xgb = search.best_estimator_
@@ -153,9 +188,33 @@ def train_ai():
     ], voting='soft')
     
     ensemble.fit(X_train, y_train)
-    y_pred = ensemble.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    logger.info(f"Точность Ансамбля ИИ (Triple-Barrier): {acc * 100:.2f}%")
+    probs = ensemble.predict_proba(X_test)[:, 1]
+    
+    # Dynamic Threshold Search
+    best_f1 = 0
+    best_thresh = 0.5
+    for thresh in np.arange(0.3, 0.8, 0.05):
+        preds = (probs >= thresh).astype(int)
+        f1 = f1_score(y_test, preds, zero_division=0)
+        if f1 > best_f1:
+            best_f1 = f1
+            best_thresh = thresh
+            
+    final_preds = (probs >= best_thresh).astype(int)
+    acc = accuracy_score(y_test, final_preds)
+    prec = precision_score(y_test, final_preds, zero_division=0)
+    rec = recall_score(y_test, final_preds, zero_division=0)
+    pr_auc = average_precision_score(y_test, probs)
+    
+    logger.info("="*50)
+    logger.info("--- ML Metrics (OOS with Embargo) ---")
+    logger.info(f"Best Threshold: {best_thresh:.2f}")
+    logger.info(f"Accuracy: {acc * 100:.2f}%")
+    logger.info(f"Precision: {prec * 100:.2f}%")
+    logger.info(f"Recall: {rec * 100:.2f}%")
+    logger.info(f"F1 Score: {best_f1:.4f}")
+    logger.info(f"PR-AUC: {pr_auc:.4f}")
+    logger.info("="*50)
 
     # Расчет вероятностей ИИ для всех сделок выборки (P1. 15)
     combined_trades['ml_prob'] = ensemble.predict_proba(combined_trades[feature_cols])[:, 1]

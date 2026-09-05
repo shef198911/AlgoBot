@@ -8,8 +8,10 @@ from strategy_ta import TAStrategy
 from ml_filter import MLFilter
 from executor import TraderExecutor
 from telegram_notifier import TelegramNotifier
+from trend_helper import get_global_trend
 
 execute_lock = threading.Lock()
+processed_signals = set()
 
 def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance):
     try:
@@ -24,27 +26,33 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             return
 
         # Шаг 2: Бот №1 (Теханализ) генерирует сигнал и признаки
-        trend_str = fetcher.check_global_trend(symbol)
-        analyzed_data = ta_bot.generate_features_and_signals(df, htf_trend=trend_str, symbol=symbol)
+        trend_str = get_global_trend(fetcher, symbol)
+        analyzed_data = ta_bot.generate_features_and_signals(df, htf_trend=trend_str, symbol=symbol, is_live=True)
         if analyzed_data is None or analyzed_data.empty:
             return
 
         current_state = analyzed_data.iloc[-1]
         
-        # Duplicate Signal Protection
-        current_time = current_state['timestamp']
-        if last_processed_candle[symbol] == current_time:
-            return
-
         ta_signal = current_state['ta_signal']
+        if ta_signal == 0:
+            return
+            
+        current_time = current_state['timestamp']
+        side_str = 'buy' if ta_signal == 1 else 'sell'
+        setup_name = current_state.get('ta_setup', 'Сигнал')
+        
+        # Duplicate Signal Protection
+        sig_key = f"{symbol}_{current_time}_{side_str}_{setup_name}"
+        with execute_lock:
+            if sig_key in processed_signals:
+                return
+            processed_signals.add(sig_key)
+            last_processed_candle[symbol] = current_time
+
         current_price = current_state['close']
         atr_value = current_state.get('ATRr', 0)
         setup_type = current_state.get('engine_setup')
         engine_context = current_state.get('engine_context')
-
-        if ta_signal != 0:
-            last_processed_candle[symbol] = current_time
-            side_str = 'buy' if ta_signal == 1 else 'sell'
             
             setup_name = current_state.get('ta_setup', 'Сигнал')
             dist_res = current_state.get('DIST_RES_PCT', 0) * 100

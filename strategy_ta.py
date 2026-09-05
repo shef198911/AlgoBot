@@ -12,10 +12,24 @@ class TAStrategy:
     def __init__(self):
         self.logger = logger.getChild("TAStrategy")
 
-    def generate_features_and_signals(self, df, htf_trend=None, symbol="UNKNOWN"):
+    def generate_features_and_signals(self, df, htf_trend="RANGE", symbol="UNKNOWN", is_live=False):
+        df = self.calculate_indicators(df)
         if df is None or df.empty:
             return None
 
+        # Установка глобального тренда
+        df['HTF_TREND'] = htf_trend
+        
+        # Расчет структуры рынка
+        df = self.analyze_structure(df)
+
+        df = self.create_signals(df, symbol=symbol, is_live=is_live)
+        
+        # Заполнение пустых значений
+        df.fillna(0, inplace=True)
+        return df
+
+    def calculate_indicators(self, df):
         data = df.copy()
         
         try:
@@ -60,33 +74,32 @@ class TAStrategy:
             data.dropna(inplace=True)
             if data.empty:
                 return None
-
-            # 2. Обогащение полноценным движком рыночной структуры (S/R Zones, State Machine, Breakout-Retest)
-            engine = MarketStructureEngine()
-            data = engine.analyze(data)
-            
-            min_sr = MIN_SR_DISTANCE_PCT if 'MIN_SR_DISTANCE_PCT' in globals() else 0.005
-
-            # 3. Индикаторное подтверждение сетапов от MarketStructureEngine
-
-            results = []
-            symbol_str = symbol
-            total_rows = len(data)
-            for i, (_, row) in enumerate(data.iterrows()):
-                effective_trend = htf_trend if htf_trend is not None else row.get("HTF_TREND", row.get("GLOBAL_TREND", "RANGE"))
-                is_last = (i == total_rows - 1)
-                is_valid, reject_reason = EntryGate.validate(row, effective_trend, symbol_str, do_log=is_last)
-                if is_valid:
-                    results.append((row.get('engine_signal', 0), row.get('engine_setup', 'None')))
-                else:
-                    results.append((0, "None"))
-                    
-            data['ta_signal'] = [r[0] for r in results]
-            data['ta_setup'] = [r[1] for r in results]
-            data['setup_score'] = data['SETUP_SCORE']
-            
+                
             return data
             
         except Exception as e:
-            self.logger.error(f"Ошибка при расчете индикаторов и структуры: {e}")
+            self.logger.error(f"Ошибка при расчете базовых индикаторов: {e}")
             return None
+
+    def analyze_structure(self, df):
+        engine = MarketStructureEngine()
+        return engine.analyze(df)
+
+    def create_signals(self, df, symbol="UNKNOWN", is_live=False):
+        results = []
+        total_rows = len(df)
+        for i, (_, row) in enumerate(df.iterrows()):
+            effective_trend = row.get("HTF_TREND", "RANGE")
+            is_last = (i == total_rows - 1)
+            is_valid, reject_reason = EntryGate.validate(row, effective_trend, symbol, do_log=is_last, is_live=is_live)
+            if is_valid:
+                results.append((row.get('engine_signal', 0), row.get('engine_setup', 'None'), row.get('engine_context', None)))
+            else:
+                results.append((0, "None", None))
+                
+        df['ta_signal'] = [r[0] for r in results]
+        df['ta_setup'] = [r[1] for r in results]
+        df['engine_context'] = [r[2] for r in results]
+        df['setup_score'] = df['SETUP_SCORE']
+        
+        return df

@@ -15,8 +15,10 @@ class TraderExecutor:
         self.risk_engine = StructureRiskEngine()
         self.exchange = exchange_client
         self.positions = {} # Стейт-менеджмент позиций {symbol: {"side": side, "entry": price, "max_profit": 0, "sl_order_id": id, "amount_coin": amount}}
+        self.pending_margins = {}
         import threading
         self.state_lock = threading.Lock()
+        self.capital_lock = threading.Lock()
         self.last_error = ""
         
         try:
@@ -31,13 +33,7 @@ class TraderExecutor:
             self.last_error = err
             return False
             
-
-        current_total_margin = sum(pos.get('margin_required', 0.0) for pos in self.positions.values())
-        if current_total_margin >= MAX_CAPITAL_USDT:
-            err = f"Лимит капитала исчерпан! Макс: {MAX_CAPITAL_USDT} USDT, используется: {current_total_margin:.2f} USDT. Пропуск {symbol}."
-            self.logger.warning(err)
-            self.last_error = err
-            return False
+        # Margins will be calculated below
 
         position_opened = False
         actual_position_amount = None
@@ -88,6 +84,15 @@ class TraderExecutor:
                 self.last_error = "Рассчитанный объем позиции (amount_coin) <= 0"
                 return False
 
+            with self.capital_lock:
+                current_total_margin = sum(pos.get('margin_required', 0.0) for pos in self.positions.values()) + sum(self.pending_margins.values())
+                if current_total_margin + margin_required > MAX_CAPITAL_USDT:
+                    err = f"Лимит капитала исчерпан! Макс: {MAX_CAPITAL_USDT} USDT, исп: {current_total_margin:.2f} USDT (с ожидаемыми). Пропуск {symbol}."
+                    self.logger.warning(err)
+                    self.last_error = err
+                    return False
+                self.pending_margins[symbol] = margin_required
+
             self.logger.info(f"Подготовка {side.upper()} ордера: {amount_coin} {symbol} (Lev: {LEVERAGE}x)")
 
             # Save plan to use it for protective orders
@@ -132,8 +137,9 @@ class TraderExecutor:
                     self.logger.error(f"Не удалось получить фактический объем позиции для {symbol}: {pos_e}")
             
             if actual_position_amount <= 0:
-                actual_position_amount = amount_coin
-                self.logger.warning(f"Используем расчетный объем {actual_position_amount}, так как не удалось получить фактический.")
+                self.logger.critical(f"Не удалось подтвердить объем открытой позиции для {symbol}. Пропуск SL/TP для восстановления.")
+                self.last_error = "UNKNOWN_AMOUNT"
+                return False
 
             sl_order_id = None
             tp_order_id = None
@@ -193,6 +199,11 @@ class TraderExecutor:
                 self.logger.critical(f"КРИТИЧЕСКИ: Ошибка ПОСЛЕ открытия позиции {symbol}. Экстренное закрытие!")
                 self.emergency_close(symbol)
             return False
+        finally:
+            with self.capital_lock:
+                if symbol in self.pending_margins:
+                    del self.pending_margins[symbol]
+
 
     def _save_live_state(self):
         with self.state_lock:
@@ -245,35 +256,48 @@ class TraderExecutor:
                     
                     if not loaded_from_state:
                         self.positions[symbol] = {"side": active_pos['side'].lower(), "entry": float(active_pos['entryPrice']), "max_price": float(active_pos['entryPrice']), "min_price": float(active_pos['entryPrice']), "sl_order_id": None, "sl_price": 0, "tp_order_id": None, "tp_price": 0, "amount": abs(float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0))))}
-                        try:
-                            open_orders = self.exchange.fetch_open_orders(symbol)
-                            for o in open_orders:
-                                o_type = o['type'].lower()
-                                if 'stop' in o_type:
-                                    self.positions[symbol]['sl_order_id'] = o['id']
-                                    self.positions[symbol]['sl_price'] = float(o.get('stopPrice') or 0)
-                                elif 'take_profit' in o_type:
-                                    self.positions[symbol]['tp_order_id'] = o['id']
-                                    self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
-                        except Exception as e:
-                            self.logger.warning(f"Не удалось восстановить SL/TP ордера: {e}")
+                        
+                # Вне зависимости от state, сверяем открытые ордера (verification)
+                try:
+                    open_orders = self.exchange.fetch_open_orders(symbol)
+                    found_sl = None
+                    found_tp = None
+                    
+                    for o in open_orders:
+                        o_type = o['type'].lower()
+                        if 'stop' in o_type:
+                            found_sl = o['id']
+                            self.positions[symbol]['sl_price'] = float(o.get('stopPrice') or 0)
+                        elif 'take_profit' in o_type:
+                            found_tp = o['id']
+                            self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
                             
-                        if not self.positions[symbol].get('sl_order_id'):
-                            try:
-                                market_id = symbol.replace('/', '').split(':')[0]
-                                algo_orders = self.exchange.fapiPrivateGetOpenAlgoOrders({'symbol': market_id})
-                                for ao in algo_orders:
-                                    ao_type = ao.get('orderType', '').lower()
-                                    if 'stop' in ao_type and not self.positions[symbol].get('sl_order_id'):
-                                        self.positions[symbol]['sl_order_id'] = str(ao.get('algoId'))
-                                        self.positions[symbol]['sl_price'] = float(ao.get('triggerPrice') or 0)
-                                    elif 'take_profit' in ao_type and not self.positions[symbol].get('tp_order_id'):
-                                        self.positions[symbol]['tp_order_id'] = str(ao.get('algoId'))
-                                        self.positions[symbol]['tp_price'] = float(ao.get('triggerPrice') or 0)
-                            except Exception:
-                                pass
+                    # Если ордер был в state, но его нет на бирже, он будет перезаписан в None и восстановлен
+                    if self.positions[symbol].get('sl_order_id') != found_sl:
+                        self.logger.warning(f"Сброс SL order ID для {symbol}, не совпадает с биржей.")
+                        self.positions[symbol]['sl_order_id'] = found_sl
+                    if self.positions[symbol].get('tp_order_id') != found_tp:
+                        self.logger.warning(f"Сброс TP order ID для {symbol}, не совпадает с биржей.")
+                        self.positions[symbol]['tp_order_id'] = found_tp
+                        
+                except Exception as e:
+                    self.logger.warning(f"Не удалось верифицировать SL/TP ордера: {e}")
+                    
+                if not self.positions[symbol].get('sl_order_id'):
+                    try:
+                        market_id = symbol.replace('/', '').split(':')[0]
+                        algo_orders = self.exchange.fapiPrivateGetOpenAlgoOrders({'symbol': market_id})
+                        for ao in algo_orders:
+                            ao_type = ao.get('orderType', '').lower()
+                            if 'stop' in ao_type and not self.positions[symbol].get('sl_order_id'):
+                                self.positions[symbol]['sl_order_id'] = str(ao.get('algoId'))
+                                self.positions[symbol]['sl_price'] = float(ao.get('triggerPrice') or 0)
+                            elif 'take_profit' in ao_type and not self.positions[symbol].get('tp_order_id'):
+                                self.positions[symbol]['tp_order_id'] = str(ao.get('algoId'))
+                                self.positions[symbol]['tp_price'] = float(ao.get('triggerPrice') or 0)
+                    except Exception:
+                        pass
 
-                
                 if self.positions[symbol]['sl_order_id'] is None:
                     self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} найдена, но защитный SL не найден. Пробуем восстановить...")
                     
