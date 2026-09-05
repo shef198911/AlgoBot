@@ -106,7 +106,6 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             logger.info(f"[{symbol}] Авто-реинвестирование: {COMPOUND_PCT}% от {current_usdt_balance:.2f} = {trade_amount:.2f} USDT")
         
         # Шаг 5: Исполнение
-        record_funnel_event('ORDER_ATTEMPT')
         with execute_lock:
             # Double-check locking with fresh position check
             double_check_status = executor.check_position_status(symbol, force_fetch=True)
@@ -115,10 +114,8 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
                 with signal_tracker_lock:
                     if sig_key in signal_states:
                         signal_states[sig_key]['status'] = 'UNKNOWN'
-                record_funnel_event('ORDER_FAIL')
                 return
 
-            record_funnel_event('RISK_PASS')
             success = executor.execute_trade(
                 symbol, side_str, trade_amount, current_price, 
                 atr_value=atr_value, dynamic_tp=dynamic_tp, 
@@ -146,8 +143,10 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             with open("trade_history.txt", "a", encoding="utf-8") as f:
                 f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_str.upper()} | Вход: {current_price}\n")
         else:
-            record_funnel_event('ORDER_FAIL')
             err_reason = getattr(executor, 'last_error', 'Неизвестная ошибка биржи')
+            # If not already recorded as RISK_FAIL in executor, record as ORDER_FAIL
+            if "отклонена Risk Engine" not in err_reason and "Лимит капитала исчерпан" not in err_reason and "Worst-case risk" not in err_reason:
+                record_funnel_event('ORDER_FAIL')
             logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
             tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
 
@@ -179,16 +178,16 @@ def main():
 
     while True:
         try:
-            # Проверка флага мягкого завершения (Graceful Stop)
+            # Проверка флага мягкого завершения (Graceful Stop - прекращение новых входов + продолжение управления позициями)
             if os.path.exists("stop.flag"):
-                active_positions = [sym for sym in SYMBOLS if executor.check_position_status(sym) is True]
+                active_positions = [sym for sym in SYMBOLS if executor.check_position_status(sym) in [True, "UNKNOWN"]]
                 if not active_positions:
                     logger.info("✅ Все сделки закрыты. Бот плавно завершает работу.")
                     os.remove("stop.flag")
                     thread_executor.shutdown(wait=False)
                     break
                 else:
-                    logger.info(f"⏳ Режим завершения. Ожидание закрытия сделок: {active_positions}")
+                    logger.info(f"⏳ Режим завершения (STOP). Новые входы заблокированы, управление позициями продолжается: {active_positions}")
                     time.sleep(15)
                     continue
 

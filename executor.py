@@ -10,14 +10,20 @@ from config import (
 )
 from analytics import analytics_manager
 from telegram_notifier import TelegramNotifier
+from entry_gate import record_funnel_event
+from data_fetcher import SafeExchange
 
 tg_notifier = TelegramNotifier()
 
 class TraderExecutor:
-    def __init__(self, exchange_client):
+    def __init__(self, exchange_client, lock=None):
         self.logger = logger.getChild("TraderExecutor")
         self.risk_engine = StructureRiskEngine()
-        self.exchange = exchange_client
+        if isinstance(exchange_client, SafeExchange):
+            self.exchange = exchange_client
+        else:
+            self.exchange = SafeExchange(exchange_client, lock=lock)
+            
         self.positions = {}  # {symbol: {"side": side, "entry": price, "max_price": ..., "sl_order_id": id, "tp_order_id": id, "amount": amount, ...}}
         self.pending_margins = {}
         self.state_lock = threading.Lock()
@@ -56,11 +62,13 @@ class TraderExecutor:
         margin_required = 0.0
 
         try:
-            if symbol not in getattr(self.exchange, 'markets', {}):
-                try:
-                    self.exchange.load_markets()
-                except Exception:
-                    pass
+            markets = getattr(self.exchange, 'markets', None)
+            if isinstance(markets, dict):
+                if symbol not in markets:
+                    try:
+                        self.exchange.load_markets()
+                    except Exception:
+                        pass
                 
             try:
                 self.exchange.set_leverage(LEVERAGE, symbol)
@@ -72,6 +80,7 @@ class TraderExecutor:
             if STRUCTURE_RISK_ENABLED and setup_type and engine_context:
                 trade_plan = self.risk_engine.build_trade_plan(direction_str, current_price, setup_type, engine_context, atr_value)
                 if not trade_plan.get('valid'):
+                    record_funnel_event('RISK_FAIL')
                     err = f"Сделка {symbol} отклонена Risk Engine: {trade_plan.get('reason')}"
                     self.logger.warning(err)
                     self.last_error = err
@@ -79,10 +88,14 @@ class TraderExecutor:
                 
                 risk_distance = trade_plan['risk_distance']
                 amount_coin = risk_usdt / risk_distance
-                amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
+                try:
+                    amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
+                except Exception:
+                    pass
                 
                 worst_case_risk = amount_coin * risk_distance
                 if worst_case_risk > risk_usdt * 1.05:
+                    record_funnel_event('RISK_FAIL')
                     err = f"Worst-case risk {worst_case_risk:.2f} exceeds limit {risk_usdt:.2f} by >5% after precision rounding."
                     self.logger.warning(err)
                     self.last_error = err
@@ -94,21 +107,30 @@ class TraderExecutor:
             else:
                 volume_usdt = risk_usdt * LEVERAGE
                 amount_coin = volume_usdt / current_price
-                amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
+                try:
+                    amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
+                except Exception:
+                    pass
                 margin_required = volume_usdt / LEVERAGE
             
             if amount_coin <= 0:
+                record_funnel_event('RISK_FAIL')
                 self.last_error = "Рассчитанный объем позиции (amount_coin) <= 0"
                 return False
 
             with self.capital_lock:
-                current_total_margin = sum(pos.get('margin_required', 0.0) for pos in self.positions.values()) + sum(self.pending_margins.values())
+                current_total_margin = sum(pos.get('margin_required', 0.0) for pos in self.positions.values() if pos.get('margin_required')) + sum(self.pending_margins.values())
                 if current_total_margin + margin_required > MAX_CAPITAL_USDT:
+                    record_funnel_event('RISK_FAIL')
                     err = f"Лимит капитала исчерпан! Макс: {MAX_CAPITAL_USDT} USDT, исп: {current_total_margin:.2f} USDT (с ожидаемыми). Пропуск {symbol}."
                     self.logger.warning(err)
                     self.last_error = err
                     return False
                 self.pending_margins[symbol] = margin_required
+
+            # Risk Engine and Capital checks passed successfully!
+            record_funnel_event('RISK_PASS')
+            record_funnel_event('ORDER_ATTEMPT')
 
             self.logger.info(f"Подготовка {side.upper()} ордера: {amount_coin} {symbol} (Lev: {LEVERAGE}x)")
 
@@ -127,8 +149,14 @@ class TraderExecutor:
             else:
                 sl_price, tp_price = self.calculate_sl_tp(side, current_price, atr_value, dynamic_tp=dynamic_tp)
 
-            sl_price = float(self.exchange.price_to_precision(symbol, sl_price))
-            tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
+            try:
+                sl_price = float(self.exchange.price_to_precision(symbol, sl_price))
+            except Exception:
+                pass
+            try:
+                tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
+            except Exception:
+                pass
             close_side = 'sell' if side in ['buy', 'long'] else 'buy'
 
             self.logger.info(f"Выставляем рыночный ордер: {amount_coin} {symbol}...")
@@ -138,34 +166,46 @@ class TraderExecutor:
             self.logger.info(f"✅ Базовый ордер исполнен! ID: {order.get('id')}")
 
             actual_price = float(order.get('average') or order.get('price') or current_price)
-            actual_position_amount = float(order.get('filled') or 0.0)
-            
-            # If filled amount is 0 or missing from order result, query exchange positionAmt
-            if actual_position_amount <= 0:
+            actual_side = side
+
+            # ALWAYS query exchange positionAmt as Single Source of Truth after MARKET order
+            for attempt in range(3):
                 try:
-                    positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
-                    for pos in positions:
-                        pos_sym = pos.get('symbol', '')
-                        if pos_sym.split(':')[0] == symbol.split(':')[0]:
-                            amt = float(pos.get('info', {}).get('positionAmt', pos.get('contracts', 0)))
-                            if abs(amt) > 0:
-                                actual_position_amount = abs(amt)
-                                if pos.get('entryPrice'):
-                                    actual_price = float(pos['entryPrice'])
-                                break
+                    positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and isinstance(self.exchange.has, dict) and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
+                    for pos in (positions or []):
+                        if isinstance(pos, dict):
+                            pos_sym = pos.get('symbol', '')
+                            if pos_sym.split(':')[0] == symbol.split(':')[0]:
+                                amt = float(pos.get('info', {}).get('positionAmt', pos.get('contracts', 0)))
+                                if abs(amt) > 0:
+                                    actual_position_amount = abs(amt)
+                                    actual_side = 'buy' if amt > 0 else 'sell'
+                                    if pos.get('entryPrice'):
+                                        actual_price = float(pos['entryPrice'])
+                                    break
+                    if actual_position_amount is not None:
+                        break
                 except Exception as pos_e:
-                    self.logger.error(f"Не удалось получить фактический объем позиции для {symbol}: {pos_e}")
-            
-            # UNKNOWN AMOUNT HANDLING (Requirement 1 & 2)
-            if actual_position_amount <= 0:
-                self.logger.critical(f"КРИТИЧЕСКИ: Не удалось подтвердить объем открытой позиции для {symbol}. Устанавливаем статус UNKNOWN в стейт для recovery.")
+                    self.logger.warning(f"Попытка {attempt+1}/3 получения фактического объема позиции {symbol}: {pos_e}")
+                time.sleep(0.5)
+
+            # Fallback to order filled if exchange positionAmt query failed
+            if actual_position_amount is None:
+                order_filled = float(order.get('filled') or 0.0)
+                if order_filled > 0:
+                    actual_position_amount = order_filled
+
+            # UNKNOWN AMOUNT HANDLING (Requirement 3)
+            # If amount is unknown, set amount=None, status='UNKNOWN', DO NOT record requested amount as actual amount
+            if actual_position_amount is None or actual_position_amount <= 0:
+                self.logger.critical(f"КРИТИЧЕСКИ: Не удалось подтвердить объем открытой позиции для {symbol}. Устанавливаем статус UNKNOWN (amount=None) в стейт для recovery.")
                 self.last_error = "UNKNOWN_AMOUNT"
                 self.positions[symbol] = {
                     'side': side,
                     'entry': float(actual_price),
                     'max_price': float(actual_price),
                     'min_price': float(actual_price),
-                    'amount': float(amount_coin),
+                    'amount': None,
                     'margin_required': margin_required,
                     'sl_order_id': None,
                     'tp_order_id': None,
@@ -182,15 +222,17 @@ class TraderExecutor:
                     'position_notional': volume_usdt,
                     'leverage': LEVERAGE,
                     'status': 'UNKNOWN',
+                    'empty_checks': 0,
                     'tp_retries': 0
                 }
                 self._save_live_state()
                 return False
 
-            # Partial fill: update margin based on actual filled amount
+            # Partial fill / Actual amount: update margin based on actual filled amount from exchange
             margin_required = (actual_position_amount * actual_price) / LEVERAGE
+            close_side = 'sell' if actual_side in ['buy', 'long'] else 'buy'
 
-            # Protective SL placement (Requirement 3: Scenario C)
+            # Protective SL placement on actual exchange amount (Requirement 6)
             try:
                 sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, actual_position_amount, params={'stopPrice': sl_price, 'reduceOnly': True})
                 sl_order_id = sl_ord['id']
@@ -201,19 +243,23 @@ class TraderExecutor:
                 self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} открыта без SL. Выполняем экстренное закрытие.")
                 self.last_error = "SL_PLACEMENT_FAILED"
                 self.positions[symbol] = {
-                    'side': side,
+                    'side': actual_side,
                     'entry': float(actual_price),
                     'amount': float(actual_position_amount),
                     'margin_required': margin_required,
                     'sl_order_id': None,
                     'tp_order_id': None,
-                    'status': 'UNKNOWN'
+                    'sl_price': float(sl_price),
+                    'tp_price': float(tp_price),
+                    'status': 'UNKNOWN',
+                    'empty_checks': 0,
+                    'tp_retries': 0
                 }
                 self._save_live_state()
-                self.emergency_close(symbol, fallback_amount=actual_position_amount, side=side)
+                self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
                 return False
 
-            # Protective TP placement (Requirement 3: Scenario B)
+            # Protective TP placement on actual exchange amount (Requirement 6)
             try:
                 tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, actual_position_amount, params={'stopPrice': tp_price, 'reduceOnly': True})
                 tp_order_id = tp_ord['id']
@@ -222,7 +268,7 @@ class TraderExecutor:
 
             entry_p = actual_price if actual_price else current_price
             self.positions[symbol] = {
-                'side': side,
+                'side': actual_side,
                 'entry': float(entry_p),
                 'max_price': float(entry_p),
                 'min_price': float(entry_p),
@@ -243,11 +289,12 @@ class TraderExecutor:
                 'position_notional': actual_position_amount * entry_p,
                 'leverage': LEVERAGE,
                 'status': 'OPEN',
+                'empty_checks': 0,
                 'tp_retries': 0
             }
             
             self._save_live_state()
-            self.logger.info(f"Сделка {side.upper()} по {symbol} открыта. Вход: {entry_p}, SL: {sl_price}, TP: {tp_price}, Объем: {actual_position_amount}")
+            self.logger.info(f"Сделка {actual_side.upper()} по {symbol} открыта. Вход: {entry_p}, SL: {sl_price}, TP: {tp_price}, Объем: {actual_position_amount}")
             return True
 
         except Exception as e:
@@ -294,11 +341,12 @@ class TraderExecutor:
     def check_position_status(self, symbol, cached_positions=None, force_fetch=False):
         """
         Verifies position status using exchange positionAmt as Single Source of Truth.
-        Performs recovery for missing SL/TP and handles trailing stop.
+        Performs recovery for missing SL/TP, protects against transient empty snapshots,
+        and handles trailing stop.
         """
         try:
             if force_fetch or cached_positions is None:
-                positions = self.exchange.fetch_positions()
+                positions = self.fetch_all_positions()
             else:
                 positions = cached_positions
 
@@ -317,7 +365,7 @@ class TraderExecutor:
                             break
             
             if active_pos:
-                # Exchange positionAmt is Source of Truth (Requirement 2 & 9)
+                # Exchange positionAmt is Source of Truth (Requirement 3, 4, 6)
                 exchange_amt = abs(float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0))))
                 raw_amt = float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0)))
                 exchange_side = 'long' if raw_amt > 0 else ('short' if raw_amt < 0 else active_pos.get('side', 'long').lower())
@@ -349,12 +397,23 @@ class TraderExecutor:
                             "amount": exchange_amt,
                             "margin_required": (exchange_amt * entry_price) / LEVERAGE,
                             "status": 'OPEN',
+                            "empty_checks": 0,
                             "tp_retries": 0
                         }
 
-                # Synchronize amount from exchange
+                # Synchronize amount from exchange & reset empty checks
                 self.positions[symbol]['amount'] = exchange_amt
-                self.positions[symbol]['margin_required'] = (exchange_amt * (self.positions[symbol].get('entry') or entry_price)) / LEVERAGE
+                self.positions[symbol]['empty_checks'] = 0
+                if entry_price > 0 and (not self.positions[symbol].get('entry') or self.positions[symbol].get('entry') == 0):
+                    self.positions[symbol]['entry'] = entry_price
+                
+                cur_entry = self.positions[symbol].get('entry') or entry_price
+                if 'max_price' not in self.positions[symbol]:
+                    self.positions[symbol]['max_price'] = cur_entry
+                if 'min_price' not in self.positions[symbol]:
+                    self.positions[symbol]['min_price'] = cur_entry
+                    
+                self.positions[symbol]['margin_required'] = (exchange_amt * cur_entry) / LEVERAGE
 
                 # Verify open orders on exchange
                 found_sl = None
@@ -400,7 +459,7 @@ class TraderExecutor:
                     except Exception:
                         pass
 
-                # RECOVERY LOGIC (Requirements 1, 2, 3)
+                # RECOVERY LOGIC (Requirements 4 & 6)
                 if self.positions[symbol].get('sl_order_id') is None or self.positions[symbol].get('tp_order_id') is None:
                     pos_data = self.positions[symbol]
                     cur_entry = pos_data.get('entry') or entry_price
@@ -422,10 +481,16 @@ class TraderExecutor:
                     else:
                         sl_p, tp_p = self.calculate_sl_tp(pos_side, cur_entry, atr_val)
                         
-                    sl_p = float(self.exchange.price_to_precision(symbol, sl_p))
-                    tp_p = float(self.exchange.price_to_precision(symbol, tp_p))
+                    try:
+                        sl_p = float(self.exchange.price_to_precision(symbol, sl_p))
+                    except Exception:
+                        pass
+                    try:
+                        tp_p = float(self.exchange.price_to_precision(symbol, tp_p))
+                    except Exception:
+                        pass
 
-                    # 1. Missing SL Recovery -> Must be placed on actual exchange_amt (Requirement 2 & 3: Scenario C)
+                    # 1. Missing SL Recovery -> Placed on actual exchange_amt
                     if not pos_data.get('sl_order_id'):
                         self.logger.critical(f"RECOVERY: Восстановление отсутствующего SL для {symbol} на объем {exchange_amt}...")
                         try:
@@ -439,7 +504,7 @@ class TraderExecutor:
                             self.emergency_close(symbol, fallback_amount=exchange_amt, side=pos_side)
                             return "UNKNOWN"
 
-                    # 2. Missing TP Recovery -> Retry TP on actual exchange_amt (Requirement 3: Scenario B)
+                    # 2. Missing TP Recovery -> Retry TP on actual exchange_amt
                     if pos_data.get('sl_order_id') and not pos_data.get('tp_order_id'):
                         pos_data['tp_retries'] = pos_data.get('tp_retries', 0) + 1
                         if pos_data['tp_retries'] <= 5:
@@ -453,6 +518,9 @@ class TraderExecutor:
                                 self.logger.warning(f"RECOVERY: Не удалось выставить TP для {symbol}: {e}")
                         else:
                             self.logger.warning(f"RECOVERY: Превышен лимит попыток TP ({pos_data['tp_retries']}). Позиция остается под защитой SL.")
+
+                    if pos_data.get('sl_order_id') and pos_data.get('status') == 'UNKNOWN':
+                        pos_data['status'] = 'OPEN'
 
                     self._save_live_state()
 
@@ -552,10 +620,23 @@ class TraderExecutor:
 
                 return True
 
-            # Position is closed on exchange
+            # Position not found in active positions snapshot
             if symbol in self.positions:
                 pos_data = self.positions[symbol]
-                self.logger.info(f"🔔 Сделка по {symbol} закрыта.")
+                st = pos_data.get('status', 'OPEN')
+                empty_checks = pos_data.get('empty_checks', 0)
+
+                # Transient empty snapshot protection (Requirements 4 & 5)
+                # Keep UNKNOWN for first 2 empty checks; 3rd empty check confirms closed
+                if empty_checks < 2:
+                    pos_data['empty_checks'] = empty_checks + 1
+                    pos_data['status'] = 'UNKNOWN'
+                    self._save_live_state()
+                    self.logger.warning(f"⚠️ Позиция {symbol} не обнаружена в snapshot (проверка {pos_data['empty_checks']}/3). Сохраняем состояние UNKNOWN для подтверждения.")
+                    return "UNKNOWN"
+
+                # Confirmed closed on exchange after bounded retry confirmations
+                self.logger.info(f"🔔 Сделка по {symbol} подтверждена закрытой.")
                 
                 try:
                     closed_trades = self.exchange.fetch_my_trades(symbol, limit=20)
@@ -638,18 +719,22 @@ class TraderExecutor:
         self.logger.critical(f"EMERGENCY CLOSE INITIATED: {symbol}")
         try:
             active_pos = None
-            try:
-                positions = self.exchange.fetch_positions()
-                for pos in (positions or []):
-                    if isinstance(pos, dict):
-                        pos_sym = pos.get('symbol', '')
-                        if pos_sym.split(':')[0] == symbol.split(':')[0]:
-                            amt = float(pos.get('info', {}).get('positionAmt', pos.get('contracts', 0)))
-                            if abs(amt) > 0:
-                                active_pos = pos
-                                break
-            except Exception as e:
-                self.logger.warning(f"EMERGENCY CLOSE: fetch_positions failed: {e}")
+            for attempt in range(2):
+                try:
+                    positions = self.exchange.fetch_positions()
+                    for pos in (positions or []):
+                        if isinstance(pos, dict):
+                            pos_sym = pos.get('symbol', '')
+                            if pos_sym.split(':')[0] == symbol.split(':')[0]:
+                                amt = float(pos.get('info', {}).get('positionAmt', pos.get('contracts', 0)))
+                                if abs(amt) > 0:
+                                    active_pos = pos
+                                    break
+                    if active_pos:
+                        break
+                except Exception as e:
+                    self.logger.warning(f"EMERGENCY CLOSE: fetch_positions попытка {attempt+1} failed: {e}")
+                time.sleep(0.5)
 
             actual_amt = None
             pos_side = None
@@ -661,33 +746,47 @@ class TraderExecutor:
             elif fallback_amount is not None and fallback_amount > 0:
                 actual_amt = float(fallback_amount)
                 pos_side = str(side).lower() if side else None
-            elif symbol in self.positions:
+            elif symbol in self.positions and self.positions[symbol].get('amount'):
                 pos_data = self.positions[symbol]
-                actual_amt = float(pos_data.get('amount', 0.0))
+                actual_amt = float(pos_data['amount'])
                 pos_side = str(pos_data.get('side', 'buy')).lower()
 
             if not actual_amt or actual_amt <= 0:
-                self.logger.warning(f"EMERGENCY CLOSE: No active position found on exchange or in state for {symbol}.")
+                self.logger.warning(f"EMERGENCY CLOSE: Не удалось определить positionAmt для {symbol}. Переводим в контролируемый UNKNOWN/RECOVERY стейт.")
+                if symbol in self.positions:
+                    self.positions[symbol]['status'] = 'UNKNOWN'
+                    self._save_live_state()
                 return False
 
             if not pos_side:
                 pos_side = str(self.positions.get(symbol, {}).get('side', 'buy')).lower()
 
             close_side = 'sell' if pos_side in ['long', 'buy'] else 'buy'
-            self.logger.critical(f"EMERGENCY CLOSE: Closing {actual_amt} {symbol} ({pos_side}) via {close_side}")
+            self.logger.critical(f"EMERGENCY CLOSE: Закрытие {actual_amt} {symbol} ({pos_side}) через {close_side}")
 
             try:
                 self.exchange.cancel_all_orders(symbol)
             except Exception as e:
-                self.logger.warning(f"EMERGENCY CLOSE: Failed to cancel orders: {e}")
+                self.logger.warning(f"EMERGENCY CLOSE: Не удалось отменить ордера: {e}")
 
-            res = self.exchange.create_market_order(symbol, close_side, actual_amt, params={'reduceOnly': True})
-            self.logger.critical(f"EMERGENCY CLOSE SUCCESS: {res}")
-            
-            if symbol in self.positions:
-                del self.positions[symbol]
-                self._save_live_state()
-            return True
+            try:
+                res = self.exchange.create_market_order(symbol, close_side, actual_amt, params={'reduceOnly': True})
+                self.logger.critical(f"EMERGENCY CLOSE SUCCESS: {res}")
+                
+                if symbol in self.positions:
+                    del self.positions[symbol]
+                    self._save_live_state()
+                return True
+            except Exception as me:
+                self.logger.error(f"EMERGENCY CLOSE MARKET ORDER FAILED for {symbol}: {me}")
+                if symbol in self.positions:
+                    self.positions[symbol]['status'] = 'UNKNOWN'
+                    self._save_live_state()
+                return False
         except Exception as e:
             self.logger.error(f"EMERGENCY CLOSE FAILED for {symbol}: {e}")
+            if symbol in self.positions:
+                self.positions[symbol]['status'] = 'UNKNOWN'
+                self._save_live_state()
             return False
+

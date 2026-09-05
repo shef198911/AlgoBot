@@ -6,6 +6,8 @@ import os
 import re
 import json
 import time
+from data_fetcher import DataFetcher
+from config import API_KEY, API_SECRET, USE_TESTNET
 
 CONFIG_FILE = "config.py"
 HISTORY_FILE = "trade_history.txt"
@@ -37,7 +39,7 @@ class AlgoBotApp:
             visual_density=ft.VisualDensity.COMPACT,
         )
         self.page.padding = 0
-        self.page.window.width = 1300
+        self.page.window.width = 1320
         self.page.window.height = 880
         self.page.fonts = {"Inter": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"}
         
@@ -45,6 +47,9 @@ class AlgoBotApp:
         self._cached_tickers = None
         self._is_refreshing_positions = False
         self._log_counter = 0
+        
+        # Reusable single DataFetcher client to avoid 5-second connection overhead
+        self.fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
         
         # Log store for filtering and deduplication
         self.raw_logs = []  # list of dicts: {category, icon, icon_bg, symbol, text, color, timestamp, count, raw}
@@ -66,7 +71,7 @@ class AlgoBotApp:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 content = f.read()
             mode_match = re.search(r'TRADING_MODE\s*=\s*"([^"]+)"', content)
-            self.current_mode = mode_match.group(1) if mode_match else "SCALPING"
+            self.current_mode = mode_match.group(1) if mode_match else "NORMAL"
             risk_match = re.search(r'RISK_MODE\s*=\s*"([^"]+)"', content)
             self.current_risk = risk_match.group(1) if risk_match else "BALANCED"
             self.current_trade_size = re.search(r'TRADE_SIZE_USDT\s*=\s*([0-9.]+)', content).group(1)
@@ -82,14 +87,14 @@ class AlgoBotApp:
             comp_match = re.search(r'COMPOUND_PCT\s*=\s*([0-9.]+)', content)
             self.current_comp_pct = comp_match.group(1) if comp_match else "2.0"
         except Exception:
-            self.current_mode = "SCALPING"
+            self.current_mode = "NORMAL"
             self.current_risk = "BALANCED"
             self.current_trade_size = "100.0"
             self.current_lev = "20"
             self.current_cap = "500.0"
-            self.current_sl = "0.005"
-            self.current_tp = "0.01"
-            self.current_use_atr = True
+            self.current_sl = "0.02"
+            self.current_tp = "0.04"
+            self.current_use_atr = False
             self.current_use_trail = True
             self.current_use_comp = False
             self.current_comp_pct = "2.0"
@@ -104,8 +109,11 @@ class AlgoBotApp:
         sl, tp = presets.get(risk, ("2.0","4.0"))
         self.input_sl.value = sl
         self.input_tp.value = tp
-        self.page.update()
-        self.log_message(f"[ВНИМАНИЕ] Режим {mode}, Риск {risk}. Сохрани и переобучи ИИ!", "warning")
+        try:
+            self.page.update()
+        except Exception:
+            pass
+        self.log_message(f"[ВНИМАНИЕ] Режим {mode}, Риск {risk}. Сохраните настройки!", "warning")
 
     def save_config(self, e=None):
         try:
@@ -114,8 +122,8 @@ class AlgoBotApp:
             new_size = float(self.input_trade_size.value)
             new_lev = int(self.input_lev.value)
             new_cap = float(self.input_cap.value)
-            new_sl = float(self.input_sl.value) / 100
-            new_tp = float(self.input_tp.value) / 100
+            new_sl = float(self.input_sl.value) / 100.0
+            new_tp = float(self.input_tp.value) / 100.0
             new_atr = "True" if self.sw_atr.value else "False"
             new_trail = "True" if self.sw_trail.value else "False"
             new_comp = "True" if self.sw_comp.value else "False"
@@ -137,26 +145,53 @@ class AlgoBotApp:
             content = re.sub(r'COMPOUND_PCT\s*=\s*[0-9.]+', f'COMPOUND_PCT = {new_comp_pct}', content)
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 f.write(content)
-            self.log_message("[СИСТЕМА] Настройки сохранены.", "info")
-            self.btn_save.text = "Сохранено"
+            self.log_message("[СИСТЕМА] Настройки успешно сохранены.", "info")
+            self.btn_save_text.value = "Сохранено ✓"
             self.btn_save.bgcolor = C_GREEN
-            self.page.update()
-            time.sleep(2)
-            self.btn_save.text = "Сохранить"
-            self.btn_save.bgcolor = C_BLUE
-            self.page.update()
+            try:
+                self.page.update()
+            except Exception:
+                pass
+            def reset_btn():
+                time.sleep(1.5)
+                self.btn_save_text.value = "Сохранить"
+                self.btn_save.bgcolor = C_BLUE
+                try:
+                    self.page.update()
+                except Exception:
+                    pass
+            threading.Thread(target=reset_btn, daemon=True).start()
+            return True
         except Exception as e:
-            self.log_message(f"[ОШИБКА] Не удалось сохранить: {e}", "error")
+            self.log_message(f"[ОШИБКА] Не удалось сохранить конфигурацию: {e}", "error")
+            self.btn_save_text.value = "Ошибка ✕"
+            self.btn_save.bgcolor = C_RED
+            try:
+                self.page.update()
+            except Exception:
+                pass
+            return False
 
     def train_ai(self, e=None):
         if self.bot_process is not None:
-            self.log_message("[ОШИБКА] Сначала останови торговлю!", "error")
+            self.log_message("[ОШИБКА] Сначала остановите торговлю перед запуском обучения!", "error")
             return
-        threading.Thread(target=self.save_config).start()
+        
+        # 1. Synchronously save config and verify before starting training (Requirement 11)
+        save_ok = self.save_config()
+        if not save_ok:
+            self.log_message("[ОШИБКА] Обучение отменено: не удалось сохранить файл конфигурации!", "error")
+            return
+
         self.btn_train.disabled = True
-        self.btn_train.text = "Обучение..."
-        self.page.update()
-        self.log_message("[СИСТЕМА] Запуск обучения ИИ...", "info")
+        self.btn_train_text.value = "Обучение..."
+        self.btn_train.bgcolor = C_SURFACE2
+        try:
+            self.page.update()
+        except Exception:
+            pass
+        self.log_message("[СИСТЕМА] Конфигурация сохранена. Запуск обучения ИИ...", "info")
+        
         def run_train():
             import sys
             base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -170,38 +205,63 @@ class AlgoBotApp:
                 self.log_message(line.strip())
             process.wait()
             if process.returncode == 0:
-                self.log_message("[СИСТЕМА] Обучение завершено! Модель сохранена.", "success")
+                self.log_message("[СИСТЕМА] Обучение завершено! Модель успешно обновлена.", "success")
+                self.btn_train_text.value = "Готово ✓"
+                self.btn_train.bgcolor = C_GREEN
             else:
                 self.log_message(f"[ОШИБКА] Обучение завершилось с кодом {process.returncode}", "error")
+                self.btn_train_text.value = "Ошибка ✕"
+                self.btn_train.bgcolor = C_RED
+            try:
+                self.page.update()
+            except Exception:
+                pass
+            time.sleep(2)
             self.btn_train.disabled = False
-            self.btn_train.text = "Обучить ИИ"
-            self.page.update()
+            self.btn_train_text.value = "Обучить ИИ"
+            self.btn_train.bgcolor = C_ORANGE
+            try:
+                self.page.update()
+            except Exception:
+                pass
+
         threading.Thread(target=run_train, daemon=True).start()
 
     # ──────────────────────────────────────────────
-    #  UI helpers
+    #  UI Layout Helpers
     # ──────────────────────────────────────────────
     def _section_label(self, text, icon=None):
         children = []
         if icon:
             children.append(ft.Icon(icon, size=14, color=C_CYAN))
-        children.append(ft.Text(text, size=10, weight=ft.FontWeight.W_600, color=C_TEXT_DIM))
+        children.append(ft.Text(text, size=11, weight=ft.FontWeight.W_700, color=C_TEXT_DIM))
         return ft.Container(
-            content=ft.Row(children, spacing=4),
-            margin=ft.Margin.only(top=4, bottom=2)
+            content=ft.Row(children, spacing=6),
+            margin=ft.Margin.only(top=8, bottom=2)
         )
 
-    def _styled_field(self, label, value, width=None):
+    def _input_group(self, label_text, control):
+        return ft.Column([
+            ft.Text(label_text, size=12, weight=ft.FontWeight.W_500, color=C_TEXT),
+            control
+        ], spacing=4)
+
+    def _styled_field(self, value, hint_text="", width=None):
         return ft.TextField(
-            label=label, value=value,
+            value=value,
+            hint_text=hint_text,
+            hint_style=ft.TextStyle(size=12, color=C_TEXT_DIM),
             width=width,
             dense=True,
             border_color=C_BORDER,
             focused_border_color=C_CYAN,
             cursor_color=C_CYAN,
             text_size=13,
-            content_padding=8,
-            label_style=ft.TextStyle(size=11, color=C_TEXT_DIM),
+            text_style=ft.TextStyle(size=13, color=C_TEXT),
+            content_padding=ft.Padding.symmetric(horizontal=10, vertical=8),
+            border_radius=6,
+            filled=True,
+            fill_color=C_SURFACE2,
         )
 
     def _action_button(self, text, bgcolor, on_click, icon=None, **kwargs):
@@ -228,72 +288,98 @@ class AlgoBotApp:
     def build_ui(self):
         risk_map_rev = {"CONSERVATIVE": "ЭКОНОМ", "BALANCED": "БАЛАНС", "AGGRESSIVE": "АГРЕССИВ"}
 
-        # Sidebar fields
+        # Clean structured dropdowns without overlapping label overlays
         self.dd_mode = ft.Dropdown(
-            label="Тип торговли",
             options=[ft.dropdown.Option("NORMAL"), ft.dropdown.Option("SCALPING")],
             value=self.current_mode,
             on_select=self.apply_auto_settings, on_text_change=self.apply_auto_settings,
             dense=True, border_color=C_BORDER, focused_border_color=C_CYAN,
-            text_size=13, label_style=ft.TextStyle(size=11, color=C_TEXT_DIM),
+            text_size=13, text_style=ft.TextStyle(size=13, color=C_TEXT),
+            content_padding=ft.Padding.symmetric(horizontal=10, vertical=6),
+            border_radius=6,
+            filled=True, fill_color=C_SURFACE2,
         )
         self.dd_risk = ft.Dropdown(
-            label="Риск-режим",
             options=[ft.dropdown.Option("ЭКОНОМ"), ft.dropdown.Option("БАЛАНС"), ft.dropdown.Option("АГРЕССИВ")],
             value=risk_map_rev.get(self.current_risk, "БАЛАНС"),
             on_select=self.apply_auto_settings, on_text_change=self.apply_auto_settings,
             dense=True, border_color=C_BORDER, focused_border_color=C_CYAN,
-            text_size=13, label_style=ft.TextStyle(size=11, color=C_TEXT_DIM),
+            text_size=13, text_style=ft.TextStyle(size=13, color=C_TEXT),
+            content_padding=ft.Padding.symmetric(horizontal=10, vertical=6),
+            border_radius=6,
+            filled=True, fill_color=C_SURFACE2,
         )
 
-        self.input_trade_size = self._styled_field("Маржа ($)", self.current_trade_size)
-        self.input_lev = self._styled_field("Плечо (x)", self.current_lev)
-        self.input_cap = self._styled_field("Лимит ($)", self.current_cap)
-        self.input_sl = self._styled_field("Stop-Loss %", str(float(self.current_sl)*100))
-        self.input_tp = self._styled_field("Take-Profit %", str(float(self.current_tp)*100))
-        self.input_comp_pct = self._styled_field("% от баланса", self.current_comp_pct)
+        # Styled clean input fields
+        self.input_trade_size = self._styled_field(self.current_trade_size)
+        self.input_lev = self._styled_field(self.current_lev)
+        self.input_cap = self._styled_field(self.current_cap)
+        self.input_sl = self._styled_field(str(float(self.current_sl)*100))
+        self.input_tp = self._styled_field(str(float(self.current_tp)*100))
+        self.input_comp_pct = self._styled_field(self.current_comp_pct)
 
-        self.sw_atr = ft.Switch(label="ATR (динам. TP/SL)", value=self.current_use_atr, active_color=C_CYAN, scale=0.85)
+        # Switches
+        self.sw_atr = ft.Switch(label="ATR (динамический SL/TP)", value=self.current_use_atr, active_color=C_CYAN, scale=0.85)
         self.sw_trail = ft.Switch(label="Трейлинг-Стоп", value=self.current_use_trail, active_color=C_CYAN, scale=0.85)
-        self.sw_comp = ft.Switch(label="Реинвестирование", value=self.current_use_comp, active_color=C_CYAN, scale=0.85)
+        self.sw_comp = ft.Switch(label="Авто-реинвестирование", value=self.current_use_comp, active_color=C_CYAN, scale=0.85)
 
+        # Buttons with dedicated Text controls to avoid modifying .text on ft.Container (Requirement 12)
+        self.btn_save_text = ft.Text("Сохранить", size=12, weight=ft.FontWeight.W_600, color="#FFFFFF", text_align=ft.TextAlign.CENTER)
         self.btn_save = ft.Container(
-            content=ft.Text("Сохранить", size=12, weight=ft.FontWeight.W_600, color="#FFFFFF", text_align=ft.TextAlign.CENTER),
-            bgcolor=C_BLUE, border_radius=6, padding=8,
+            content=self.btn_save_text,
+            bgcolor=C_BLUE, border_radius=6, height=38,
             on_click=lambda e: threading.Thread(target=self.save_config).start(),
             alignment=ft.Alignment(0, 0),
         )
+
+        self.btn_train_text = ft.Text("Обучить ИИ", size=12, weight=ft.FontWeight.W_600, color="#FFFFFF", text_align=ft.TextAlign.CENTER)
         self.btn_train = ft.Container(
-            content=ft.Text("Обучить ИИ", size=12, weight=ft.FontWeight.W_600, color="#FFFFFF", text_align=ft.TextAlign.CENTER),
-            bgcolor=C_ORANGE, border_radius=6, padding=8,
+            content=self.btn_train_text,
+            bgcolor=C_ORANGE, border_radius=6, height=38,
             on_click=self.train_ai,
             alignment=ft.Alignment(0, 0),
         )
 
+        # Left Sidebar with clear typography and clean columns
         sidebar = ft.Container(
             content=ft.Column([
-                ft.Text("AlgoBot AI", size=20, weight=ft.FontWeight.W_700, color=C_CYAN),
-                ft.Text("Панель управления", size=11, color=C_TEXT_DIM),
+                ft.Row([
+                    ft.Icon(ft.Icons.AUTO_AWESOME, size=20, color=C_CYAN),
+                    ft.Text("AlgoBot AI", size=20, weight=ft.FontWeight.W_700, color=C_CYAN),
+                ], spacing=6),
+                ft.Text("Панель управления и риск-менеджмент", size=11, color=C_TEXT_DIM),
+                ft.Divider(color=C_BORDER, height=1),
+
                 self._section_label("ТОРГОВЛЯ", ft.Icons.CANDLESTICK_CHART),
-                self.dd_mode,
-                self.dd_risk,
+                self._input_group("Тип торговли", self.dd_mode),
+                self._input_group("Риск-режим", self.dd_risk),
+
                 self._section_label("КАПИТАЛ", ft.Icons.ACCOUNT_BALANCE_WALLET),
-                ft.Row([self.input_trade_size, self.input_lev], spacing=6),
-                self.input_cap,
+                ft.Row([
+                    ft.Column([ft.Text("Маржа ($)", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_trade_size], spacing=4, expand=1),
+                    ft.Column([ft.Text("Плечо (x)", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_lev], spacing=4, expand=1),
+                ], spacing=8),
+                self._input_group("Лимит капитала ($)", self.input_cap),
+
                 self._section_label("РИСК", ft.Icons.SHIELD),
-                ft.Row([self.input_sl, self.input_tp], spacing=6),
-                self._section_label("PRO ОПЦИИ", ft.Icons.AUTO_AWESOME),
+                ft.Row([
+                    ft.Column([ft.Text("Stop-Loss %", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_sl], spacing=4, expand=1),
+                    ft.Column([ft.Text("Take-Profit %", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_tp], spacing=4, expand=1),
+                ], spacing=8),
+
+                self._section_label("PRO ОПЦИИ", ft.Icons.SETTINGS_SUGGEST),
                 self.sw_atr,
                 self.sw_trail,
                 self.sw_comp,
-                self.input_comp_pct,
+                self._input_group("% реинвестирования", self.input_comp_pct),
+
                 ft.Container(height=6),
                 self.btn_save,
                 ft.Container(height=2),
                 self.btn_train,
-            ], scroll=ft.ScrollMode.AUTO, spacing=4),
-            width=240,
-            padding=12,
+            ], scroll=ft.ScrollMode.AUTO, spacing=6),
+            width=270,
+            padding=14,
             bgcolor=C_SURFACE,
         )
 
@@ -322,13 +408,13 @@ class AlgoBotApp:
             bgcolor=C_SURFACE,
         )
 
-        # Control buttons (Reduced gap)
+        # Control buttons (Distinguished Stop vs Emergency Kill - Requirement 8)
         self.btn_start = self._action_button("Запустить", C_GREEN, self.start_bot, ft.Icons.PLAY_ARROW)
-        self.btn_graceful = self._action_button("Доработать", C_ORANGE, self.graceful_stop, ft.Icons.FLAG)
-        self.btn_stop = self._action_button("Стоп", C_RED, self.stop_bot, ft.Icons.STOP)
+        self.btn_graceful = self._action_button("Стоп (доработать)", C_ORANGE, self.graceful_stop, ft.Icons.STOP_CIRCLE)
+        self.btn_kill = self._action_button("Аварийный Kill", C_RED, self.emergency_kill_bot, ft.Icons.DANGEROUS)
 
         controls_row = ft.Container(
-            content=ft.Row([self.btn_start, self.btn_graceful, self.btn_stop], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
+            content=ft.Row([self.btn_start, self.btn_graceful, self.btn_kill], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
             padding=ft.Padding.symmetric(vertical=4),
         )
 
@@ -472,7 +558,7 @@ class AlgoBotApp:
             return "TRADES"
         elif "RECOVERY" in msg_upper or "ТРЕЙЛИНГ" in msg_upper or "EMERGENCY" in msg_upper or "UNKNOWN" in msg_upper:
             return "RECOVERY"
-        elif "[ОШИБКА" in message or "ERROR" in msg_upper or "CRITICAL" in msg_upper or "СБОЙ" in msg_upper:
+        elif "[ОШИБКА" in message or "ERROR" in msg_upper or "CRITICAL" in msg_upper or "СБОЙ" in msg_upper or "ОТКЛОНЕНА RISK" in msg_upper:
             return "ERRORS"
         elif "[V]" in message or "ОДОБРЕН" in msg_upper or "1-Й СЛОЙ: ДА" in msg_upper:
             return "SIGNALS"
@@ -489,12 +575,12 @@ class AlgoBotApp:
             return (category, "🚀", C_GREEN, symbol, message.replace("[GO]","").strip(), C_GREEN)
         elif "[V]" in message:
             return (category, "✓", C_CYAN, symbol, message.replace("[V]","").strip(), C_CYAN)
-        elif "[X]" in message:
-            return (category, "✕", C_TEXT_DIM, symbol, message.replace("[X]","").strip(), C_TEXT_DIM)
+        elif category == "ERRORS":
+            return (category, "🚨", C_RED, symbol, message, C_RED)
         elif category == "RECOVERY":
             return (category, "⚡", C_PURPLE, symbol, message.replace("[СИСТЕМА]","").strip(), C_PURPLE)
-        elif category == "ERRORS":
-            return (category, "⚠", C_RED, symbol, message, C_RED)
+        elif "[X]" in message:
+            return (category, "✕", C_TEXT_DIM, symbol, message.replace("[X]","").strip(), C_TEXT_DIM)
         elif "[ВНИМАНИЕ]" in message or "WARNING" in message.upper():
             return (category, "⚡", C_ORANGE, symbol, message.replace("[ВНИМАНИЕ]","").strip(), C_ORANGE)
         elif "[СИСТЕМА]" in message or "[INFO]" in message:
@@ -514,8 +600,9 @@ class AlgoBotApp:
         color = log_item.get('color', C_TEXT_DIM)
         ts = log_item.get('timestamp', '')
         count = log_item.get('count', 1)
+        category = log_item.get('category', 'ALL')
 
-        # Extract rejection reason for compact chip
+        # Extract rejection / error reason for compact chip
         reason_match = re.search(r'\(([^)]+)\)', text)
         clean_text = text
         reason_tag = None
@@ -531,7 +618,7 @@ class AlgoBotApp:
                     content=ft.Text(icon, size=11, weight=ft.FontWeight.W_700, color=color, text_align=ft.TextAlign.CENTER),
                     width=20, height=20,
                     border_radius=4,
-                    bgcolor=ft.Colors.with_opacity(0.15, icon_bg),
+                    bgcolor=ft.Colors.with_opacity(0.18, icon_bg if icon_bg else color),
                     alignment=ft.Alignment(0, 0),
                 )
             )
@@ -542,11 +629,11 @@ class AlgoBotApp:
             row_elements.append(ft.Text(symbol, size=11, weight=ft.FontWeight.W_700, color=C_TEXT))
 
         if reason_tag:
-            chip_color = C_RED if "ERROR" in reason_tag or "FAIL" in reason_tag else (C_ORANGE if "TREND" in reason_tag else C_TEXT_DIM)
+            chip_color = C_RED if ("ERROR" in reason_tag or "FAIL" in reason_tag or category == "ERRORS") else (C_ORANGE if "TREND" in reason_tag else C_TEXT_DIM)
             row_elements.append(
                 ft.Container(
                     content=ft.Text(reason_tag, size=9, weight=ft.FontWeight.W_600, color=chip_color),
-                    bgcolor=ft.Colors.with_opacity(0.12, chip_color),
+                    bgcolor=ft.Colors.with_opacity(0.15, chip_color),
                     border_radius=3,
                     padding=ft.Padding.symmetric(horizontal=4, vertical=1),
                 )
@@ -558,7 +645,7 @@ class AlgoBotApp:
                 ft.Text(clean_text, size=11, color=color, overflow=ft.TextOverflow.ELLIPSIS, max_lines=1, expand=True)
             )
 
-        # Repeating count multiplier badge (Requirement 18)
+        # Repeating count multiplier badge
         if count > 1:
             row_elements.append(
                 ft.Container(
@@ -569,9 +656,11 @@ class AlgoBotApp:
                 )
             )
 
+        card_bg = ft.Colors.with_opacity(0.10, C_RED) if category == "ERRORS" else C_SURFACE2
+
         return ft.Container(
             content=ft.Row(row_elements, spacing=6, alignment=ft.MainAxisAlignment.START),
-            bgcolor=C_SURFACE2,
+            bgcolor=card_bg,
             border_radius=4,
             padding=ft.Padding.symmetric(horizontal=8, vertical=4),
         )
@@ -605,7 +694,7 @@ class AlgoBotApp:
         category, icon, icon_bg, symbol, text, color = self._parse_log_entry(message)
         ts = time.strftime("%H:%M:%S")
 
-        # Repeating reject deduplication (Requirement 18)
+        # Repeating reject deduplication
         if category == "REJECTS" and self.raw_logs and self.raw_logs[-1].get('category') == "REJECTS":
             last_item = self.raw_logs[-1]
             if last_item.get('symbol') == symbol and last_item.get('text') == text:
@@ -657,28 +746,17 @@ class AlgoBotApp:
         self.page.set_clipboard("\n".join(lines))
         self.log_message("[СИСТЕМА] Лог скопирован в буфер обмена.", "info")
 
-    def _extract_text(self, control):
-        parts = []
-        if isinstance(control, ft.Text) and control.value:
-            parts.append(control.value)
-        if hasattr(control, 'content') and control.content:
-            parts.append(self._extract_text(control.content))
-        if hasattr(control, 'controls'):
-            for c in control.controls:
-                parts.append(self._extract_text(c))
-        return " ".join(p for p in parts if p)
-
     # ──────────────────────────────────────────────
     #  Бизнес-логика и рендеринг позиций
     # ──────────────────────────────────────────────
     def fetch_balance(self):
         try:
             self.lbl_balance.value = "Баланс: загрузка..."
-            self.page.update()
-            from data_fetcher import DataFetcher
-            from config import API_KEY, API_SECRET, USE_TESTNET
-            fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
-            balance = fetcher.exchange.fetch_balance()
+            try:
+                self.page.update()
+            except Exception:
+                pass
+            balance = self.fetcher.exchange.fetch_balance()
             usdt = balance['total'].get('USDT', 0.0)
             self.lbl_balance.value = f"{usdt:,.2f} USDT"
         except Exception as e:
@@ -699,10 +777,7 @@ class AlgoBotApp:
 
     def _fetch_and_render_positions(self):
         try:
-            from data_fetcher import DataFetcher
-            from config import API_KEY, API_SECRET, USE_TESTNET
-            fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
-            positions = fetcher.exchange.fetch_positions()
+            positions = self.fetcher.exchange.fetch_positions()
             
             st = {}
             if os.path.exists('live_state.json'):
@@ -831,16 +906,13 @@ class AlgoBotApp:
 
     def close_position_manual(self, symbol, side, contracts):
         try:
-            from data_fetcher import DataFetcher
-            from config import API_KEY, API_SECRET, USE_TESTNET
-            fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
             close_side = "sell" if side.upper() == "LONG" else "buy"
             self.log_message(f"[СИСТЕМА] Закрытие позиции {symbol}...", "info")
             try:
-                fetcher.exchange.cancel_all_orders(symbol)
+                self.fetcher.exchange.cancel_all_orders(symbol)
             except Exception:
                 pass
-            fetcher.exchange.create_market_order(symbol, close_side, contracts, params={'reduceOnly': True})
+            self.fetcher.exchange.create_market_order(symbol, close_side, contracts, params={'reduceOnly': True})
             self.log_message(f"[V] Позиция {symbol} закрыта!", "success")
             self._fetch_and_render_positions()
             self.fetch_balance()
@@ -869,6 +941,7 @@ class AlgoBotApp:
                     f"Воронка: Сигналы={funnel.get('SIGNAL_FOUND',0)} "
                     f"-> Gate={funnel.get('ENTRY_GATE_PASS',0)}/{funnel.get('ENTRY_GATE_FAIL',0)} "
                     f"-> ML={funnel.get('ML_PASS',0)}/{funnel.get('ML_FAIL',0)} "
+                    f"-> Risk={funnel.get('RISK_PASS',0)}/{funnel.get('RISK_FAIL',0)} "
                     f"-> Ордера={funnel.get('ORDER_SUCCESS',0)}/{funnel.get('ORDER_FAIL',0)}"
                 )
                 self.lbl_stat_funnel.value = funnel_text
@@ -916,7 +989,7 @@ class AlgoBotApp:
             self.lbl_status.bgcolor = ft.Colors.with_opacity(0.15, C_GREEN)
             self.btn_start.visible = False
             self.btn_graceful.visible = True
-            self.btn_stop.visible = True
+            self.btn_kill.visible = True
             self.page.update()
             import sys
             base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -940,18 +1013,28 @@ class AlgoBotApp:
         self.handle_bot_stop()
 
     def graceful_stop(self, e=None):
-        self.log_message("[ВНИМАНИЕ] Режим плавного завершения. Ожидаем закрытия открытых сделок.", "warning")
+        """
+        Graceful Stop (Requirement 8): Stops new entries while keeping position management,
+        SL/TP protection, recovery, and trailing active until all positions are flat.
+        """
+        self.log_message("[ВНИМАНИЕ] Режим плавного завершения. Новые входы остановлены, открытые позиции продолжают управляться до закрытия.", "warning")
         with open("stop.flag", "w") as f:
             f.write("stop")
         self.lbl_status.content = ft.Text("ЗАВЕРШЕНИЕ...", size=11, weight=ft.FontWeight.W_700, color=C_ORANGE)
         self.lbl_status.bgcolor = ft.Colors.with_opacity(0.15, C_ORANGE)
         self.btn_graceful.visible = False
-        self.page.update()
+        try:
+            self.page.update()
+        except Exception:
+            pass
 
-    def stop_bot(self, e=None):
-        """Emergency Stop: Stops local process without closing positions on exchange."""
+    def emergency_kill_bot(self, e=None):
+        """
+        Explicit Emergency Kill action: Terminates the local Python bot process immediately.
+        Orders on exchange remain placed.
+        """
         if self.bot_process is not None:
-            self.log_message("[СИСТЕМА] Экстренная остановка бота. Позиции на бирже остаются защищенными SL/TP.", "warning")
+            self.log_message("[СИСТЕМА] Принудительный сброс (Kill) локального процесса. Позиции на бирже остаются защищенными SL/TP.", "warning")
             self.bot_process.kill()
             self.bot_process = None
             self.handle_bot_stop()
@@ -961,7 +1044,7 @@ class AlgoBotApp:
         self.lbl_status.bgcolor = ft.Colors.with_opacity(0.15, C_RED)
         self.btn_start.visible = True
         self.btn_graceful.visible = False
-        self.btn_stop.visible = False
+        self.btn_kill.visible = False
         try:
             self.page.update()
         except Exception:

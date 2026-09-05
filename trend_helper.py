@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from ta.trend import EMAIndicator, ADXIndicator
-from config import TRADING_MODE, TREND_TIMEFRAME
+from config import TRADING_MODE, TREND_TIMEFRAME, HTF_TREND_HISTORY_LIMIT
 
 def evaluate_trend(fast, slow, close, adx_val):
     if (pd.isna(fast) or pd.isna(slow) or pd.isna(close) or pd.isna(adx_val) or 
@@ -23,7 +23,9 @@ def evaluate_trend(fast, slow, close, adx_val):
     else:
         return 'RANGE'
 
-def _get_htf_dataframe(fetcher, symbol, limit=500):
+def _get_htf_dataframe(fetcher, symbol, limit=None):
+    if limit is None:
+        limit = HTF_TREND_HISTORY_LIMIT
     tf = TREND_TIMEFRAME
     if TRADING_MODE == 'SCALPING':
         fast_window, slow_window = 21, 50
@@ -46,8 +48,8 @@ def _get_htf_dataframe(fetcher, symbol, limit=500):
     return df_htf
 
 def get_global_trend(fetcher, symbol):
-    # Live uses same 500-bar limit to ensure EMA and ADX indicator convergence parity with training
-    df_htf = _get_htf_dataframe(fetcher, symbol, limit=500)
+    # Live uses HTF_TREND_HISTORY_LIMIT to ensure EMA and ADX indicator convergence parity with training
+    df_htf = _get_htf_dataframe(fetcher, symbol, limit=HTF_TREND_HISTORY_LIMIT)
     if df_htf is None or df_htf.empty:
         return "UNKNOWN"
         
@@ -64,7 +66,7 @@ def add_global_trend(df, fetcher, symbol):
         return df
 
     tf = TREND_TIMEFRAME
-    df_htf = _get_htf_dataframe(fetcher, symbol, limit=1500)
+    df_htf = _get_htf_dataframe(fetcher, symbol, limit=HTF_TREND_HISTORY_LIMIT)
     
     if df_htf is None or df_htf.empty:
         df['HTF_TREND'] = 'UNKNOWN'

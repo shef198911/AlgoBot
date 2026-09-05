@@ -1,7 +1,12 @@
 ccxt
 pandas
-pandas-ta
+numpy
+ta
 xgboost
 scikit-learn
+joblib
+python-dotenv
+flet
 streamlit
 plotly
+requests

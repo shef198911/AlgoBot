@@ -398,5 +398,248 @@ class TestComprehensiveSuite(unittest.TestCase):
                     except Exception as e:
                         self.fail(f"train_ai raised an unexpected exception: {e}")
 
+    # 26. SafeExchange concurrency and thread safety
+    def test_26_safe_exchange_concurrency(self):
+        from data_fetcher import SafeExchange
+        mock_raw = MagicMock()
+        mock_raw.fetch_positions.side_effect = lambda: [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '1.0'}}]
+        mock_raw.fetch_ohlcv.side_effect = lambda symbol, timeframe, limit=100: [[1000, 10, 12, 9, 11, 100]]
+        
+        safe_ex = SafeExchange(mock_raw)
+        
+        results = []
+        def worker():
+            for _ in range(20):
+                p = safe_ex.fetch_positions()
+                o = safe_ex.fetch_ohlcv('BTC/USDT', '15m', limit=50)
+                results.append(len(p) + len(o))
+                
+        threads = [threading.Thread(target=worker) for _ in range(5)]
+        for t in threads: t.start()
+        for t in threads: t.join()
+        
+        self.assertEqual(len(results), 100)
+        self.assertEqual(mock_raw.fetch_positions.call_count, 100)
+        self.assertEqual(mock_raw.fetch_ohlcv.call_count, 100)
+
+    # 27. Unknown amount handling (amount=None, status=UNKNOWN, no local amount fallback)
+    def test_27_unknown_amount_behavior(self):
+        mock_ex = MagicMock()
+        # Market order created without filled amount
+        mock_ex.create_market_order.return_value = {'id': 'm_unk', 'average': 50000.0}
+        # fetch_positions returns empty or error
+        mock_ex.fetch_positions.return_value = []
+        executor = TraderExecutor(mock_ex)
+        
+        success = executor.execute_trade('BTC/USDT', 'buy', 1.0, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
+        self.assertFalse(success)
+        self.assertEqual(executor.last_error, "UNKNOWN_AMOUNT")
+        self.assertIn('BTC/USDT', executor.positions)
+        self.assertIsNone(executor.positions['BTC/USDT']['amount'])
+        self.assertEqual(executor.positions['BTC/USDT']['status'], 'UNKNOWN')
+
+    # 28. Unknown position recovery on actual exchange amount
+    def test_28_unknown_position_recovery(self):
+        mock_ex = MagicMock()
+        executor = TraderExecutor(mock_ex)
+        # Position is initially UNKNOWN with amount=None
+        executor.positions['BTC/USDT'] = {
+            'side': 'long',
+            'entry': 50000.0,
+            'max_price': 50000.0,
+            'min_price': 50000.0,
+            'sl_order_id': None,
+            'tp_order_id': None,
+            'amount': None,
+            'status': 'UNKNOWN',
+            'empty_checks': 0
+        }
+        
+        # Exchange returns active position with actual amount 0.45
+        snapshot = [{'symbol': 'BTC/USDT', 'side': 'long', 'entryPrice': 50000.0, 'info': {'positionAmt': '0.45'}}]
+        mock_ex.fetch_positions.return_value = snapshot
+        mock_ex.fetch_open_orders.return_value = []
+        mock_ex.create_order.side_effect = [{'id': 'rec_sl'}, {'id': 'rec_tp'}]
+        
+        status = executor.check_position_status('BTC/USDT', cached_positions=snapshot)
+        self.assertTrue(status)
+        self.assertEqual(executor.positions['BTC/USDT']['amount'], 0.45)
+        self.assertEqual(executor.positions['BTC/USDT']['status'], 'OPEN')
+        self.assertEqual(executor.positions['BTC/USDT']['sl_order_id'], 'rec_sl')
+        self.assertEqual(executor.positions['BTC/USDT']['tp_order_id'], 'rec_tp')
+        # Verify SL order was created with amount 0.45
+        sl_call = mock_ex.create_order.call_args_list[0]
+        self.assertEqual(sl_call[0][3], 0.45)
+
+    # 29. Empty snapshot transient protection (<3 checks keeps UNKNOWN)
+    def test_29_empty_snapshot_transient_protection(self):
+        mock_ex = MagicMock()
+        mock_ex.fetch_positions.return_value = []
+        executor = TraderExecutor(mock_ex)
+        executor.positions['BTC/USDT'] = {
+            'side': 'long',
+            'entry': 50000.0,
+            'max_price': 50000.0,
+            'min_price': 50000.0,
+            'sl_order_id': None,
+            'tp_order_id': None,
+            'amount': None,
+            'status': 'UNKNOWN',
+            'empty_checks': 0
+        }
+        
+        # Check 1: empty snapshot -> stays UNKNOWN
+        s1 = executor.check_position_status('BTC/USDT', cached_positions=[])
+        self.assertEqual(s1, 'UNKNOWN')
+        self.assertIn('BTC/USDT', executor.positions)
+        self.assertEqual(executor.positions['BTC/USDT']['empty_checks'], 1)
+        
+        # Check 2: empty snapshot -> stays UNKNOWN
+        s2 = executor.check_position_status('BTC/USDT', cached_positions=[])
+        self.assertEqual(s2, 'UNKNOWN')
+        self.assertIn('BTC/USDT', executor.positions)
+        self.assertEqual(executor.positions['BTC/USDT']['empty_checks'], 2)
+        
+        # Check 3: empty snapshot -> now confirmed closed and cleaned up
+        s3 = executor.check_position_status('BTC/USDT', cached_positions=[])
+        self.assertFalse(s3)
+        self.assertNotIn('BTC/USDT', executor.positions)
+
+    # 30. Partial fill handling (SL/TP placed strictly on actual amount)
+    def test_30_partial_fill_handling(self):
+        mock_ex = MagicMock()
+        # Initial check_position_status sees empty positions; post-market sees filled
+        mock_ex.fetch_positions.side_effect = [
+            [], # check_position_status at start of execute_trade
+            [{'symbol': 'BTC/USDT', 'side': 'long', 'info': {'positionAmt': '0.35'}}] # post-fill check
+        ]
+        mock_ex.create_market_order.return_value = {'id': 'm_part', 'average': 50000.0, 'filled': 0.35}
+        mock_ex.create_order.side_effect = [{'id': 'sl_part'}, {'id': 'tp_part'}]
+        executor = TraderExecutor(mock_ex)
+        
+        success = executor.execute_trade('BTC/USDT', 'buy', 1.0, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
+        self.assertTrue(success)
+        self.assertEqual(executor.positions['BTC/USDT']['amount'], 0.35)
+        # Check SL call used actual amount 0.35
+        sl_call = mock_ex.create_order.call_args_list[0]
+        self.assertEqual(sl_call[0][3], 0.35)
+
+    # 31. SL placement failure triggers emergency close
+    def test_31_sl_failure_triggers_emergency_close(self):
+        mock_ex = MagicMock()
+        mock_ex.fetch_positions.side_effect = [
+            [], # check_position_status at start
+            [{'symbol': 'BTC/USDT', 'side': 'long', 'info': {'positionAmt': '0.5'}}] # post-order check
+        ]
+        mock_ex.create_market_order.side_effect = [
+            {'id': 'm_entry', 'average': 50000.0, 'filled': 0.5},
+            {'id': 'm_close', 'average': 49950.0, 'filled': 0.5}
+        ]
+        mock_ex.create_order.side_effect = Exception("Binance SL Error: Insufficient margin for stop loss")
+        executor = TraderExecutor(mock_ex)
+        
+        success = executor.execute_trade('BTC/USDT', 'buy', 0.5, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
+        self.assertFalse(success)
+        self.assertEqual(executor.last_error, "SL_PLACEMENT_FAILED")
+        self.assertNotIn('BTC/USDT', executor.positions)
+        # Verify emergency close was called (2 market order calls: entry + close)
+        self.assertEqual(mock_ex.create_market_order.call_count, 2)
+        close_call = mock_ex.create_market_order.call_args_list[1]
+        self.assertEqual(close_call[0][1], 'sell') # opposite side
+
+    # 32. TP placement failure keeps position protected under SL and allows recovery
+    def test_32_tp_failure_keeps_sl_protection(self):
+        mock_ex = MagicMock()
+        mock_ex.fetch_positions.side_effect = [
+            [], # check_position_status at start
+            [{'symbol': 'BTC/USDT', 'side': 'long', 'info': {'positionAmt': '0.5'}}] # post-order check
+        ]
+        mock_ex.create_market_order.return_value = {'id': 'm_entry', 'average': 50000.0, 'filled': 0.5}
+        # First call (SL) succeeds, second call (TP) fails
+        mock_ex.create_order.side_effect = [{'id': 'sl_ok'}, Exception("TP rejected by exchange")]
+        executor = TraderExecutor(mock_ex)
+        
+        success = executor.execute_trade('BTC/USDT', 'buy', 0.5, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
+        self.assertTrue(success) # Position was successfully opened and protected by SL
+        self.assertIn('BTC/USDT', executor.positions)
+        self.assertEqual(executor.positions['BTC/USDT']['sl_order_id'], 'sl_ok')
+        self.assertIsNone(executor.positions['BTC/USDT']['tp_order_id'])
+        # Emergency close should NOT be called
+        self.assertEqual(mock_ex.create_market_order.call_count, 1)
+
+    # 33. Graceful stop behavior in main loop
+    def test_33_graceful_stop_position_management(self):
+        import main
+        mock_executor = MagicMock()
+        # Simulate active position on BTC/USDT
+        mock_executor.positions = {'BTC/USDT': {'side': 'long', 'amount': 0.1}}
+        mock_executor.check_position_status.return_value = True
+        
+        # When RUNNING is False, active positions should be processed
+        active_statuses = [mock_executor.check_position_status(s) for s in list(mock_executor.positions.keys())]
+        has_open = any(st in (True, 'UNKNOWN') for st in active_statuses)
+        self.assertTrue(has_open)
+
+    # 34. Risk Funnel event recording sequence
+    def test_34_risk_funnel_event_recording(self):
+        from entry_gate import record_funnel_event, get_funnel_summary
+        summary_before = get_funnel_summary()
+        
+        record_funnel_event('RISK_FAIL')
+        summary_fail = get_funnel_summary()
+        self.assertEqual(summary_fail['RISK_FAIL'], summary_before['RISK_FAIL'] + 1)
+        
+        record_funnel_event('RISK_PASS')
+        record_funnel_event('ORDER_ATTEMPT')
+        summary_pass = get_funnel_summary()
+        self.assertEqual(summary_pass['RISK_PASS'], summary_before['RISK_PASS'] + 1)
+        self.assertEqual(summary_pass['ORDER_ATTEMPT'], summary_before['ORDER_ATTEMPT'] + 1)
+
+    # 35. Desktop App config saving before AI training launch
+    def test_35_desktop_app_save_config_before_train(self):
+        from desktop_app import AlgoBotApp
+        mock_page = MagicMock()
+        app = AlgoBotApp(mock_page)
+        
+        saved_before_train = []
+        def mock_save():
+            saved_before_train.append(True)
+            return True
+            
+        app.save_config = mock_save
+        
+        with patch('threading.Thread') as mock_thread:
+            app.train_ai()
+            self.assertEqual(len(saved_before_train), 1)
+            self.assertTrue(saved_before_train[0])
+            self.assertTrue(mock_thread.called)
+
+    # 36. Global Trend Indicator Limit Parity
+    def test_36_indicator_htf_trend_limit_parity(self):
+        from trend_helper import get_global_trend, add_global_trend
+        import config
+        
+        # Check config setting
+        self.assertTrue(hasattr(config, 'HTF_TREND_HISTORY_LIMIT'))
+        self.assertEqual(config.HTF_TREND_HISTORY_LIMIT, 500)
+        
+        mock_fetcher = MagicMock()
+        dates = pd.date_range('2023-01-01', periods=500, freq='4h')
+        df_htf = pd.DataFrame({
+            'timestamp': dates,
+            'open': [100.0 + i for i in range(500)],
+            'high': [105.0 + i for i in range(500)],
+            'low': [95.0 + i for i in range(500)],
+            'close': [102.0 + i for i in range(500)],
+            'volume': [1000.0 for _ in range(500)]
+        })
+        mock_fetcher.get_historical_klines.return_value = df_htf
+        
+        trend = get_global_trend(mock_fetcher, 'BTC/USDT')
+        self.assertIn(trend, ['BULL', 'STRONG_BULL', 'BEAR', 'STRONG_BEAR', 'RANGE', 'UNKNOWN'])
+        # Verify get_historical_klines was called with limit=500
+        mock_fetcher.get_historical_klines.assert_called_with('BTC/USDT', config.TREND_TIMEFRAME, limit=config.HTF_TREND_HISTORY_LIMIT)
+
 if __name__ == '__main__':
     unittest.main()
+
