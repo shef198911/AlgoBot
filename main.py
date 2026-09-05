@@ -57,55 +57,55 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         setup_type = current_state.get('engine_setup')
         engine_context = current_state.get('engine_context')
             
-            setup_name = current_state.get('ta_setup', 'Сигнал')
-            dist_res = current_state.get('DIST_RES_PCT', 0) * 100
-            dist_sup = current_state.get('DIST_SUP_PCT', 0) * 100
-            sr_info = f"Запас до сопротивления: +{dist_res:.1f}%" if side_str == 'buy' else f"Запас до поддержки: -{dist_sup:.1f}%"
-            
-            logger.info(f"[{symbol}] [Бот 1 - Теханализ] Сигнал {side_str.upper()}! Сетап: {setup_name} ({sr_info}). Цена: {current_price}")
+        setup_name = current_state.get('ta_setup', 'Сигнал')
+        dist_res = current_state.get('DIST_RES_PCT', 0) * 100
+        dist_sup = current_state.get('DIST_SUP_PCT', 0) * 100
+        sr_info = f"Запас до сопротивления: +{dist_res:.1f}%" if side_str == 'buy' else f"Запас до поддержки: -{dist_sup:.1f}%"
+        
+        logger.info(f"[{symbol}] [Бот 1 - Теханализ] Сигнал {side_str.upper()}! Сетап: {setup_name} ({sr_info}). Цена: {current_price}")
 
-            # Шаг 4: Бот №2 (ИИ) фильтрует сигнал.
-            is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
+        # Шаг 4: Бот №2 (ИИ) фильтрует сигнал.
+        is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
+        
+        if is_approved:
+            tp_text = f"{dynamic_tp*100:.2f}% (Динамический)" if dynamic_tp else "Стандартный"
+            msg_approved = f"✅ <b>Сигнал ОДОБРЕН ИИ</b>\nМонета: {symbol}\nСетап: {setup_name}\nТип: {side_str.upper()}\nВход: {current_price}\n{sr_info}\nУверенность ИИ: {ai_confidence*100:.1f}%\nТейк-Профит ИИ: {tp_text}\n\nОтправляю ордер..."
+            logger.info(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОДОБРЕН. Уверенность: {ai_confidence:.2f}. TP: {tp_text}")
+            tg.send_message(msg_approved)
             
-            if is_approved:
-                tp_text = f"{dynamic_tp*100:.2f}% (Динамический)" if dynamic_tp else "Стандартный"
-                msg_approved = f"✅ <b>Сигнал ОДОБРЕН ИИ</b>\nМонета: {symbol}\nСетап: {setup_name}\nТип: {side_str.upper()}\nВход: {current_price}\n{sr_info}\nУверенность ИИ: {ai_confidence*100:.1f}%\nТейк-Профит ИИ: {tp_text}\n\nОтправляю ордер..."
-                logger.info(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОДОБРЕН. Уверенность: {ai_confidence:.2f}. TP: {tp_text}")
-                tg.send_message(msg_approved)
-                
-                # Расчет суммы входа (Авто-реинвестирование)
-                trade_amount = TRADE_SIZE_USDT
-                from config import USE_COMPOUNDING, COMPOUND_PCT
-                if USE_COMPOUNDING and current_usdt_balance is not None:
-                    trade_amount = current_usdt_balance * (COMPOUND_PCT / 100.0)
-                    logger.info(f"[{symbol}] Авто-реинвестирование: {COMPOUND_PCT}% от {current_usdt_balance:.2f} = {trade_amount:.2f} USDT")
-                
-                # Шаг 5: Исполнение
-                with execute_lock:
-                    # Double-check locking
-                    double_check_status = executor.check_position_status(symbol)
-                    if double_check_status is True or double_check_status == "UNKNOWN":
-                        logger.warning(f"[{symbol}] Позиция уже открыта или статус неизвестен (double-check). Пропуск исполнения.")
-                        success = False
-                    else:
-                        success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp, setup_type=setup_type, engine_context=engine_context, ai_confidence=ai_confidence, probs_str=probs_str, ta_setup=setup_name)
-                
-                if success:
-                    pos = executor.positions.get(symbol, {})
-                    sl = pos.get('sl_price', 0)
-                    tp = pos.get('tp_price', 0)
-                    logger.info(f"[{symbol}] Сделка и защитные ордера успешно выставлены на бирже.")
-                    tg.send_message(f"💰 <b>Сделка {side_str.upper()} по {symbol} открыта!</b>\nВход: {current_price}\nСтоп-Лосс: {sl}\nТейк-Профит: {tp}")
-                    # Запись в историю
-                    with open("trade_history.txt", "a", encoding="utf-8") as f:
-                        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_str.upper()} | Вход: {current_price}\n")
+            # Расчет суммы входа (Авто-реинвестирование)
+            trade_amount = TRADE_SIZE_USDT
+            from config import USE_COMPOUNDING, COMPOUND_PCT
+            if USE_COMPOUNDING and current_usdt_balance is not None:
+                trade_amount = current_usdt_balance * (COMPOUND_PCT / 100.0)
+                logger.info(f"[{symbol}] Авто-реинвестирование: {COMPOUND_PCT}% от {current_usdt_balance:.2f} = {trade_amount:.2f} USDT")
+            
+            # Шаг 5: Исполнение
+            with execute_lock:
+                # Double-check locking
+                double_check_status = executor.check_position_status(symbol)
+                if double_check_status is True or double_check_status == "UNKNOWN":
+                    logger.warning(f"[{symbol}] Позиция уже открыта или статус неизвестен (double-check). Пропуск исполнения.")
+                    success = False
                 else:
-                    err_reason = getattr(executor, 'last_error', 'Неизвестная ошибка биржи')
-                    logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
-                    tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
+                    success = executor.execute_trade(symbol, side_str, trade_amount, current_price, atr_value=atr_value, dynamic_tp=dynamic_tp, setup_type=setup_type, engine_context=engine_context, ai_confidence=ai_confidence, probs_str=probs_str, ta_setup=setup_name)
+            
+            if success:
+                pos = executor.positions.get(symbol, {})
+                sl = pos.get('sl_price', 0)
+                tp = pos.get('tp_price', 0)
+                logger.info(f"[{symbol}] Сделка и защитные ордера успешно выставлены на бирже.")
+                tg.send_message(f"💰 <b>Сделка {side_str.upper()} по {symbol} открыта!</b>\nВход: {current_price}\nСтоп-Лосс: {sl}\nТейк-Профит: {tp}")
+                # Запись в историю
+                with open("trade_history.txt", "a", encoding="utf-8") as f:
+                    f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_str.upper()} | Вход: {current_price}\n")
             else:
-                breakdown = f" ({probs_str})" if probs_str else ""
-                logger.warning(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОТКЛОНЕН. Уверенность: {ai_confidence:.2f}{breakdown}. Порог: {ML_PROBABILITY_THRESHOLD}")
+                err_reason = getattr(executor, 'last_error', 'Неизвестная ошибка биржи')
+                logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
+                tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
+        else:
+            breakdown = f" ({probs_str})" if probs_str else ""
+            logger.warning(f"[{symbol}] [Бот 2 - ИИ] Сигнал ОТКЛОНЕН. Уверенность: {ai_confidence:.2f}{breakdown}. Порог: {ML_PROBABILITY_THRESHOLD}")
     except Exception as e:
         logger.error(f"[{symbol}] Ошибка в потоке обработки: {e}")
 
