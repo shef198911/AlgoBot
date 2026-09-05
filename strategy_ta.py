@@ -27,7 +27,7 @@ class TAStrategy:
         df = self.create_signals(df, symbol=symbol, is_live=is_live)
         
         # Заполнение пустых значений
-        df.fillna(0, inplace=True)
+        df = df.fillna(0).infer_objects(copy=False)
         return df
 
     def calculate_indicators(self, df):
