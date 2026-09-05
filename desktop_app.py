@@ -188,7 +188,7 @@ class AlgoBotApp:
         children.append(ft.Text(text, size=10, weight=ft.FontWeight.W_600, color=C_TEXT_DIM))
         return ft.Container(
             content=ft.Row(children, spacing=4),
-            margin=ft.margin.only(top=4, bottom=2)
+            margin=ft.Margin.only(top=4, bottom=2)
         )
 
     def _styled_field(self, label, value, width=None):
@@ -216,7 +216,7 @@ class AlgoBotApp:
             ),
             bgcolor=bgcolor,
             border_radius=6,
-            padding=ft.padding.symmetric(horizontal=12, vertical=8),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=8),
             on_click=on_click,
             animate=ft.Animation(200, ft.AnimationCurve.EASE_IN_OUT),
             **kwargs,
@@ -261,13 +261,13 @@ class AlgoBotApp:
             content=ft.Text("Сохранить", size=12, weight=ft.FontWeight.W_600, color="#FFFFFF", text_align=ft.TextAlign.CENTER),
             bgcolor=C_BLUE, border_radius=6, padding=8,
             on_click=lambda e: threading.Thread(target=self.save_config).start(),
-            alignment=ft.alignment.Alignment(0, 0),
+            alignment=ft.Alignment(0, 0),
         )
         self.btn_train = ft.Container(
             content=ft.Text("Обучить ИИ", size=12, weight=ft.FontWeight.W_600, color="#FFFFFF", text_align=ft.TextAlign.CENTER),
             bgcolor=C_ORANGE, border_radius=6, padding=8,
             on_click=self.train_ai,
-            alignment=ft.alignment.Alignment(0, 0),
+            alignment=ft.Alignment(0, 0),
         )
 
         sidebar = ft.Container(
@@ -303,7 +303,7 @@ class AlgoBotApp:
             content=ft.Text("ОСТАНОВЛЕН", size=11, weight=ft.FontWeight.W_700, color=C_RED),
             bgcolor=ft.Colors.with_opacity(0.15, C_RED),
             border_radius=4,
-            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+            padding=ft.Padding.symmetric(horizontal=8, vertical=4),
         )
 
         header_row = ft.Container(
@@ -318,7 +318,7 @@ class AlgoBotApp:
                                   on_click=lambda e: threading.Thread(target=self.fetch_balance).start()),
                 ], spacing=6),
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=6),
             bgcolor=C_SURFACE,
         )
 
@@ -329,7 +329,7 @@ class AlgoBotApp:
 
         controls_row = ft.Container(
             content=ft.Row([self.btn_start, self.btn_graceful, self.btn_stop], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
-            padding=ft.padding.symmetric(vertical=4),
+            padding=ft.Padding.symmetric(vertical=4),
         )
 
         # Console toolbar with quick filter chips
@@ -348,7 +348,7 @@ class AlgoBotApp:
                                   on_click=self.download_console),
                 ], spacing=0),
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            padding=ft.padding.symmetric(horizontal=10, vertical=4),
+            padding=ft.Padding.symmetric(horizontal=10, vertical=4),
             bgcolor=C_SURFACE2,
             border_radius=ft.BorderRadius(top_left=8, top_right=8, bottom_left=0, bottom_right=0),
         )
@@ -408,7 +408,7 @@ class AlgoBotApp:
             expand=1,
         )
 
-        center = ft.Column([header_row, controls_row, ft.Container(content=tabs, expand=True, padding=ft.padding.symmetric(horizontal=8))], expand=True, spacing=2)
+        center = ft.Column([header_row, controls_row, ft.Container(content=tabs, expand=True, padding=ft.Padding.symmetric(horizontal=8))], expand=True, spacing=2)
 
         # ── RIGHT SIDEBAR (POSITIONS) ──
         self.positions_col = ft.Column(spacing=6, scroll=ft.ScrollMode.AUTO, expand=True)
@@ -450,9 +450,9 @@ class AlgoBotApp:
             chip = ft.Container(
                 content=ft.Text(label, size=10, weight=ft.FontWeight.W_600, color=C_TEXT if is_active else C_TEXT_DIM),
                 bgcolor=ft.Colors.with_opacity(0.2, C_CYAN) if is_active else ft.Colors.TRANSPARENT,
-                border=ft.border.all(1, C_CYAN if is_active else C_BORDER),
+                border=ft.Border.all(1, C_CYAN if is_active else C_BORDER),
                 border_radius=4,
-                padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                padding=ft.Padding.symmetric(horizontal=6, vertical=2),
                 on_click=lambda e, f_code=code: self._set_log_filter(f_code),
             )
             self.filter_chips_row.controls.append(chip)
@@ -532,7 +532,7 @@ class AlgoBotApp:
                     width=20, height=20,
                     border_radius=4,
                     bgcolor=ft.Colors.with_opacity(0.15, icon_bg),
-                    alignment=ft.alignment.Alignment(0, 0),
+                    alignment=ft.Alignment(0, 0),
                 )
             )
 
@@ -548,7 +548,7 @@ class AlgoBotApp:
                     content=ft.Text(reason_tag, size=9, weight=ft.FontWeight.W_600, color=chip_color),
                     bgcolor=ft.Colors.with_opacity(0.12, chip_color),
                     border_radius=3,
-                    padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                    padding=ft.Padding.symmetric(horizontal=4, vertical=1),
                 )
             )
 
@@ -565,7 +565,7 @@ class AlgoBotApp:
                     content=ft.Text(f"×{count}", size=10, weight=ft.FontWeight.W_700, color=C_ORANGE),
                     bgcolor=ft.Colors.with_opacity(0.2, C_ORANGE),
                     border_radius=3,
-                    padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                    padding=ft.Padding.symmetric(horizontal=4, vertical=1),
                 )
             )
 
@@ -573,7 +573,7 @@ class AlgoBotApp:
             content=ft.Row(row_elements, spacing=6, alignment=ft.MainAxisAlignment.START),
             bgcolor=C_SURFACE2,
             border_radius=4,
-            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+            padding=ft.Padding.symmetric(horizontal=8, vertical=4),
         )
 
     def _render_filtered_console(self):
@@ -760,7 +760,7 @@ class AlgoBotApp:
                             ft.Icon(ft.Icons.INBOX, size=18, color=C_TEXT_DIM),
                             ft.Text("Нет активных позиций", size=11, color=C_TEXT_DIM),
                         ], alignment=ft.MainAxisAlignment.CENTER, spacing=6),
-                        alignment=ft.alignment.Alignment(0, 0),
+                        alignment=ft.Alignment(0, 0),
                         padding=12,
                         bgcolor=C_SURFACE2,
                         border_radius=6
@@ -783,7 +783,7 @@ class AlgoBotApp:
                                 ft.Container(
                                     content=ft.Text(p['side'], size=9, weight=ft.FontWeight.W_700, color=side_color),
                                     bgcolor=ft.Colors.with_opacity(0.15, side_color),
-                                    border_radius=3, padding=ft.padding.symmetric(horizontal=5, vertical=2),
+                                    border_radius=3, padding=ft.Padding.symmetric(horizontal=5, vertical=2),
                                 ),
                             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                             ft.Row([
@@ -795,19 +795,19 @@ class AlgoBotApp:
                                 ft.Container(
                                     content=ft.Text(f"SL: {p['sl']} ({'OK' if p['sl_ok'] else 'RECOVERY'})", size=9, color=sl_badge_color),
                                     bgcolor=ft.Colors.with_opacity(0.12, sl_badge_color),
-                                    border_radius=3, padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                                    border_radius=3, padding=ft.Padding.symmetric(horizontal=4, vertical=1),
                                 ),
                                 ft.Container(
                                     content=ft.Text(f"TP: {p['tp']} ({'OK' if p['tp_ok'] else '...' })", size=9, color=tp_badge_color),
                                     bgcolor=ft.Colors.with_opacity(0.12, tp_badge_color),
-                                    border_radius=3, padding=ft.padding.symmetric(horizontal=4, vertical=1),
+                                    border_radius=3, padding=ft.Padding.symmetric(horizontal=4, vertical=1),
                                 ),
                             ], spacing=6),
                             ft.Row([
                                 ft.Text(f"{p['pnl']:+.2f} $ ({p['roe_pct']:+.1f}%)", size=12, weight=ft.FontWeight.W_700, color=pnl_color),
                                 ft.Container(
                                     content=ft.Text("Закрыть", size=10, color=C_RED, weight=ft.FontWeight.W_600),
-                                    padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                                    padding=ft.Padding.symmetric(horizontal=6, vertical=2),
                                     bgcolor=ft.Colors.with_opacity(0.12, C_RED),
                                     border_radius=4,
                                     on_click=lambda e, sym=p['symbol'], side=p['side'], cnt=p['contracts']: threading.Thread(target=self.close_position_manual, args=(sym, side, cnt)).start(),
@@ -894,7 +894,7 @@ class AlgoBotApp:
                                 self.history_list.controls.append(
                                     ft.Container(
                                         content=ft.Text(line, size=11, color=color, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS),
-                                        padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                                        padding=ft.Padding.symmetric(horizontal=8, vertical=4),
                                         bgcolor=C_SURFACE2,
                                         border_radius=4,
                                     )

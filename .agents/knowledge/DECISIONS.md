@@ -17,3 +17,9 @@
 **Decision**: Zero Lookahead Bias in Market Structure.
 **Reason**: To ensure that ML training data matches live execution exactly, `market_structure.py` must only use data available up to candle `i` to evaluate candle `i`. Swing detection waits for `k` bars to confirm.
 **Constraint**: Never modify `market_structure.py` to use future data (e.g., `shift(-1)`) for live signal generation.
+
+## Decision 004
+**Date**: 2026-09-05
+**Decision**: Modernize Flet UI layout helpers to capitalized class methods (`ft.Margin.only`, `ft.Padding.symmetric`, `ft.Border.all`, `ft.Alignment`).
+**Reason**: In Flet 0.86+, lowercase helper modules (`ft.margin.only`, `ft.padding.symmetric`, `ft.border.all`) do not expose factory functions, causing runtime `AttributeError` on desktop app startup.
+**Constraint**: Always use PascalCase class methods (`ft.Margin`, `ft.Padding`, `ft.Border`, `ft.BorderRadius`, `ft.Alignment`, `ft.Colors`) when constructing UI style definitions in Flet.
