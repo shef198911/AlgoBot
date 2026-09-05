@@ -143,19 +143,26 @@ def train_ai():
     feature_cols = FEATURE_COLUMNS
     X = combined_trades[feature_cols]
     y = combined_trades['is_success']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+    # Splitting into Train, Val, Test with Embargo
+    val_split_idx = int(len(X) * 0.6)
+    test_split_idx = int(len(X) * 0.8)
     
-    # Time-Series Embargo
-    split_idx = int(len(X) * 0.8)
-    train_end_idx = split_idx - ML_HORIZON
-    if train_end_idx <= 0:
+    train_end_idx = val_split_idx - ML_HORIZON
+    val_end_idx = test_split_idx - ML_HORIZON
+    
+    if train_end_idx <= 0 or val_end_idx <= val_split_idx:
         logger.error("Недостаточно данных для Time-Series Embargo.")
         return
         
     X_train = X.iloc[:train_end_idx]
     y_train = y.iloc[:train_end_idx]
-    X_test = X.iloc[split_idx:]
-    y_test = y.iloc[split_idx:]
+    
+    X_val = X.iloc[val_split_idx:val_end_idx]
+    y_val = y.iloc[val_split_idx:val_end_idx]
+    
+    X_test = X.iloc[test_split_idx:]
+    y_test = y.iloc[test_split_idx:]
+    signals_test = combined_trades['ta_signal'].iloc[test_split_idx:]
     
     pos_count = sum(y_train == 1)
     neg_count = sum(y_train == 0)
@@ -169,7 +176,6 @@ def train_ai():
         'learning_rate': [0.01, 0.05, 0.1]
     }
     
-    # Attempt to use gap if available in current scikit-learn
     try:
         tscv = TimeSeriesSplit(n_splits=3, gap=ML_HORIZON)
     except TypeError:
@@ -188,38 +194,56 @@ def train_ai():
     ], voting='soft')
     
     ensemble.fit(X_train, y_train)
-    probs = ensemble.predict_proba(X_test)[:, 1]
     
-    # Dynamic Threshold Search
+    # Dynamic Threshold Search on Validation Set
+    probs_val = ensemble.predict_proba(X_val)[:, 1]
     best_f1 = 0
     best_thresh = 0.5
     for thresh in np.arange(0.3, 0.8, 0.05):
-        preds = (probs >= thresh).astype(int)
-        f1 = f1_score(y_test, preds, zero_division=0)
+        preds = (probs_val >= thresh).astype(int)
+        f1 = f1_score(y_val, preds, zero_division=0)
         if f1 > best_f1:
             best_f1 = f1
             best_thresh = thresh
             
-    final_preds = (probs >= best_thresh).astype(int)
+    # Final Metrics on Test Set (OOS)
+    probs_test = ensemble.predict_proba(X_test)[:, 1]
+    final_preds = (probs_test >= best_thresh).astype(int)
+    
     acc = accuracy_score(y_test, final_preds)
     prec = precision_score(y_test, final_preds, zero_division=0)
     rec = recall_score(y_test, final_preds, zero_division=0)
-    pr_auc = average_precision_score(y_test, probs)
+    pr_auc = average_precision_score(y_test, probs_test)
     
     logger.info("="*50)
-    logger.info("--- ML Metrics (OOS with Embargo) ---")
-    logger.info(f"Best Threshold: {best_thresh:.2f}")
+    logger.info("--- ML Metrics (OOS Test Set with Embargo) ---")
+    logger.info(f"Best Threshold (from Val Set): {best_thresh:.2f}")
     logger.info(f"Accuracy: {acc * 100:.2f}%")
     logger.info(f"Precision: {prec * 100:.2f}%")
     logger.info(f"Recall: {rec * 100:.2f}%")
-    logger.info(f"F1 Score: {best_f1:.4f}")
+    logger.info(f"F1 Score: {f1_score(y_test, final_preds, zero_division=0):.4f}")
     logger.info(f"PR-AUC: {pr_auc:.4f}")
+    
+    # LONG / SHORT Specific Metrics
+    for direction, sig_val in [("LONG", 1.0), ("SHORT", -1.0)]:
+        mask = (signals_test == sig_val)
+        if mask.sum() > 0:
+            y_t_dir = y_test[mask]
+            preds_dir = final_preds[mask]
+            probs_dir = probs_test[mask]
+            
+            d_acc = accuracy_score(y_t_dir, preds_dir)
+            d_prec = precision_score(y_t_dir, preds_dir, zero_division=0)
+            d_rec = recall_score(y_t_dir, preds_dir, zero_division=0)
+            d_f1 = f1_score(y_t_dir, preds_dir, zero_division=0)
+            
+            logger.info(f"[{direction}] Acc: {d_acc*100:.1f}%, Prec: {d_prec*100:.1f}%, Rec: {d_rec*100:.1f}%, F1: {d_f1:.4f}")
     logger.info("="*50)
 
-    # Расчет вероятностей ИИ для всех сделок выборки (P1. 15)
+    # Расчет вероятностей ИИ для всех сделок выборки
     combined_trades['ml_prob'] = ensemble.predict_proba(combined_trades[feature_cols])[:, 1]
 
-    # Детальная статистика по сетапам с AVG SCORE и AVG ML PROB (P1. 15)
+    # Детальная статистика по сетапам с AVG SCORE и AVG ML PROB
     logger.info("="*105)
     logger.info("ДЕТАЛИЗАЦИЯ ПО СЕТАПАМ PRICE ACTION (LONG / SHORT)")
     logger.info("="*105)
@@ -252,7 +276,8 @@ def train_ai():
         
     model_data = {
         'ensemble': ensemble,
-        'regressor': regressor
+        'regressor': regressor,
+        'threshold': best_thresh
     }
     
     joblib.dump(model_data, MODEL_FILE)

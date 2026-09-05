@@ -137,8 +137,29 @@ class TraderExecutor:
                     self.logger.error(f"Не удалось получить фактический объем позиции для {symbol}: {pos_e}")
             
             if actual_position_amount <= 0:
-                self.logger.critical(f"Не удалось подтвердить объем открытой позиции для {symbol}. Пропуск SL/TP для восстановления.")
+                self.logger.critical(f"Не удалось подтвердить объем открытой позиции для {symbol}. Сохраняем в стейт и вызываем emergency_close.")
                 self.last_error = "UNKNOWN_AMOUNT"
+                self.positions[symbol] = {
+                    'side': side,
+                    'entry': float(actual_price),
+                    'max_price': float(actual_price),
+                    'min_price': float(actual_price),
+                    'amount': float(amount_coin),
+                    'margin_required': margin_required,
+                    'sl_order_id': None,
+                    'tp_order_id': None,
+                    'sl_price': float(sl_price),
+                    'tp_price': float(tp_price),
+                    'setup_type': setup_type,
+                    'engine_context': engine_context,
+                    'timestamp': time.time() * 1000,
+                    'atr_value': atr_value,
+                    'risk_usdt': risk_usdt,
+                    'position_notional': volume_usdt,
+                    'leverage': LEVERAGE
+                }
+                self._save_live_state()
+                self.emergency_close(symbol)
                 return False
 
             sl_order_id = None
@@ -264,11 +285,16 @@ class TraderExecutor:
                     found_tp = None
                     
                     for o in open_orders:
-                        o_type = o['type'].lower()
-                        if 'stop' in o_type:
+                        o_type = o.get('type', '').lower()
+                        info_type = o.get('info', {}).get('origType', '').lower()
+                        
+                        is_stop = 'stop' in o_type or 'stop' in info_type
+                        is_take_profit = 'take_profit' in o_type or 'take_profit' in info_type
+                        
+                        if is_stop:
                             found_sl = o['id']
                             self.positions[symbol]['sl_price'] = float(o.get('stopPrice') or 0)
-                        elif 'take_profit' in o_type:
+                        elif is_take_profit:
                             found_tp = o['id']
                             self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
                             
@@ -298,8 +324,8 @@ class TraderExecutor:
                     except Exception:
                         pass
 
-                if self.positions[symbol]['sl_order_id'] is None:
-                    self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} найдена, но защитный SL не найден. Пробуем восстановить...")
+                if self.positions[symbol].get('sl_order_id') is None or self.positions[symbol].get('tp_order_id') is None:
+                    self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} найдена, но защитные ордера (SL/TP) отсутствуют. Пробуем восстановить...")
                     
                     # 1. Get real pos and entry
                     entry_price = self.positions[symbol]['entry']
@@ -330,20 +356,22 @@ class TraderExecutor:
                     sl_price = float(self.exchange.price_to_precision(symbol, sl_price))
                     tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
                     
-                    try:
-                        sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'reduceOnly': True})
-                        self.positions[symbol]['sl_order_id'] = sl_ord['id']
-                        self.positions[symbol]['sl_price'] = sl_price
-                    except Exception as e:
-                        self.logger.critical(f"Не удалось восстановить SL: {e}")
-                        
-                    try:
-                        tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, amount_coin, params={'stopPrice': tp_price, 'reduceOnly': True})
-                        self.positions[symbol]['tp_order_id'] = tp_ord['id']
-                        self.positions[symbol]['tp_price'] = tp_price
-                    except Exception as e:
-                        self.logger.critical(f"Не удалось восстановить TP: {e}")
-                        
+                    if not self.positions[symbol].get('sl_order_id'):
+                        try:
+                            sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, amount_coin, params={'stopPrice': sl_price, 'reduceOnly': True})
+                            self.positions[symbol]['sl_order_id'] = sl_ord['id']
+                            self.positions[symbol]['sl_price'] = sl_price
+                        except Exception as e:
+                            self.logger.critical(f"Не удалось восстановить SL: {e}")
+                            
+                    if not self.positions[symbol].get('tp_order_id'):
+                        try:
+                            tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, amount_coin, params={'stopPrice': tp_price, 'reduceOnly': True})
+                            self.positions[symbol]['tp_order_id'] = tp_ord['id']
+                            self.positions[symbol]['tp_price'] = tp_price
+                        except Exception as e:
+                            self.logger.critical(f"Не удалось восстановить TP: {e}")
+                            
                     self._save_live_state()
 
                 
@@ -523,11 +551,8 @@ class TraderExecutor:
                         active_pos = pos
                         break
             if not active_pos:
-                self.logger.warning(f"EMERGENCY CLOSE: No active position found on exchange for {symbol}.")
-                if symbol in self.positions:
-                    del self.positions[symbol]
-                    self._save_live_state()
-                return True
+                self.logger.warning(f"EMERGENCY CLOSE: No active position found on exchange for {symbol}. Возможно API лагает, оставляем стейт для recovery.")
+                return False
                 
             actual_amt = abs(float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0))))
             side = active_pos['side'].lower()

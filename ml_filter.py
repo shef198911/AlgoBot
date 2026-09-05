@@ -12,6 +12,7 @@ class MLFilter:
         self.load_model()
         
     def load_model(self):
+        self.threshold = ML_PROBABILITY_THRESHOLD
         if os.path.exists(MODEL_FILE):
             try:
                 model_data = joblib.load(MODEL_FILE)
@@ -19,11 +20,12 @@ class MLFilter:
                 if isinstance(model_data, dict) and 'ensemble' in model_data:
                     self.ensemble = model_data['ensemble']
                     self.regressor = model_data['regressor']
+                    self.threshold = model_data.get('threshold', ML_PROBABILITY_THRESHOLD)
                 else:
                     self.ensemble = model_data # старая версия (если вдруг)
                     
                 self.is_trained = True
-                self.logger.info(f"Модель ИИ V3 успешно загружена из {MODEL_FILE}")
+                self.logger.info(f"Модель ИИ V3 успешно загружена из {MODEL_FILE}. Порог: {self.threshold:.2f}")
             except Exception as e:
                 self.logger.error(f"Ошибка загрузки ИИ: {e}")
         else:
@@ -61,9 +63,9 @@ class MLFilter:
             except Exception as e:
                 self.logger.debug(f"Не удалось получить разбивку по моделям: {e}")
                 
-            self.logger.info(f"Оценка ИИ (Ансамбль): уверенность {prob:.2f} (порог {ML_PROBABILITY_THRESHOLD})")
+            self.logger.info(f"Оценка ИИ (Ансамбль): уверенность {prob:.2f} (порог {self.threshold:.2f})")
             
-            is_approved = prob >= ML_PROBABILITY_THRESHOLD
+            is_approved = prob >= self.threshold
             
             # Если сделка одобрена, просим регрессор предсказать Тейк-Профит
             predicted_tp_pct = None

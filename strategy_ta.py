@@ -18,7 +18,8 @@ class TAStrategy:
             return None
 
         # Установка глобального тренда
-        df['HTF_TREND'] = htf_trend
+        if 'HTF_TREND' not in df.columns:
+            df['HTF_TREND'] = htf_trend
         
         # Расчет структуры рынка
         df = self.analyze_structure(df)

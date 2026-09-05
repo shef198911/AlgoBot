@@ -1,0 +1,1 @@
+﻿echo "Added Strict Entry Gate to TAStrategy" >> test_gate.txt

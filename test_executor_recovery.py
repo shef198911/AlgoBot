@@ -85,7 +85,10 @@ class TestTraderExecutorRecovery(unittest.TestCase):
         
         self.assertFalse(success)
         self.assertEqual(self.executor.last_error, "UNKNOWN_AMOUNT")
-        self.assertNotIn('BTC/USDT', self.executor.positions)
+        
+        # Since emergency_close failed to find the position on exchange, it leaves the state intact for recovery
+        self.assertIn('BTC/USDT', self.executor.positions)
+        self.assertEqual(self.executor.positions['BTC/USDT']['amount'], 0.1)
 
     @patch('executor.logger')
     def test_check_position_status_verifies_open_orders(self, mock_logger):
