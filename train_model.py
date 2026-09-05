@@ -181,10 +181,15 @@ def train_ai():
     except TypeError:
         tscv = TimeSeriesSplit(n_splits=3)
         
-    search = RandomizedSearchCV(xgb_base, param_distributions=param_dist, n_iter=3, cv=tscv, random_state=42)
-    search.fit(X_train, y_train)
-    best_xgb = search.best_estimator_
-    logger.info("AutoML подобрал лучшие параметры XGBoost.")
+    try:
+        search = RandomizedSearchCV(xgb_base, param_distributions=param_dist, n_iter=3, cv=tscv, random_state=42)
+        search.fit(X_train, y_train)
+        best_xgb = search.best_estimator_
+        logger.info("AutoML подобрал лучшие параметры XGBoost.")
+    except ValueError as e:
+        logger.warning(f"Недостаточно данных для AutoML ({e}). Обучаем XGBoost со стандартными параметрами.")
+        best_xgb = xgb_base
+        best_xgb.fit(X_train, y_train)
 
     # Ансамбль
     ensemble = VotingClassifier(estimators=[
