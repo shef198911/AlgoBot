@@ -100,6 +100,8 @@ def train_ai():
             
             is_success[i] = success
             max_excursions[i] = max_exc
+            df_analyzed.at[i, 'trade_rr'] = trade_plan.get('rr', 1.5)
+            df_analyzed.at[i, 'risk_dist'] = trade_plan.get('risk_distance', atr) / entry if entry > 0 else 0.01
             
         df_analyzed['is_success'] = is_success
         df_analyzed['max_excursion'] = max_excursions
@@ -200,16 +202,37 @@ def train_ai():
     
     ensemble.fit(X_train, y_train)
     
-    # Dynamic Threshold Search on Validation Set
+    # Dynamic Threshold Search on Validation Set (Expectancy Based)
     probs_val = ensemble.predict_proba(X_val)[:, 1]
-    best_f1 = 0
+    
+    val_rr = combined_trades['trade_rr'].iloc[val_split_idx:val_end_idx].values
+    val_risk_dist = combined_trades['risk_dist'].iloc[val_split_idx:val_end_idx].values
+    val_fees_in_r = 0.001 / np.maximum(val_risk_dist, 0.0001)
+    
+    best_expectancy = -9999
     best_thresh = 0.5
     for thresh in np.arange(0.3, 0.8, 0.05):
         preds = (probs_val >= thresh).astype(int)
-        f1 = f1_score(y_val, preds, zero_division=0)
-        if f1 > best_f1:
-            best_f1 = f1
+        taken_trades = np.where(preds == 1)[0]
+        n_trades = len(taken_trades)
+        
+        if n_trades < 10:  # Minimum sample size guard
+            continue
+            
+        success = y_val.values[taken_trades]
+        rewards_r = val_rr[taken_trades]
+        fees_r = val_fees_in_r[taken_trades]
+        
+        expected_r = success * rewards_r - (1 - success) * 1.0 - fees_r
+        expectancy = np.mean(expected_r)
+        
+        if expectancy > best_expectancy:
+            best_expectancy = expectancy
             best_thresh = thresh
+            
+    if best_expectancy == -9999:
+        logger.warning("No threshold met minimum sample size on Val Set. Defaulting to 0.5.")
+        best_thresh = 0.5
             
     # Final Metrics on Test Set (OOS)
     probs_test = ensemble.predict_proba(X_test)[:, 1]
@@ -228,6 +251,24 @@ def train_ai():
     logger.info(f"Train samples: {len(X_train)} (Pos: {pos_count}, Neg: {neg_count})")
     logger.info(f"Validation samples: {len(X_val)} | OOS Test samples: {len(X_test)}")
     logger.info(f"Best Threshold (Selected on Val Set): {best_thresh:.2f}")
+    
+    # Calculate OOS Expectancy
+    test_taken = np.where(final_preds == 1)[0]
+    test_rr = combined_trades['trade_rr'].iloc[test_split_idx:].values
+    test_risk_dist = combined_trades['risk_dist'].iloc[test_split_idx:].values
+    test_fees_in_r = 0.001 / np.maximum(test_risk_dist, 0.0001)
+    
+    if len(test_taken) > 0:
+        test_success = y_test.values[test_taken]
+        test_expected_r = test_success * test_rr[test_taken] - (1 - test_success) * 1.0 - test_fees_in_r[test_taken]
+        test_expectancy = np.mean(test_expected_r)
+        total_r = np.sum(test_expected_r)
+    else:
+        test_expectancy = 0
+        total_r = 0
+        
+    logger.info(f"OOS Expectancy (per trade): {test_expectancy:.3f} R")
+    logger.info(f"OOS Total Estimated Net Profit: {total_r:.2f} R (from {len(test_taken)} trades)")
     logger.info(f"Accuracy:        {acc * 100:.2f}%")
     logger.info(f"Precision:       {prec * 100:.2f}%")
     logger.info(f"Recall:          {rec * 100:.2f}%")

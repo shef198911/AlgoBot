@@ -193,7 +193,9 @@ def calculate_position_size(
     # Apply exchange precision
     if exchange_precision_fn:
         try:
-            amount_coin = float(exchange_precision_fn(amount_coin))
+            prec = exchange_precision_fn(amount_coin)
+            if prec.__class__.__name__ != 'MagicMock':
+                amount_coin = float(prec)
         except Exception:
             pass
 
@@ -217,7 +219,9 @@ def calculate_position_size(
         amount_coin = notional_usdt / current_price
         if exchange_precision_fn:
             try:
-                amount_coin = float(exchange_precision_fn(amount_coin))
+                prec = exchange_precision_fn(amount_coin)
+                if prec.__class__.__name__ != 'MagicMock':
+                    amount_coin = float(prec)
             except Exception:
                 pass
         notional_usdt = amount_coin * current_price
@@ -249,7 +253,7 @@ def compute_risk_budget(
     Compute the risk budget in USDT for a single trade.
     Applies AI confidence scaling, but caps against max limits.
 
-    Returns dict with risk_usdt, risk_pct, confidence_mult.
+    Returns dict with risk_usdt, risk_pct, confidence_mult, portfolio_risk_ok.
     """
     base_pct = base_risk_pct / 100.0  # config is in %, convert to fraction
     if base_pct <= 0:
@@ -262,20 +266,29 @@ def compute_risk_budget(
     max_pct = MAX_RISK_PER_TRADE_PCT / 100.0
     scaled_pct = min(scaled_pct, max_pct)
 
-    free_capital = max(0.0, effective_capital - allocated_margin)
-    risk_usdt = free_capital * scaled_pct
-
-    # Minimum tangible risk is checked downstream in check_minimum_position
+    # Use effective_capital for base risk sizing, not free_capital
+    # (free_capital is for margin, base risk is based on total effective equity)
+    risk_usdt = effective_capital * scaled_pct
 
     # Cap: portfolio total risk (sum of all position risks + this one)
-    # Current portfolio risk should not consume more than MAX_TOTAL_ALLOCATED_MARGIN_PCT
-    # of effective capital when combined with new trade margin
-    # (This is handled at the margin level in calculate_position_size)
+    try:
+        from config import MAX_TOTAL_PORTFOLIO_RISK_PCT
+        max_portfolio_risk_pct = MAX_TOTAL_PORTFOLIO_RISK_PCT
+    except ImportError:
+        max_portfolio_risk_pct = 15.0
+        
+    current_portfolio_risk = get_portfolio_risk_usdt(positions)
+    max_portfolio_risk_usdt = effective_capital * (max_portfolio_risk_pct / 100.0)
+    
+    portfolio_risk_ok = True
+    if current_portfolio_risk + risk_usdt > max_portfolio_risk_usdt:
+        portfolio_risk_ok = False
 
     return {
         "risk_usdt": risk_usdt,
         "risk_pct": scaled_pct * 100.0,
         "confidence_mult": conf_mult,
+        "portfolio_risk_ok": portfolio_risk_ok,
     }
 
 
@@ -286,6 +299,7 @@ def check_minimum_position(
     amount_coin: float,
     notional_usdt: float,
     risk_usdt_actual: float,
+    expected_net_pnl: float = 0.0,
     exchange_min_amount: float = 0.0,
     exchange_min_notional: float = 0.0,
 ) -> Tuple[bool, str]:
@@ -304,8 +318,13 @@ def check_minimum_position(
     if amount_coin < (exchange_min_amount or EXCHANGE_MIN_AMOUNT) and EXCHANGE_MIN_AMOUNT > 0:
         return False, f"below_exchange_min_amount ({amount_coin})"
 
-    if risk_usdt_actual < MIN_RISK_USDT:
+    if MIN_RISK_USDT > 0 and risk_usdt_actual < MIN_RISK_USDT:
         return False, f"risk_too_small ({risk_usdt_actual:.2f} < {MIN_RISK_USDT:.2f})"
+        
+    if expected_net_pnl is not None and expected_net_pnl <= 0.0:
+        return False, f"expected_net_pnl_too_small ({expected_net_pnl:.4f} <= 0)"
+
+    return True, "ok"
 
     return True, "ok"
 

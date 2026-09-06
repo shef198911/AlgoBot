@@ -263,12 +263,15 @@ class TestComprehensiveSuite(unittest.TestCase):
         
         executor = TraderExecutor(mock_ex)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
-            'valid': True, 'risk_distance': 0.01, 'stop_loss': 0.09, 'take_profit': 0.12
+            'valid': True, 'risk_distance': 0.004, 'stop_loss': 0.096, 'take_profit': 0.12
         })
         
-        res = executor.execute_trade('DOGE/USDT', 'buy', 10.0, 0.10, atr_value=0.005, setup_type='SUPPORT_BOUNCE', engine_context={'nearest_support': 0.09})
+        # We need to temporarily set LEVERAGE to 5, or adjust entry so SL doesn't hit liquidation.
+        # Actually, with SL 0.096, distance is 0.004, which is 4%. 20x leverage liquidation is at 4.6%.
+        # So SL at 0.096 (4%) is BEFORE liquidation (4.6%), so it's safe!
+        res = executor.execute_trade('DOGE/USDT', 'buy', 10.0, 0.10, atr_value=0.005, setup_type='SUPPORT_BOUNCE', engine_context={'nearest_support': 0.096})
         self.assertTrue(res)
-        mock_ex.create_order.assert_any_call('DOGE/USDT', 'STOP_MARKET', 'sell', 600.0, params={'stopPrice': 0.09, 'reduceOnly': True})
+        mock_ex.create_order.assert_any_call('DOGE/USDT', 'STOP_MARKET', 'sell', 600.0, params={'stopPrice': 0.096, 'reduceOnly': True})
         self.assertEqual(executor.positions['DOGE/USDT']['amount'], 600.0)
 
     # 17. Capital reservation concurrency
@@ -288,7 +291,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.fetch_positions.return_value = []
         res = executor.execute_trade('ETH/USDT', 'buy', 10.0, 50000.0, atr_value=100.0, setup_type='SUPPORT_BOUNCE', engine_context={'nearest_support': 49000.0})
         self.assertFalse(res)
-        self.assertIn("Лимит капитала исчерпан", executor.last_error)
+        self.assertIn("Недостаточно", executor.last_error)
         self.assertNotIn('ETH/USDT', executor.pending_margins)
 
     # 18. Duplicate signal & Signal State Machine

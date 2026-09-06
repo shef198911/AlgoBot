@@ -112,7 +112,13 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         # Use effective capital (Requirement 1: min of TRADING_CAPITAL, real balance)
         effective_cap = executor.get_effective_capital()
         if effective_cap <= 0:
-            effective_cap = getattr(executor, 'working_capital', 500.0)
+            err = "Не удалось определить эффективный капитал (сбой API баланса или нулевой баланс). Блокировка новых сделок (Fail-Closed)."
+            logger.error(f"[{symbol}] {err}")
+            with signal_tracker_lock:
+                if sig_key in signal_states:
+                    signal_states[sig_key]['status'] = 'EXECUTION_REJECTED'
+            record_funnel_event('RISK_FAIL')
+            return
 
         if trade_mode == "AUTO":
             # Compute risk budget with AI confidence scaling + hard caps (Requirements 3, 6)
@@ -126,6 +132,14 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             trade_amount = budget['risk_usdt']
             risk_pct = budget['risk_pct']
             conf_mult = budget['confidence_mult']
+            
+            if not budget.get('portfolio_risk_ok', True):
+                with signal_tracker_lock:
+                    if sig_key in signal_states:
+                        signal_states[sig_key]['status'] = 'EXECUTION_REJECTED'
+                record_funnel_event('RISK_FAIL')
+                logger.warning(f"[{symbol}] Общий риск портфеля превышен! Пропуск сделки. Risk USDT: {trade_amount:.2f}")
+                return
         else:
             try:
                 base_risk_pct = float(getattr(config, 'BASE_RISK_PCT', 1.0)) / 100.0

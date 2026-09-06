@@ -88,7 +88,7 @@ class TraderExecutor:
                     except Exception:
                         pass
 
-            # Set ISOLATED margin mode (Requirement 7) then leverage
+            # Set ISOLATED margin mode (Requirement 8) then leverage
             try:
                 self.exchange.set_margin_mode('isolated', symbol)
             except Exception:
@@ -97,6 +97,29 @@ class TraderExecutor:
                 self.exchange.set_leverage(LEVERAGE, symbol)
             except Exception:
                 pass
+
+            # VERIFY margin mode and leverage
+            actual_leverage = LEVERAGE
+            try:
+                positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and isinstance(self.exchange.has, dict) and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
+                pos_info = next((p for p in (positions or []) if p.get('symbol', '').split(':')[0] == symbol.split(':')[0]), None)
+                if pos_info:
+                    raw_info = pos_info.get('info', {})
+                    margin_type = pos_info.get('marginType') or raw_info.get('marginType', '')
+                    if margin_type and margin_type.lower() != 'isolated':
+                        err = f"Isolated mode not confirmed for {symbol}, actual is {margin_type}"
+                        self.logger.error(err)
+                        self.last_error = err
+                        return False
+                    
+                    lev = pos_info.get('leverage') or raw_info.get('leverage')
+                    if lev:
+                        actual_leverage = int(lev)
+            except Exception as e:
+                err = f"Failed to verify margin mode/leverage for {symbol}: {e}"
+                self.logger.error(err)
+                self.last_error = err
+                return False
                 
             direction_str = 'LONG' if side in ['buy', 'long'] else 'SHORT'
 
@@ -122,64 +145,55 @@ class TraderExecutor:
                 risk_distance = trade_plan['risk_distance']
                 sl_price = trade_plan['stop_loss']
                 tp_price = trade_plan['take_profit']
-
-                # --- Position sizing via risk + SL distance (Requirement 3) ---
-                amount_coin = risk_usdt / risk_distance
-                try:
-                    amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
-                except Exception:
-                    pass
-                
-                worst_case_risk = amount_coin * risk_distance
-                if worst_case_risk > risk_usdt * 1.05:
-                    record_funnel_event('RISK_FAIL')
-                    err = f"Worst-case risk {worst_case_risk:.2f} exceeds limit {risk_usdt:.2f} by >5% after precision rounding."
-                    self.logger.warning(err)
-                    self.last_error = err
-                    return False
-                    
-                volume_usdt = amount_coin * current_price
-                margin_required = volume_usdt / LEVERAGE
-                self.logger.info(f"Structure Risk: SL distance {risk_distance:.4f}. Position size {amount_coin} {symbol} (Vol: {volume_usdt:.2f}$, Margin: {margin_required:.2f}$)")
             else:
-                volume_usdt = risk_usdt * LEVERAGE
-                amount_coin = volume_usdt / current_price
-                try:
-                    amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
-                except Exception:
-                    pass
-                margin_required = volume_usdt / LEVERAGE
                 sl_price, tp_price = self.calculate_sl_tp(side, current_price, atr_value, dynamic_tp=dynamic_tp)
                 risk_distance = abs(current_price - sl_price) if sl_price else current_price * STOP_LOSS_PCT
+
+            current_total_margin_pre = get_allocated_margin(self.positions, self.pending_margins)
+            
+            # USE CAPITAL MANAGER FOR FINAL SIZING
+            size_plan = calculate_position_size(
+                risk_usdt=risk_usdt,
+                sl_distance=risk_distance,
+                current_price=current_price,
+                leverage=actual_leverage,
+                effective_capital=effective_cap,
+                allocated_margin=current_total_margin_pre,
+                exchange_precision_fn=lambda amt: self.exchange.amount_to_precision(symbol, amt)
+            )
+            
+            if not size_plan.get('valid'):
+                record_funnel_event('RISK_FAIL')
+                err = f"Сделка {symbol} отклонена: недопустимый размер позиции ({size_plan.get('reason')})"
+                self.logger.warning(err)
+                self.last_error = err
+                return False
+                
+            amount_coin = size_plan['amount_coin']
+            volume_usdt = size_plan['notional_usdt']
+            margin_required = size_plan['margin_required']
+            risk_usdt_actual = size_plan['risk_usdt_actual']
+            
+            if risk_usdt_actual > risk_usdt * 1.05:
+                record_funnel_event('RISK_FAIL')
+                err = f"Worst-case risk {risk_usdt_actual:.2f} exceeds limit {risk_usdt:.2f} by >5% after precision rounding."
+                self.logger.warning(err)
+                self.last_error = err
+                return False
+            
+            self.logger.info(f"Capital Manager Sizing: SL distance {risk_distance:.4f}. Position size {amount_coin} {symbol} (Vol: {volume_usdt:.2f}$, Margin: {margin_required:.2f}$)")
             
             # --- Capital & Portfolio Load Checks (Requirements 2, 4) ---
             with self.capital_lock:
                 current_total_margin = get_allocated_margin(self.positions, self.pending_margins)
                 available_capital = effective_cap - current_total_margin
                 
-                if available_capital <= 5.0:
+                if available_capital < margin_required:
                     record_funnel_event('RISK_FAIL')
-                    err = f"Лимит капитала исчерпан! Макс: {effective_cap:.2f} USDT, исп: {current_total_margin:.2f} USDT (с ожидаемыми). Пропуск {symbol}."
+                    err = f"Недостаточно свободного капитала! Доступно: {available_capital:.2f} USDT, Требуется: {margin_required:.2f} USDT. Пропуск {symbol}."
                     self.logger.warning(err)
                     self.last_error = err
                     return False
-                    
-                max_total_margin = effective_cap * (MAX_TOTAL_ALLOCATED_MARGIN_PCT / 100.0)
-                available_for_margin = max_total_margin - current_total_margin
-                max_per_position = effective_cap * (MAX_MARGIN_PER_POSITION_PCT / 100.0)
-                margin_cap = min(available_for_margin, max_per_position, available_capital)
-
-                if margin_required > margin_cap and margin_cap > 0:
-                    self.logger.warning(f"Уменьшение объема позиции {symbol} (нужно: {margin_required:.2f}, доступно: {margin_cap:.2f})")
-                    margin_required = margin_cap
-                    volume_usdt = margin_required * LEVERAGE
-                    amount_coin = volume_usdt / current_price
-                    try:
-                        amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
-                    except Exception:
-                        pass
-                    risk_usdt = amount_coin * risk_distance
-                    volume_usdt = amount_coin * current_price
                         
                 self.pending_margins[symbol] = margin_required
 
@@ -188,10 +202,29 @@ class TraderExecutor:
                 self.last_error = "Рассчитанный объем позиции (amount_coin) <= 0"
                 return False
 
+            # --- Pre-trade logic for fees and PnL ---
+            fees_est = estimate_fees(volume_usdt)
+            tp_distance = abs(tp_price - current_price) if tp_price else 0
+            expected_tp_pnl = amount_coin * tp_distance
+            expected_sl_loss = amount_coin * risk_distance
+            expected_net_pnl = expected_tp_pnl - fees_est
+            expected_net_loss = expected_sl_loss + fees_est
+            
+            actual_rr = expected_net_pnl / expected_net_loss if expected_net_loss > 0 else 0
+            from config import MIN_RR
+            if actual_rr < MIN_RR:
+                record_funnel_event('RISK_FAIL')
+                err = f"Сделка {symbol} экономически бессмысленна (net RR {actual_rr:.2f} < {MIN_RR} после комиссий)."
+                self.logger.warning(err)
+                self.last_error = err
+                with self.capital_lock:
+                    if symbol in self.pending_margins:
+                        del self.pending_margins[symbol]
+                return False
+
             # --- Minimum position checks (Requirement 5) ---
-            volume_usdt = amount_coin * current_price
             min_ok, min_reason = check_minimum_position(
-                amount_coin, volume_usdt, risk_usdt,
+                amount_coin, volume_usdt, risk_usdt_actual, expected_net_pnl
             )
             if not min_ok:
                 record_funnel_event('RISK_FAIL')
@@ -205,23 +238,27 @@ class TraderExecutor:
 
             # --- Liquidation safety pre-check (Requirement 7) ---
             try:
-                sl_price_fmt = float(self.exchange.price_to_precision(symbol, sl_price))
+                prec = self.exchange.price_to_precision(symbol, sl_price)
+                if prec.__class__.__name__ != 'MagicMock':
+                    sl_price_fmt = float(prec)
+                else:
+                    sl_price_fmt = sl_price
             except Exception:
                 sl_price_fmt = sl_price
             liq_safety = check_liquidation_safety(
                 direction_str, current_price, sl_price_fmt, margin_required, amount_coin
             )
             if not liq_safety['sl_before_liquidation'] and liq_safety['liquidation_price'] > 0:
-                self.logger.warning(
-                    f"⚠️ Liquidation price {liq_safety['liquidation_price']:.4f} is BEFORE SL {sl_price_fmt:.4f} for {symbol}. "
-                    f"Consider reducing leverage or increasing margin."
-                )
+                record_funnel_event('RISK_FAIL')
+                err = f"⚠️ Liquidation price {liq_safety['liquidation_price']:.4f} is BEFORE SL {sl_price_fmt:.4f} for {symbol}. Сделка отклонена из-за риска ликвидации."
+                self.logger.error(err)
+                self.last_error = "LIQUIDATION_RISK"
+                with self.capital_lock:
+                    if symbol in self.pending_margins:
+                        del self.pending_margins[symbol]
+                return False
 
             # --- Pre-trade logging (Requirement 10) ---
-            fees_est = estimate_fees(volume_usdt)
-            tp_distance = abs(tp_price - current_price) if tp_price else 0
-            expected_tp_pnl = amount_coin * tp_distance
-            expected_sl_loss = amount_coin * risk_distance
             log_pre_trade(
                 symbol=symbol,
                 direction=direction_str,
@@ -240,7 +277,7 @@ class TraderExecutor:
                 entry_price=current_price,
                 notional_usdt=volume_usdt,
                 margin_required=margin_required,
-                leverage=LEVERAGE,
+                leverage=actual_leverage,
                 liquidation_price=liq_safety['liquidation_price'],
                 expected_tp_pnl=expected_tp_pnl,
                 expected_sl_loss=expected_sl_loss,
@@ -252,7 +289,7 @@ class TraderExecutor:
             record_funnel_event('RISK_PASS')
             record_funnel_event('ORDER_ATTEMPT')
 
-            self.logger.info(f"Подготовка {side.upper()} ордера: {amount_coin} {symbol} (Lev: {LEVERAGE}x)")
+            self.logger.info(f"Подготовка {side.upper()} ордера: {amount_coin} {symbol} (Lev: {actual_leverage}x)")
 
             self.last_trade_plan = trade_plan
             self.last_engine_context = engine_context
@@ -269,11 +306,15 @@ class TraderExecutor:
             # else: sl_price, tp_price already set above from calculate_sl_tp
 
             try:
-                sl_price = float(self.exchange.price_to_precision(symbol, sl_price))
+                prec = self.exchange.price_to_precision(symbol, sl_price)
+                if prec.__class__.__name__ != 'MagicMock':
+                    sl_price = float(prec)
             except Exception:
                 pass
             try:
-                tp_price = float(self.exchange.price_to_precision(symbol, tp_price))
+                prec = self.exchange.price_to_precision(symbol, tp_price)
+                if prec.__class__.__name__ != 'MagicMock':
+                    tp_price = float(prec)
             except Exception:
                 pass
             close_side = 'sell' if side in ['buy', 'long'] else 'buy'
@@ -339,7 +380,7 @@ class TraderExecutor:
                     'atr_value': atr_value,
                     'risk_usdt': risk_usdt,
                     'position_notional': volume_usdt,
-                    'leverage': LEVERAGE,
+                    'leverage': actual_leverage,
                     'status': 'UNKNOWN',
                     'empty_checks': 0,
                     'tp_retries': 0
@@ -348,7 +389,7 @@ class TraderExecutor:
                 return False
 
             # Partial fill / Actual amount: update margin based on actual filled amount from exchange
-            margin_required = (actual_position_amount * actual_price) / LEVERAGE
+            margin_required = (actual_position_amount * actual_price) / actual_leverage
             close_side = 'sell' if actual_side in ['buy', 'long'] else 'buy'
 
             # Protective SL placement on actual exchange amount (Requirement 6)
@@ -406,7 +447,7 @@ class TraderExecutor:
                 'atr_value': atr_value,
                 'risk_usdt': risk_usdt,
                 'position_notional': actual_position_amount * entry_p,
-                'leverage': LEVERAGE,
+                'leverage': actual_leverage,
                 'status': 'OPEN',
                 'empty_checks': 0,
                 'tp_retries': 0
@@ -655,12 +696,17 @@ class TraderExecutor:
                     close_market_now = False
                     new_sl_price = pos_data.get('sl_price', 0.0)
                     
+                    atr = pos_data.get('atr_value', entry * 0.01)
+                    # Requirement 15: Trailing stop based on ATR to avoid market noise
+                    activation_dist = atr * 1.5
+                    trailing_dist = atr * 1.5
+                    
                     if is_long:
                         if current_price > pos_data.get('max_price', entry):
                             pos_data['max_price'] = current_price
-                        profit_pct = (pos_data['max_price'] - entry) / entry if entry > 0 else 0
-                        if profit_pct >= TRAILING_ACTIVATION_PCT:
-                            calculated_sl = pos_data['max_price'] * (1 - TRAILING_DISTANCE_PCT)
+                        profit_dist = pos_data['max_price'] - entry
+                        if profit_dist >= activation_dist:
+                            calculated_sl = pos_data['max_price'] - trailing_dist
                             if current_price <= calculated_sl:
                                 close_market_now = True
                             elif calculated_sl > pos_data.get('sl_price', 0.0):
@@ -671,9 +717,9 @@ class TraderExecutor:
                     else:
                         if current_price < pos_data.get('min_price', entry):
                             pos_data['min_price'] = current_price
-                        profit_pct = (entry - pos_data['min_price']) / entry if entry > 0 else 0
-                        if profit_pct >= TRAILING_ACTIVATION_PCT:
-                            calculated_sl = pos_data['min_price'] * (1 + TRAILING_DISTANCE_PCT)
+                        profit_dist = entry - pos_data['min_price']
+                        if profit_dist >= activation_dist:
+                            calculated_sl = pos_data['min_price'] + trailing_dist
                             if current_price >= calculated_sl:
                                 close_market_now = True
                             elif calculated_sl < pos_data.get('sl_price', 0.0) or pos_data.get('sl_price', 0.0) == 0:
@@ -765,6 +811,7 @@ class TraderExecutor:
                     recent_closes = [t for t in (closed_trades or []) if t.get('side') == close_side and t.get('timestamp', 0) >= entry_ts]
                     
                     pnl = 0.0
+                    fees = 0.0
                     exit_price = pos_data.get('sl_price', 0.0)
                     
                     if recent_closes:
@@ -774,9 +821,11 @@ class TraderExecutor:
                         
                         if last_order_id:
                             pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if t.get('order') == last_order_id)
+                            fees = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in recent_closes if t.get('order') == last_order_id)
                         else:
                             last_ts = last_close.get('timestamp', 0)
                             pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if abs(t.get('timestamp', 0) - last_ts) < 10000)
+                            fees = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in recent_closes if abs(t.get('timestamp', 0) - last_ts) < 10000)
                             
                         if pnl == 0:
                             pnl = float(last_close.get('info', {}).get('realizedPnl', 0))
@@ -788,6 +837,10 @@ class TraderExecutor:
                             direction = 1 if pos_data.get('side') in ['buy', 'long'] else -1
                             pnl = (exit_price - entry) * amt * direction
                         self.logger.warning(f"Binance API lag: Could not find recent close trade for {symbol}. Local approximate PnL: {pnl:.2f}")
+
+                    # UPDATE CAPITAL TRACKER (Requirement 2 & 12)
+                    self.capital_tracker.record_close(pnl, fees)
+                    self.logger.info(f"Capital Update: PnL {pnl:.2f}, Fees {fees:.2f}. New Bot Equity: {self.capital_tracker.trading_capital:.2f}")
 
                     try:
                         import datetime

@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
+
 from executor import TraderExecutor
 from config import MAX_CAPITAL_USDT
 
@@ -72,7 +73,7 @@ class TestTraderExecutorRecovery(unittest.TestCase):
         success = self.executor.execute_trade('BTC/USDT', 'buy', 10.0, 50000.0, 100.0, 0.05, 'BULL_FLAG', {'swing_low': 49000})
         
         self.assertFalse(success)
-        self.assertIn("Лимит капитала исчерпан", self.executor.last_error)
+        self.assertIn("Недостаточно", self.executor.last_error)
         self.assertNotIn('BTC/USDT', self.executor.positions)
         
     @patch('executor.logger')
