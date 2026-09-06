@@ -49,7 +49,7 @@ class AlgoBotApp:
         self._is_refreshing_positions = False
         self._log_counter = 0
         
-        atexit.register(self.kill_bot)
+        atexit.register(self.emergency_kill_bot)
         
         # Reusable single DataFetcher client to avoid 5-second connection overhead
         self.fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
