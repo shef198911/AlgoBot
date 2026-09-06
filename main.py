@@ -101,11 +101,34 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         logger.info(f"[GO] {symbol} - 1-й слой: ДА - 2-й слой: ДА (уверенность {ai_confidence*100:.1f}%) -> ОТКРЫВАЮ СДЕЛКУ")
         tg.send_message(msg_approved)
         
-        # Расчет суммы входа (Авто-реинвестирование)
-        trade_amount = TRADE_SIZE_USDT
-        if USE_COMPOUNDING and current_usdt_balance is not None:
-            trade_amount = current_usdt_balance * (COMPOUND_PCT / 100.0)
-            logger.info(f"[{symbol}] Авто-реинвестирование: {COMPOUND_PCT}% от {current_usdt_balance:.2f} = {trade_amount:.2f} USDT")
+        # 3. Dynamic risk sizing (~1% of Working Capital, up to 2% for high confidence)
+        from config import TRADE_SIZE_USDT
+        try:
+            base_risk_pct = float(TRADE_SIZE_USDT) / 100.0
+            if base_risk_pct <= 0:
+                base_risk_pct = 0.01
+        except Exception:
+            base_risk_pct = 0.01
+        
+        # Scale risk if confidence is high (e.g. >= 0.90 scales to 2%)
+        # Let's say ML confidence is between 0.55 and 1.0
+        if ai_confidence >= 0.9:
+            risk_pct = base_risk_pct * 2.0
+        elif ai_confidence >= 0.7:
+            risk_pct = base_risk_pct * 1.5
+        else:
+            risk_pct = base_risk_pct
+            
+        working_cap = getattr(executor, 'working_capital', 500.0)
+        trade_amount = working_cap * risk_pct
+        
+        # Enforce minimum tangible risk to avoid tiny $2 trades
+        MIN_RISK_USDT = 15.0
+        if trade_amount < MIN_RISK_USDT:
+            # Safely bump to MIN_RISK_USDT, capped by the actual working capital
+            trade_amount = min(MIN_RISK_USDT, working_cap)
+
+        logger.info(f"[{symbol}] Risk Sizing: AI Confidence {ai_confidence*100:.1f}% -> Risk {risk_pct*100:.2f}%. Risk Amount: {trade_amount:.2f} USDT from {working_cap:.2f} Cap")
         
         # Шаг 5: Исполнение
         with execute_lock:
@@ -169,7 +192,26 @@ def main():
     fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
     ta_bot = TAStrategy()
     ml_bot = MLFilter()
-    executor = TraderExecutor(fetcher.exchange)
+    
+    # Calculate working capital for the session
+    from config import MAX_CAPITAL_USDT
+    if float(MAX_CAPITAL_USDT) > 0:
+        session_working_capital = float(MAX_CAPITAL_USDT)
+    else:
+        session_working_capital = 500.0 # fallback
+        for attempt in range(3):
+            try:
+                balance = fetcher.exchange.fetch_balance()
+                session_working_capital = balance['total'].get('USDT', 0.0)
+                logger.info(f"MAX_CAPITAL_USDT is <= 0. Fetched actual balance: {session_working_capital:.2f} USDT")
+                break
+            except Exception as e:
+                logger.error(f"Error fetching balance for working capital (attempt {attempt+1}/3): {e}")
+                time.sleep(2)
+            
+    logger.info(f"Session Working Capital: {session_working_capital:.2f} USDT")
+    
+    executor = TraderExecutor(fetcher.exchange, working_capital=session_working_capital)
 
     logger.info(f"Символы: {SYMBOLS}, Таймфрейм: {TIMEFRAME}")
     last_processed_candle = {sym: None for sym in SYMBOLS}

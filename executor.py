@@ -16,9 +16,10 @@ from data_fetcher import SafeExchange
 tg_notifier = TelegramNotifier()
 
 class TraderExecutor:
-    def __init__(self, exchange_client, lock=None):
+    def __init__(self, exchange_client, lock=None, working_capital=500.0):
         self.logger = logger.getChild("TraderExecutor")
         self.risk_engine = StructureRiskEngine()
+        self.working_capital = working_capital
         if isinstance(exchange_client, SafeExchange):
             self.exchange = exchange_client
         else:
@@ -115,11 +116,11 @@ class TraderExecutor:
             
             with self.capital_lock:
                 current_total_margin = sum(pos.get('margin_required', 0.0) for pos in self.positions.values() if pos.get('margin_required')) + sum(self.pending_margins.values())
-                available_capital = MAX_CAPITAL_USDT - current_total_margin
+                available_capital = self.working_capital - current_total_margin
                 
                 if available_capital <= 5.0:
                     record_funnel_event('RISK_FAIL')
-                    err = f"Лимит капитала исчерпан! Макс: {MAX_CAPITAL_USDT} USDT, исп: {current_total_margin:.2f} USDT (с ожидаемыми). Пропуск {symbol}."
+                    err = f"Лимит капитала исчерпан! Макс: {self.working_capital} USDT, исп: {current_total_margin:.2f} USDT (с ожидаемыми). Пропуск {symbol}."
                     self.logger.warning(err)
                     self.last_error = err
                     return False

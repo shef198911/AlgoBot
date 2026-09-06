@@ -34,7 +34,7 @@ else: # SCALPING
 HTF_TREND_HISTORY_LIMIT = 500       # Единый лимит HTF свечей для обучения и live (Indicator convergence parity)
 TIMEFRAME_GLOBAL = TREND_TIMEFRAME
 
-TRADE_SIZE_USDT = 100.0  # Сколько СВОИХ денег (маржи) мы вкладываем в сделку
+TRADE_SIZE_USDT = 1.0  # Базовый риск в % от капитала (ранее - маржа)
 LEVERAGE = 20 # Плечо
 MAX_CAPITAL_USDT = 500.0 # Общий лимит выделенных средств на торговлю
 

@@ -119,15 +119,15 @@ class AlgoBotApp:
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 content = f.read()
-            new_size = float(self.input_trade_size.value)
-            new_lev = int(self.input_lev.value)
-            new_cap = float(self.input_cap.value)
-            new_sl = float(self.input_sl.value) / 100.0
-            new_tp = float(self.input_tp.value) / 100.0
+            new_size = float(self.input_trade_size.value or 0.0)
+            new_lev = int(self.input_lev.value or 20)
+            new_cap = float(self.input_cap.value or 0.0)
+            new_sl = float(self.input_sl.value or 0.0) / 100.0
+            new_tp = float(self.input_tp.value or 0.0) / 100.0
             new_atr = "True" if self.sw_atr.value else "False"
             new_trail = "True" if self.sw_trail.value else "False"
             new_comp = "True" if self.sw_comp.value else "False"
-            new_comp_pct = float(self.input_comp_pct.value)
+            new_comp_pct = float(self.input_comp_pct.value or 0.0)
             risk_map = {"ЭКОНОМ": "CONSERVATIVE", "БАЛАНС": "BALANCED", "АГРЕССИВ": "AGGRESSIVE"}
             current_risk_eng = risk_map.get(self.dd_risk.value, "BALANCED")
             content = re.sub(r'TRADING_MODE\s*=\s*"[^"]+"', f'TRADING_MODE = "{self.dd_mode.value}"', content)
@@ -356,7 +356,7 @@ class AlgoBotApp:
 
                 self._section_label("КАПИТАЛ", ft.Icons.ACCOUNT_BALANCE_WALLET),
                 ft.Row([
-                    ft.Column([ft.Text("Маржа ($)", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_trade_size], spacing=4, expand=1),
+                    ft.Column([ft.Text("Базовый риск (%)", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_trade_size], spacing=4, expand=1),
                     ft.Column([ft.Text("Плечо (x)", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_lev], spacing=4, expand=1),
                 ], spacing=8),
                 self._input_group("Лимит капитала ($)", self.input_cap),
