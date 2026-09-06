@@ -6,6 +6,7 @@ import os
 import re
 import json
 import time
+import atexit
 from data_fetcher import DataFetcher
 from config import API_KEY, API_SECRET, USE_TESTNET
 
@@ -47,6 +48,8 @@ class AlgoBotApp:
         self._cached_tickers = None
         self._is_refreshing_positions = False
         self._log_counter = 0
+        
+        atexit.register(self.kill_bot)
         
         # Reusable single DataFetcher client to avoid 5-second connection overhead
         self.fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)

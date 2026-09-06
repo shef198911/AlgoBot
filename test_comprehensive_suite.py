@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 from unittest.mock import MagicMock, patch
 
+# Prevent real telegram messages during tests
+patch('telegram_notifier.TelegramNotifier.send_message').start()
+
 import config
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
