@@ -34,7 +34,9 @@ else: # SCALPING
 HTF_TREND_HISTORY_LIMIT = 500       # Единый лимит HTF свечей для обучения и live (Indicator convergence parity)
 TIMEFRAME_GLOBAL = TREND_TIMEFRAME
 
-TRADE_SIZE_USDT = 1.0  # Базовый риск в % от капитала (ранее - маржа)
+TRADE_SIZE_MODE = "AUTO"  # AUTO или MANUAL
+BASE_RISK_PCT = 1.0  # Базовый риск в % от капитала
+MIN_RISK_USDT = 15.0 # Минимальный объем сделки
 LEVERAGE = 20 # Плечо
 MAX_CAPITAL_USDT = 500.0 # Общий лимит выделенных средств на торговлю
 

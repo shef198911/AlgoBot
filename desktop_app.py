@@ -74,7 +74,17 @@ class AlgoBotApp:
             self.current_mode = mode_match.group(1) if mode_match else "NORMAL"
             risk_match = re.search(r'RISK_MODE\s*=\s*"([^"]+)"', content)
             self.current_risk = risk_match.group(1) if risk_match else "BALANCED"
-            self.current_trade_size = re.search(r'TRADE_SIZE_USDT\s*=\s*([0-9.]+)', content).group(1)
+            try:
+                self.current_trade_size_mode = re.search(r'TRADE_SIZE_MODE\s*=\s*"([^"]+)"', content).group(1)
+            except Exception:
+                self.current_trade_size_mode = "AUTO"
+            try:
+                self.current_base_risk = re.search(r'BASE_RISK_PCT\s*=\s*([0-9.]+)', content).group(1)
+            except Exception:
+                try:
+                    self.current_base_risk = re.search(r'TRADE_SIZE_USDT\s*=\s*([0-9.]+)', content).group(1)
+                except Exception:
+                    self.current_base_risk = "1.0"
             lev_match = re.search(r'LEVERAGE\s*=\s*([0-9]+)', content)
             self.current_lev = lev_match.group(1) if lev_match else "20"
             cap_match = re.search(r'MAX_CAPITAL_USDT\s*=\s*([0-9.]+)', content)
@@ -89,7 +99,8 @@ class AlgoBotApp:
         except Exception:
             self.current_mode = "NORMAL"
             self.current_risk = "BALANCED"
-            self.current_trade_size = "100.0"
+            self.current_trade_size_mode = "AUTO"
+            self.current_base_risk = "1.0"
             self.current_lev = "20"
             self.current_cap = "500.0"
             self.current_sl = "0.02"
@@ -119,7 +130,8 @@ class AlgoBotApp:
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 content = f.read()
-            new_size = float(self.input_trade_size.value or 0.0)
+            new_size = float(self.input_base_risk.value or 0.0)
+            mode_risk = self.dd_trade_size_mode.value
             new_lev = int(self.input_lev.value or 20)
             new_cap = float(self.input_cap.value or 0.0)
             new_sl = float(self.input_sl.value or 0.0) / 100.0
@@ -134,7 +146,11 @@ class AlgoBotApp:
             content = re.sub(r'RISK_MODE\s*=\s*"[^"]+"', f'RISK_MODE = "{current_risk_eng}"', content)
             ml_thresholds = {"CONSERVATIVE": "0.65", "BALANCED": "0.55", "AGGRESSIVE": "0.50"}
             content = re.sub(r'ML_PROBABILITY_THRESHOLD\s*=\s*[0-9.]+', f'ML_PROBABILITY_THRESHOLD = {ml_thresholds[current_risk_eng]}', content)
-            content = re.sub(r'TRADE_SIZE_USDT\s*=\s*[0-9.]+', f'TRADE_SIZE_USDT = {new_size}', content)
+            
+            content = re.sub(r'TRADE_SIZE_MODE\s*=\s*"[^"]+"', f'TRADE_SIZE_MODE = "{mode_risk}"', content)
+            content = re.sub(r'BASE_RISK_PCT\s*=\s*[0-9.]+', f'BASE_RISK_PCT = {new_size}', content)
+            content = re.sub(r'TRADE_SIZE_USDT\s*=\s*[0-9.]+', f'BASE_RISK_PCT = {new_size}', content)
+            
             content = re.sub(r'LEVERAGE\s*=\s*[0-9]+', f'LEVERAGE = {new_lev}', content)
             content = re.sub(r'MAX_CAPITAL_USDT\s*=\s*[0-9.]+', f'MAX_CAPITAL_USDT = {new_cap}', content)
             content = re.sub(r'STOP_LOSS_PCT\s*=\s*[0-9.]+', f'STOP_LOSS_PCT = {new_sl}', content)
@@ -309,9 +325,19 @@ class AlgoBotApp:
             border_radius=6,
             filled=True, fill_color=C_SURFACE2,
         )
+        
+        self.dd_trade_size_mode = ft.Dropdown(
+            options=[ft.dropdown.Option("AUTO"), ft.dropdown.Option("MANUAL")],
+            value=self.current_trade_size_mode,
+            dense=True, border_color=C_BORDER, focused_border_color=C_CYAN,
+            text_size=13, text_style=ft.TextStyle(size=13, color=C_TEXT),
+            content_padding=ft.Padding.symmetric(horizontal=10, vertical=6),
+            border_radius=6,
+            filled=True, fill_color=C_SURFACE2,
+        )
 
         # Styled clean input fields
-        self.input_trade_size = self._styled_field(self.current_trade_size)
+        self.input_base_risk = self._styled_field(self.current_base_risk)
         self.input_lev = self._styled_field(self.current_lev)
         self.input_cap = self._styled_field(self.current_cap)
         self.input_sl = self._styled_field(str(float(self.current_sl)*100))
@@ -353,10 +379,11 @@ class AlgoBotApp:
                 self._section_label("ТОРГОВЛЯ", ft.Icons.CANDLESTICK_CHART),
                 self._input_group("Тип торговли", self.dd_mode),
                 self._input_group("Риск-режим", self.dd_risk),
+                self._input_group("Режим объема", self.dd_trade_size_mode),
 
                 self._section_label("КАПИТАЛ", ft.Icons.ACCOUNT_BALANCE_WALLET),
                 ft.Row([
-                    ft.Column([ft.Text("Базовый риск (%)", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_trade_size], spacing=4, expand=1),
+                    ft.Column([ft.Text("Баз. риск (%)", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_base_risk], spacing=4, expand=1),
                     ft.Column([ft.Text("Плечо (x)", size=12, weight=ft.FontWeight.W_500, color=C_TEXT), self.input_lev], spacing=4, expand=1),
                 ], spacing=8),
                 self._input_group("Лимит капитала ($)", self.input_cap),

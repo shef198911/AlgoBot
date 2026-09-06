@@ -3,7 +3,7 @@ import os
 import concurrent.futures
 import threading
 from config import (
-    logger, SYMBOLS, TIMEFRAME, TRADE_SIZE_USDT, 
+    logger, SYMBOLS, TIMEFRAME, BASE_RISK_PCT, 
     API_KEY, API_SECRET, USE_TESTNET, USE_COMPOUNDING, COMPOUND_PCT
 )
 from data_fetcher import DataFetcher
@@ -102,31 +102,45 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         tg.send_message(msg_approved)
         
         # 3. Dynamic risk sizing (~1% of Working Capital, up to 2% for high confidence)
-        from config import TRADE_SIZE_USDT
+        import config
         try:
-            base_risk_pct = float(TRADE_SIZE_USDT) / 100.0
+            trade_mode = getattr(config, 'TRADE_SIZE_MODE', 'AUTO')
+        except Exception:
+            trade_mode = "AUTO"
+            
+        try:
+            min_risk_usdt = float(getattr(config, 'MIN_RISK_USDT', 15.0))
+        except Exception:
+            min_risk_usdt = 15.0
+
+        try:
+            base_risk_pct = float(getattr(config, 'BASE_RISK_PCT', 1.0)) / 100.0
             if base_risk_pct <= 0:
                 base_risk_pct = 0.01
         except Exception:
             base_risk_pct = 0.01
-        
-        # Scale risk if confidence is high (e.g. >= 0.90 scales to 2%)
-        # Let's say ML confidence is between 0.55 and 1.0
-        if ai_confidence >= 0.9:
-            risk_pct = base_risk_pct * 2.0
-        elif ai_confidence >= 0.7:
-            risk_pct = base_risk_pct * 1.5
-        else:
-            risk_pct = base_risk_pct
             
         working_cap = getattr(executor, 'working_capital', 500.0)
-        trade_amount = working_cap * risk_pct
-        
-        # Enforce minimum tangible risk to avoid tiny $2 trades
-        MIN_RISK_USDT = 15.0
-        if trade_amount < MIN_RISK_USDT:
-            # Safely bump to MIN_RISK_USDT, capped by the actual working capital
-            trade_amount = min(MIN_RISK_USDT, working_cap)
+
+        if trade_mode == "AUTO":
+            # Scale risk if confidence is high (e.g. >= 0.90 scales up)
+            if ai_confidence >= 0.9:
+                risk_pct = base_risk_pct * 3.0
+            elif ai_confidence >= 0.8:
+                risk_pct = base_risk_pct * 2.0
+            elif ai_confidence >= 0.7:
+                risk_pct = base_risk_pct * 1.5
+            else:
+                risk_pct = base_risk_pct
+                
+            trade_amount = working_cap * risk_pct
+            
+            # Enforce minimum tangible risk
+            if trade_amount < min_risk_usdt:
+                trade_amount = min(min_risk_usdt, working_cap)
+        else:
+            risk_pct = base_risk_pct
+            trade_amount = working_cap * risk_pct
 
         logger.info(f"[{symbol}] Risk Sizing: AI Confidence {ai_confidence*100:.1f}% -> Risk {risk_pct*100:.2f}%. Risk Amount: {trade_amount:.2f} USDT from {working_cap:.2f} Cap")
         
