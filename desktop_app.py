@@ -773,8 +773,13 @@ class AlgoBotApp:
 
     def _copy_console(self):
         lines = [item.get('raw', '') for item in self.raw_logs]
-        self.page.set_clipboard("\n".join(lines))
-        self.log_message("[СИСТЕМА] Лог скопирован в буфер обмена.", "info")
+        text = "\n".join(lines)
+        try:
+            import subprocess
+            subprocess.run(['clip.exe'], input=text.encode('utf-8'), check=True)
+            self.log_message("[СИСТЕМА] Логи скопированы в буфер обмена.", "info")
+        except Exception as e:
+            self.log_message(f"[ОШИБКА] Сбой буфера обмена: {e}", "error")
 
     # ──────────────────────────────────────────────
     #  Бизнес-логика и рендеринг позиций
