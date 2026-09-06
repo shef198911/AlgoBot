@@ -806,16 +806,16 @@ class TraderExecutor:
                 # Confirmed closed on exchange after bounded retry confirmations
                 self.logger.info(f"🔔 Сделка по {symbol} подтверждена закрытой.")
                 
+                pnl = 0.0
+                fees = 0.0
+                exit_price = pos_data.get('sl_price', 0.0)
+                
                 try:
                     closed_trades = self.exchange.fetch_my_trades(symbol, limit=20)
                     close_side = 'sell' if pos_data.get('side') in ['buy', 'long'] else 'buy'
                     entry_ts = pos_data.get('timestamp', time.time() * 1000 - 120000)
                     
                     recent_closes = [t for t in (closed_trades or []) if t.get('side') == close_side and t.get('timestamp', 0) >= entry_ts]
-                    
-                    pnl = 0.0
-                    fees = 0.0
-                    exit_price = pos_data.get('sl_price', 0.0)
                     
                     if recent_closes:
                         last_close = recent_closes[-1]
@@ -832,51 +832,53 @@ class TraderExecutor:
                             
                         if pnl == 0:
                             pnl = float(last_close.get('info', {}).get('realizedPnl', 0))
-                    else:
-                        exit_price = pos_data.get('sl_price', 0.0)
-                        entry = pos_data.get('entry', 0.0)
-                        amt = pos_data.get('amount', 0.0)
-                        if exit_price and entry and amt:
-                            direction = 1 if pos_data.get('side') in ['buy', 'long'] else -1
-                            pnl = (exit_price - entry) * amt * direction
-                        self.logger.warning(f"Binance API lag: Could not find recent close trade for {symbol}. Local approximate PnL: {pnl:.2f}")
-
-                    # UPDATE CAPITAL TRACKER (Requirement 2 & 12)
-                    self.capital_tracker.record_close(pnl, fees)
-                    self.logger.info(f"Capital Update: PnL {pnl:.2f}, Fees {fees:.2f}. New Bot Equity: {self.capital_tracker.trading_capital:.2f}")
-
-                    try:
-                        import datetime
-                        report = {
-                            "time_opened": datetime.datetime.fromtimestamp(pos_data.get('timestamp', time.time()*1000)/1000).strftime('%Y-%m-%d %H:%M:%S'),
-                            "time_closed": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            "symbol": symbol,
-                            "side": str(pos_data.get('side', '')).upper(),
-                            "entry_price": pos_data.get('entry'),
-                            "exit_price": exit_price,
-                            "pnl_usdt": pnl,
-                            "layer1_ta_setup": pos_data.get('ta_setup', 'UNKNOWN'),
-                            "layer1_engine_setup": pos_data.get('setup_type', 'UNKNOWN'),
-                            "layer1_engine_context": pos_data.get('engine_context', {}),
-                            "layer2_ai_confidence": pos_data.get('ai_confidence', 0.0),
-                            "layer2_probs": pos_data.get('probs_str', ""),
-                            "max_price": pos_data.get('max_price', pos_data.get('entry')),
-                            "min_price": pos_data.get('min_price', pos_data.get('entry')),
-                            "sl_price": pos_data.get('sl_price', 0),
-                            "tp_price": pos_data.get('tp_price', 0)
-                        }
-                        with open("detailed_trades.jsonl", "a", encoding="utf-8") as df_file:
-                            df_file.write(json.dumps(report, ensure_ascii=False) + "\n")
-                    except Exception as e:
-                        self.logger.error(f"Ошибка сохранения детального отчета: {e}")
-
-                    analytics_manager.record_trade(symbol, pos_data.get('side'), pos_data.get('entry'), exit_price, pnl)
-                    
-                    emoji = "🟢" if pnl > 0 else "🔴"
-                    tg_notifier.send_message(f"{emoji} <b>Сделка по {symbol} ЗАКРЫТА!</b>\nТип: {str(pos_data.get('side', '')).upper()}\nPnL: {pnl:.2f} USDT")
-                        
                 except Exception as e:
-                    self.logger.error(f"Ошибка получения PnL для аналитики: {e}")
+                    self.logger.error(f"Ошибка fetch_my_trades для {symbol}: {e}")
+
+                if pnl == 0.0:
+                    exit_price = exit_price or pos_data.get('sl_price', 0.0)
+                    entry = pos_data.get('entry', 0.0)
+                    amt = pos_data.get('amount', 0.0)
+                    if exit_price and entry and amt:
+                        direction = 1 if pos_data.get('side') in ['buy', 'long'] else -1
+                        pnl = (exit_price - entry) * amt * direction
+                    self.logger.warning(f"Используем локальный PnL для {symbol}: {pnl:.2f}")
+
+                # UPDATE CAPITAL TRACKER (Requirement 2 & 12)
+                self.capital_tracker.record_close(pnl, fees)
+                self.logger.info(f"Capital Update: PnL {pnl:.2f}, Fees {fees:.2f}. Bot Equity: {self.capital_tracker.trading_capital:.2f}")
+
+                try:
+                    import datetime
+                    report = {
+                        "time_opened": datetime.datetime.fromtimestamp(pos_data.get('timestamp', time.time()*1000)/1000).strftime('%Y-%m-%d %H:%M:%S'),
+                        "time_closed": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "symbol": symbol,
+                        "side": str(pos_data.get('side', '')).upper(),
+                        "entry_price": pos_data.get('entry'),
+                        "exit_price": exit_price,
+                        "pnl_usdt": pnl,
+                        "layer1_ta_setup": pos_data.get('ta_setup', 'UNKNOWN'),
+                        "layer1_engine_setup": pos_data.get('setup_type', 'UNKNOWN'),
+                        "layer1_engine_context": pos_data.get('engine_context', {}),
+                        "layer2_ai_confidence": pos_data.get('ai_confidence', 0.0),
+                        "layer2_probs": pos_data.get('probs_str', ""),
+                        "max_price": pos_data.get('max_price', pos_data.get('entry')),
+                        "min_price": pos_data.get('min_price', pos_data.get('entry')),
+                        "sl_price": pos_data.get('sl_price', 0),
+                        "tp_price": pos_data.get('tp_price', 0)
+                    }
+                    with open("detailed_trades.jsonl", "a", encoding="utf-8") as df_file:
+                        df_file.write(json.dumps(report, ensure_ascii=False) + "\n")
+                except Exception as e:
+                    self.logger.error(f"Ошибка сохранения detailed_trades.jsonl: {e}")
+
+                try:
+                    analytics_manager.record_trade(symbol, pos_data.get('side'), pos_data.get('entry'), exit_price, pnl)
+                    emoji = "✅" if pnl > 0 else "❌"
+                    tg_notifier.send_message(f"{emoji} <b>Сделка {symbol} ЗАКРЫТА!</b>\nТип: {str(pos_data.get('side', '')).upper()}\nPnL: {pnl:.2f} USDT")
+                except Exception as e:
+                    self.logger.error(f"Ошибка сохранения аналитики/тг: {e}")
                 
                 del self.positions[symbol]
                 self._save_live_state()
