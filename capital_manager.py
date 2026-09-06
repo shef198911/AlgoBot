@@ -120,7 +120,10 @@ class CapitalTracker:
     def effective_capital(self, real_balance: float) -> float:
         """Requirement 1: effective = min(TRADING_CAPITAL, real_balance)."""
         with self._lock:
-            return min(self._trading_capital, real_balance) if real_balance > 0 else self._trading_capital
+            # FAIL-CLOSED: if real_balance is negative (unknown/API error), return 0.0
+            if real_balance < 0:
+                return 0.0
+            return min(self._trading_capital, real_balance)
 
     def get_snapshot(self) -> Dict[str, float]:
         with self._lock:
@@ -138,10 +141,12 @@ def get_allocated_margin(positions: dict, pending_margins: dict) -> float:
     """Sum of margin from open positions + pending margins."""
     pos_margin = sum(
         pos.get('margin_required', 0.0)
-        for pos in positions.values()
         if pos.get('margin_required')
+        else (pos.get('amount', 0.0) * pos.get('entry', 0.0) / pos.get('leverage', 1))
+        for pos in positions.values()
     )
-    pend_margin = sum(pending_margins.values())
+    # Proper Atomic Reservation: ignore pending if already transitioned to open position
+    pend_margin = sum(v for k, v in pending_margins.items() if k not in positions)
     return pos_margin + pend_margin
 
 

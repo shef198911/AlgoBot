@@ -221,18 +221,9 @@ def main():
     if float(MAX_CAPITAL_USDT) > 0:
         session_working_capital = float(MAX_CAPITAL_USDT)
     else:
-        session_working_capital = 500.0 # fallback
-        for attempt in range(3):
-            try:
-                balance = fetcher.exchange.fetch_balance()
-                session_working_capital = balance['total'].get('USDT', 0.0)
-                logger.info(f"MAX_CAPITAL_USDT is <= 0. Fetched actual balance: {session_working_capital:.2f} USDT")
-                break
-            except Exception as e:
-                logger.error(f"Error fetching balance for working capital (attempt {attempt+1}/3): {e}")
-                time.sleep(2)
+        session_working_capital = 500.0 # Strict fallback to 500 bot equity, NOT real balance
             
-    logger.info(f"Session Working Capital: {session_working_capital:.2f} USDT")
+    logger.info(f"Session Working Capital (Bot Equity): {session_working_capital:.2f} USDT")
     
     executor = TraderExecutor(fetcher.exchange, working_capital=session_working_capital)
 
@@ -261,13 +252,14 @@ def main():
                     continue
 
             # Получение баланса ОДИН раз за цикл (Requirement 1: effective = min(TRADING_CAPITAL, real))
-            current_usdt_balance = None
+            current_usdt_balance = -1.0 # default to unknown state
             try:
                 balance = fetcher.exchange.fetch_balance()
                 current_usdt_balance = balance['total'].get('USDT', 0.0)
                 executor.update_real_balance(current_usdt_balance)
             except Exception as e:
                 logger.error(f"Ошибка получения баланса: {e}")
+                executor.update_real_balance(-1.0)
 
             # Single Position Snapshot per cycle for all 25 coins (Requirement 7)
             positions_snapshot = executor.fetch_all_positions()

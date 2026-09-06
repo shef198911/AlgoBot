@@ -150,6 +150,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.create_order.side_effect = [{'id': 'sl1'}, {'id': 'tp1'}]
         
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
             'valid': True, 'risk_distance': 500.0, 'stop_loss': 49500.0, 'take_profit': 51000.0
         })
@@ -171,6 +172,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.fetch_positions.return_value = []
         
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
             'valid': True, 'risk_distance': 500.0, 'stop_loss': 49500.0, 'take_profit': 51000.0
         })
@@ -195,6 +197,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.create_order.side_effect = Exception("Binance SL placement rejected")
         
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
             'valid': True, 'risk_distance': 50.0, 'stop_loss': 2950.0, 'take_profit': 3100.0
         })
@@ -218,6 +221,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.create_order.side_effect = create_order_mock
         
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
             'valid': True, 'risk_distance': 5.0, 'stop_loss': 145.0, 'take_profit': 160.0
         })
@@ -241,6 +245,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.create_order.side_effect = [{'id': 'rec_sl'}, {'id': 'rec_tp'}]
         
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.positions['ADA/USDT'] = {
             'side': 'long', 'entry': 0.50, 'amount': 800.0,
             'sl_order_id': None, 'tp_order_id': None
@@ -262,6 +267,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.create_order.side_effect = [{'id': 'sl1'}, {'id': 'tp1'}]
         
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
             'valid': True, 'risk_distance': 0.004, 'stop_loss': 0.096, 'take_profit': 0.12
         })
@@ -282,6 +288,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.price_to_precision.side_effect = lambda s, p: str(p)
         
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
             'valid': True, 'risk_distance': 100.0, 'stop_loss': 49000.0, 'take_profit': 52000.0
         })
@@ -319,6 +326,7 @@ class TestComprehensiveSuite(unittest.TestCase):
             {'symbol': 'ETH/USDT:USDT', 'side': 'short', 'contracts': 2.0, 'entryPrice': 3000.0, 'info': {'positionAmt': '-2.0'}}
         ]
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         snapshot = executor.fetch_all_positions()
         self.assertEqual(len(snapshot), 2)
         
@@ -348,6 +356,7 @@ class TestComprehensiveSuite(unittest.TestCase):
             {'id': 'sl_xrp', 'type': 'STOP_MARKET', 'stopPrice': 0.48}
         ]
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.positions['XRP/USDT'] = {
             'side': 'long', 'entry': 0.5, 'amount': 500.0, 'sl_order_id': 'sl_xrp', 'tp_order_id': None
         }
@@ -376,6 +385,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex = MagicMock()
         mock_ex.fetch_positions.return_value = None
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.positions['BTC/USDT'] = {'side': 'long', 'entry': 50000.0, 'amount': 1.0, 'sl_order_id': 's1'}
         
         status = executor.check_position_status('BTC/USDT', cached_positions=None)
@@ -439,6 +449,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         # fetch_positions returns empty or error
         mock_ex.fetch_positions.return_value = []
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         
         success = executor.execute_trade('BTC/USDT', 'buy', 1.0, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
         self.assertFalse(success)
@@ -451,6 +462,7 @@ class TestComprehensiveSuite(unittest.TestCase):
     def test_28_unknown_position_recovery(self):
         mock_ex = MagicMock()
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         # Position is initially UNKNOWN with amount=None
         executor.positions['BTC/USDT'] = {
             'side': 'long',
@@ -485,6 +497,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex = MagicMock()
         mock_ex.fetch_positions.return_value = []
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         executor.positions['BTC/USDT'] = {
             'side': 'long',
             'entry': 50000.0,
@@ -525,6 +538,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.create_market_order.return_value = {'id': 'm_part', 'average': 50000.0, 'filled': 0.35}
         mock_ex.create_order.side_effect = [{'id': 'sl_part'}, {'id': 'tp_part'}]
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         
         success = executor.execute_trade('BTC/USDT', 'buy', 1.0, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
         self.assertTrue(success)
@@ -546,6 +560,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         ]
         mock_ex.create_order.side_effect = Exception("Binance SL Error: Insufficient margin for stop loss")
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         
         success = executor.execute_trade('BTC/USDT', 'buy', 0.5, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
         self.assertFalse(success)
@@ -567,6 +582,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         # First call (SL) succeeds, second call (TP) fails
         mock_ex.create_order.side_effect = [{'id': 'sl_ok'}, Exception("TP rejected by exchange")]
         executor = TraderExecutor(mock_ex)
+        executor.update_real_balance(10000.0)
         
         success = executor.execute_trade('BTC/USDT', 'buy', 0.5, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
         self.assertTrue(success) # Position was successfully opened and protected by SL

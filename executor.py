@@ -126,7 +126,10 @@ class TraderExecutor:
             # --- Compute effective capital (Requirement 1) ---
             effective_cap = self.get_effective_capital()
             if effective_cap <= 0:
-                effective_cap = self.working_capital  # fallback
+                err = f"effective_capital <= 0 (maybe real balance fetch failed). FAIL CLOSED. No new entry for {symbol}."
+                self.logger.error(err)
+                self.last_error = err
+                return False
 
             trade_plan = None
             sl_price = 0.0
