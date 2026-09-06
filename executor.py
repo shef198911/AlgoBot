@@ -113,20 +113,33 @@ class TraderExecutor:
                     pass
                 margin_required = volume_usdt / LEVERAGE
             
-            if amount_coin <= 0:
-                record_funnel_event('RISK_FAIL')
-                self.last_error = "Рассчитанный объем позиции (amount_coin) <= 0"
-                return False
-
             with self.capital_lock:
                 current_total_margin = sum(pos.get('margin_required', 0.0) for pos in self.positions.values() if pos.get('margin_required')) + sum(self.pending_margins.values())
-                if current_total_margin + margin_required > MAX_CAPITAL_USDT:
+                available_capital = MAX_CAPITAL_USDT - current_total_margin
+                
+                if available_capital <= 5.0:
                     record_funnel_event('RISK_FAIL')
                     err = f"Лимит капитала исчерпан! Макс: {MAX_CAPITAL_USDT} USDT, исп: {current_total_margin:.2f} USDT (с ожидаемыми). Пропуск {symbol}."
                     self.logger.warning(err)
                     self.last_error = err
                     return False
+                    
+                if margin_required > available_capital:
+                    self.logger.warning(f"Уменьшение объема позиции {symbol} (нужно: {margin_required:.2f}, доступно: {available_capital:.2f})")
+                    margin_required = available_capital
+                    volume_usdt = margin_required * LEVERAGE
+                    amount_coin = volume_usdt / current_price
+                    try:
+                        amount_coin = float(self.exchange.amount_to_precision(symbol, amount_coin))
+                    except Exception:
+                        pass
+                        
                 self.pending_margins[symbol] = margin_required
+
+            if amount_coin <= 0:
+                record_funnel_event('RISK_FAIL')
+                self.last_error = "Рассчитанный объем позиции (amount_coin) <= 0"
+                return False
 
             # Risk Engine and Capital checks passed successfully!
             record_funnel_event('RISK_PASS')

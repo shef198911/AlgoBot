@@ -60,6 +60,8 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
                     return
                 elif st == 'UNKNOWN':
                     return
+                elif st == 'EXECUTION_REJECTED':
+                    return
                 elif st == 'EXECUTION_FAILED':
                     # Retry allowed only if attempts < 3 and candle is still active
                     if state_info.get('attempts', 0) >= 3:
@@ -130,6 +132,8 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
                     signal_states[sig_key]['status'] = 'EXECUTED'
                 elif getattr(executor, 'last_error', '') == 'UNKNOWN_AMOUNT':
                     signal_states[sig_key]['status'] = 'UNKNOWN'
+                elif any(err in getattr(executor, 'last_error', '') for err in ['Лимит капитала', 'Worst-case', 'Рассчитанный объем']):
+                    signal_states[sig_key]['status'] = 'EXECUTION_REJECTED'
                 else:
                     signal_states[sig_key]['status'] = 'EXECUTION_FAILED'
 
