@@ -38,6 +38,7 @@ def train_ai():
             logger.warning(f"Пропуск {symbol}: недостаточно данных для расчета индикаторов.")
             continue
         
+        df_analyzed.reset_index(drop=True, inplace=True)
         
         # Filter TA signals by Global Trend (just like in Live)
         tp_pct = TAKE_PROFIT_PCT
