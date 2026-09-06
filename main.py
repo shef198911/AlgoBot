@@ -101,48 +101,43 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         logger.info(f"[GO] {symbol} - 1-й слой: ДА - 2-й слой: ДА (уверенность {ai_confidence*100:.1f}%) -> ОТКРЫВАЮ СДЕЛКУ")
         tg.send_message(msg_approved)
         
-        # 3. Dynamic risk sizing (~1% of Working Capital, up to 2% for high confidence)
+        # 3. Dynamic risk sizing via Capital Manager
         import config
+        from capital_manager import compute_risk_budget
         try:
             trade_mode = getattr(config, 'TRADE_SIZE_MODE', 'AUTO')
         except Exception:
             trade_mode = "AUTO"
-            
-        try:
-            min_risk_usdt = float(getattr(config, 'MIN_RISK_USDT', 15.0))
-        except Exception:
-            min_risk_usdt = 15.0
 
-        try:
-            base_risk_pct = float(getattr(config, 'BASE_RISK_PCT', 1.0)) / 100.0
-            if base_risk_pct <= 0:
-                base_risk_pct = 0.01
-        except Exception:
-            base_risk_pct = 0.01
-            
-        working_cap = getattr(executor, 'working_capital', 500.0)
+        # Use effective capital (Requirement 1: min of TRADING_CAPITAL, real balance)
+        effective_cap = executor.get_effective_capital()
+        if effective_cap <= 0:
+            effective_cap = getattr(executor, 'working_capital', 500.0)
 
         if trade_mode == "AUTO":
-            # Scale risk if confidence is high (e.g. >= 0.90 scales up)
-            if ai_confidence >= 0.9:
-                risk_pct = base_risk_pct * 3.0
-            elif ai_confidence >= 0.8:
-                risk_pct = base_risk_pct * 2.0
-            elif ai_confidence >= 0.7:
-                risk_pct = base_risk_pct * 1.5
-            else:
-                risk_pct = base_risk_pct
-                
-            trade_amount = working_cap * risk_pct
-            
-            # Enforce minimum tangible risk
-            if trade_amount < min_risk_usdt:
-                trade_amount = min(min_risk_usdt, working_cap)
+            # Compute risk budget with AI confidence scaling + hard caps (Requirements 3, 6)
+            budget = compute_risk_budget(
+                effective_capital=effective_cap,
+                base_risk_pct=float(getattr(config, 'BASE_RISK_PCT', 1.0)),
+                ai_confidence=ai_confidence,
+                allocated_margin=sum(pos.get('margin_required', 0.0) for pos in executor.positions.values() if pos.get('margin_required')) + sum(executor.pending_margins.values()),
+                positions=executor.positions,
+            )
+            trade_amount = budget['risk_usdt']
+            risk_pct = budget['risk_pct']
+            conf_mult = budget['confidence_mult']
         else:
-            risk_pct = base_risk_pct
-            trade_amount = working_cap * risk_pct
+            try:
+                base_risk_pct = float(getattr(config, 'BASE_RISK_PCT', 1.0)) / 100.0
+                if base_risk_pct <= 0:
+                    base_risk_pct = 0.01
+            except Exception:
+                base_risk_pct = 0.01
+            risk_pct = base_risk_pct * 100.0
+            trade_amount = effective_cap * base_risk_pct
+            conf_mult = 1.0
 
-        logger.info(f"[{symbol}] Risk Sizing: AI Confidence {ai_confidence*100:.1f}% -> Risk {risk_pct*100:.2f}%. Risk Amount: {trade_amount:.2f} USDT from {working_cap:.2f} Cap")
+        logger.info(f"[{symbol}] Risk Sizing: AI Confidence {ai_confidence*100:.1f}% (x{conf_mult:.1f}) -> Risk {risk_pct:.2f}%. Risk Amount: {trade_amount:.2f} USDT from {effective_cap:.2f} Effective Cap")
         
         # Шаг 5: Исполнение
         with execute_lock:
@@ -251,14 +246,14 @@ def main():
                     time.sleep(15)
                     continue
 
-            # Получение баланса ОДИН раз за цикл, если включено авто-реинвестирование
+            # Получение баланса ОДИН раз за цикл (Requirement 1: effective = min(TRADING_CAPITAL, real))
             current_usdt_balance = None
-            if USE_COMPOUNDING:
-                try:
-                    balance = fetcher.exchange.fetch_balance()
-                    current_usdt_balance = balance['total'].get('USDT', 0.0)
-                except Exception as e:
-                    logger.error(f"Ошибка получения баланса для реинвестирования: {e}")
+            try:
+                balance = fetcher.exchange.fetch_balance()
+                current_usdt_balance = balance['total'].get('USDT', 0.0)
+                executor.update_real_balance(current_usdt_balance)
+            except Exception as e:
+                logger.error(f"Ошибка получения баланса: {e}")
 
             # Single Position Snapshot per cycle for all 25 coins (Requirement 7)
             positions_snapshot = executor.fetch_all_positions()

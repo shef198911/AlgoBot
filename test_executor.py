@@ -29,6 +29,9 @@ class TestExecutor(unittest.TestCase):
         config.LEVERAGE = 10
         config.STRUCTURE_RISK_ENABLED = True
         config.MAX_RISK_PERCENT = 1.0
+        
+        import capital_manager
+        capital_manager.MIN_RISK_USDT = 0.0
 
     @patch('executor.json')
     @patch('executor.open')

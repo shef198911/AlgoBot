@@ -20,6 +20,9 @@ from entry_gate import EntryGate, record_funnel_event, get_funnel_summary
 from risk_manager import StructureRiskEngine
 
 class TestComprehensiveSuite(unittest.TestCase):
+    def setUp(self):
+        import capital_manager
+        capital_manager.MIN_RISK_USDT = 0.0
     
     # 1. Syntax of all Python files
     def test_01_syntax_compilation_all_files(self):

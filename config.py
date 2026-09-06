@@ -38,7 +38,17 @@ TRADE_SIZE_MODE = "AUTO"  # AUTO или MANUAL
 BASE_RISK_PCT = 1.0  # Базовый риск в % от капитала
 MIN_RISK_USDT = 15.0 # Минимальный объем сделки
 LEVERAGE = 20 # Плечо
-MAX_CAPITAL_USDT = 500.0 # Общий лимит выделенных средств на торговлю
+MAX_CAPITAL_USDT = 500.0 # Общий лимит выделенных средств на торговлю (TRADING_CAPITAL)
+
+# --- Capital Management (Portfolio Load & Minimums) ---
+MIN_POSITION_NOTIONAL_USDT = 10.0    # Minimum notional value for a position
+EXCHANGE_MIN_NOTIONAL_USDT = 5.0     # Exchange minimum notional (Binance default)
+EXCHANGE_MIN_AMOUNT = 0.0            # Exchange minimum amount (symbol-specific, 0 = use exchange info)
+MAX_RISK_PER_TRADE_PCT = 3.0         # Maximum risk % per single trade (hard cap after AI scaling)
+MAX_MARGIN_PER_POSITION_PCT = 30.0   # Maximum margin per single position as % of effective capital
+MAX_TOTAL_ALLOCATED_MARGIN_PCT = 80.0  # Maximum total allocated margin as % of effective capital
+MAINTENANCE_MARGIN_RATE = 0.004      # Maintenance margin rate for liquidation estimation (Binance tier-1)
+ESTIMATED_FEE_RATE = 0.0005          # Estimated taker fee rate per side (0.05%)
 
 # --- Настройки Market Structure & Price Action Engine ---
 SR_ZONE_ATR_MULTIPLIER = 0.75       # Ширина зоны S/R в ATR
