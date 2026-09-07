@@ -98,23 +98,26 @@ class TraderExecutor:
             except Exception:
                 pass
 
-            # VERIFY margin mode and leverage
-            actual_leverage = LEVERAGE
+            # VERIFY margin mode and leverage (P0-3, P0-4)
+            actual_leverage = None
             try:
                 positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and isinstance(self.exchange.has, dict) and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
+                print(f"DEBUG: symbol={symbol}, positions={positions}")
                 pos_info = next((p for p in (positions or []) if p.get('symbol', '').split(':')[0] == symbol.split(':')[0]), None)
-                if pos_info:
-                    raw_info = pos_info.get('info', {})
-                    margin_type = pos_info.get('marginType') or raw_info.get('marginType', '')
-                    if margin_type and margin_type.lower() != 'isolated':
-                        err = f"Isolated mode not confirmed for {symbol}, actual is {margin_type}"
-                        self.logger.error(err)
-                        self.last_error = err
-                        return False
+                print(f"DEBUG: pos_info={pos_info}")
+                if not pos_info:
+                    raise Exception("Position info absent from exchange.")
                     
-                    lev = pos_info.get('leverage') or raw_info.get('leverage')
-                    if lev:
-                        actual_leverage = int(lev)
+                raw_info = pos_info.get('info', {})
+                margin_type = pos_info.get('marginType') or raw_info.get('marginType', '')
+                if not margin_type or margin_type.lower() != 'isolated':
+                    raise Exception(f"Isolated mode not confirmed for {symbol}, actual is {margin_type}")
+                    
+                lev = pos_info.get('leverage') or raw_info.get('leverage')
+                if lev:
+                    actual_leverage = int(lev)
+                else:
+                    raise Exception(f"Leverage not confirmed for {symbol}")
             except Exception as e:
                 err = f"Failed to verify margin mode/leverage for {symbol}: {e}"
                 self.logger.error(err)
@@ -186,8 +189,28 @@ class TraderExecutor:
             
             self.logger.info(f"Capital Manager Sizing: SL distance {risk_distance:.4f}. Position size {amount_coin} {symbol} (Vol: {volume_usdt:.2f}$, Margin: {margin_required:.2f}$)")
             
-            # --- Capital & Portfolio Load Checks (Requirements 2, 4) ---
+            # --- Capital & Portfolio Load Checks (Requirements 2, 4, P0-2) ---
             with self.capital_lock:
+                # P0-2 Portfolio Risk Cap Check
+                try:
+                    from config import MAX_TOTAL_PORTFOLIO_RISK_PCT
+                    max_portfolio_risk_pct = MAX_TOTAL_PORTFOLIO_RISK_PCT
+                except ImportError:
+                    max_portfolio_risk_pct = 15.0
+                    
+                from capital_manager import get_portfolio_risk_usdt
+                current_portfolio_risk = get_portfolio_risk_usdt(self.positions)
+                max_portfolio_risk_usdt = effective_cap * (max_portfolio_risk_pct / 100.0)
+                
+                if current_portfolio_risk + risk_usdt_actual > max_portfolio_risk_usdt:
+                    if symbol in self.pending_margins:
+                        del self.pending_margins[symbol]
+                    record_funnel_event('RISK_FAIL')
+                    err = f"Общий риск портфеля превышен! Добавив {risk_usdt_actual:.2f}, риск станет {current_portfolio_risk + risk_usdt_actual:.2f} > лимит {max_portfolio_risk_usdt:.2f}."
+                    self.logger.warning(err)
+                    self.last_error = err
+                    return False
+
                 current_total_margin = get_allocated_margin(self.positions, self.pending_margins)
                 available_capital = effective_cap - current_total_margin
                 
@@ -357,6 +380,40 @@ class TraderExecutor:
                 order_filled = float(order.get('filled') or 0.0)
                 if order_filled > 0:
                     actual_position_amount = order_filled
+
+            # ACTUAL LIQUIDATION PRICE VERIFICATION (P0-5)
+            actual_liquidation_price = None
+            actual_mark_price = actual_price
+            try:
+                for pos in (positions or []):
+                    if isinstance(pos, dict):
+                        pos_sym = pos.get('symbol', '')
+                        if pos_sym.split(':')[0] == symbol.split(':')[0]:
+                            raw_info = pos.get('info', {})
+                            liq_p = pos.get('liquidationPrice') or raw_info.get('liquidationPrice')
+                            mark_p = pos.get('markPrice') or raw_info.get('markPrice')
+                            if liq_p:
+                                actual_liquidation_price = float(liq_p)
+                            if mark_p:
+                                actual_mark_price = float(mark_p)
+                            break
+            except Exception as e:
+                self.logger.error(f"Ошибка проверки liquidationPrice: {e}")
+
+            if actual_liquidation_price is None or actual_liquidation_price <= 0:
+                self.logger.warning(f"⚠️ Не удалось получить фактический liquidationPrice для {symbol} после открытия. Позиция не считается полностью безопасной.")
+                liq_safe_post = False
+            else:
+                if direction_str == 'LONG':
+                    liq_safe_post = sl_price > actual_liquidation_price
+                else:
+                    liq_safe_post = sl_price < actual_liquidation_price
+                    
+                if not liq_safe_post:
+                    self.logger.critical(f"КРИТИЧЕСКИ: Фактический SL {sl_price} НЕ безопасен относительно ликвидации {actual_liquidation_price} (Mark: {actual_mark_price}). Экстренное закрытие.")
+                    self.last_error = "LIQUIDATION_RISK"
+                    self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
+                    return False
 
             # UNKNOWN AMOUNT HANDLING (Requirement 3)
             # If amount is unknown, set amount=None, status='UNKNOWN', DO NOT record requested amount as actual amount
@@ -844,9 +901,10 @@ class TraderExecutor:
                         pnl = (exit_price - entry) * amt * direction
                     self.logger.warning(f"Используем локальный PnL для {symbol}: {pnl:.2f}")
 
-                # UPDATE CAPITAL TRACKER (Requirement 2 & 12)
-                self.capital_tracker.record_close(pnl, fees)
-                self.logger.info(f"Capital Update: PnL {pnl:.2f}, Fees {fees:.2f}. Bot Equity: {self.capital_tracker.trading_capital:.2f}")
+                # UPDATE CAPITAL TRACKER (Requirement 2 & 12, P0-7)
+                event_id = f"{symbol}_{pos_data.get('timestamp', int(time.time()*1000))}_close"
+                self.capital_tracker.record_close(pnl, fees, event_id=event_id)
+                self.logger.info(f"Capital Update [{event_id}]: PnL {pnl:.2f}, Fees {fees:.2f}. Bot Equity: {self.capital_tracker.trading_capital:.2f}")
 
                 try:
                     import datetime

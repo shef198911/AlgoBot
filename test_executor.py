@@ -16,11 +16,20 @@ class TestExecutor(unittest.TestCase):
         
         # Configure mock exchange
         self.mock_exchange = MagicMock()
+        self.mock_exchange.fetch_positions.return_value = [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 40000.0, 'markPrice': 50000.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 2000.0, 'markPrice': 3000.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 100.0, 'markPrice': 150.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.2, 'markPrice': 0.5},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.05, 'markPrice': 0.1},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 50.0, 'markPrice': 100.0}
+]
         self.mock_exchange.markets = {'TEST/USDT': {}}
         self.mock_exchange.price_to_precision.side_effect = lambda sym, price: f"{price:.4f}"
         self.mock_exchange.amount_to_precision.side_effect = lambda sym, amt: f"{amt:.4f}"
         
-        self.executor = TraderExecutor(self.mock_exchange)
+        self.executor = TraderExecutor(self.mock_exchange, working_capital=500.0)
+        self.executor.update_real_balance(10000.0)
         self.executor.logger = self.mock_logger
         self.executor.risk_engine = MagicMock()
         

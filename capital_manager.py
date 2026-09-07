@@ -80,14 +80,61 @@ def ai_confidence_multiplier(confidence: float) -> float:
 # ---------------------------------------------------------------------------
 # Capital Tracker (Requirement 2 — Dynamic Capital)
 # ---------------------------------------------------------------------------
-class CapitalTracker:
-    """Thread-safe tracker for dynamic trading capital state."""
+import json
+import os
+import tempfile
 
-    def __init__(self, trading_capital: float):
+class CapitalTracker:
+    """Thread-safe tracker for dynamic trading capital state with atomic persistence (P0-6)."""
+
+    def __init__(self, trading_capital: float, state_file: str = "bot_equity.json"):
+        self.state_file = state_file
+        self.is_corrupt = False
+        self.processed_events = set()
+        
         self._trading_capital = trading_capital
         self._realized_pnl = 0.0
         self._total_fees = 0.0
         self._lock = threading.Lock()
+        
+        self._load_state()
+
+    def _load_state(self):
+        if not os.path.exists(self.state_file):
+            self._save_state_unlocked()
+            return
+            
+        try:
+            with open(self.state_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            self._trading_capital = float(data.get('trading_capital', self._trading_capital))
+            self._realized_pnl = float(data.get('realized_pnl', 0.0))
+            self._total_fees = float(data.get('total_fees', 0.0))
+            self.processed_events = set(data.get('processed_events', []))
+            self.is_corrupt = False
+            _log.info(f"Loaded capital state: {self._trading_capital} USDT")
+        except Exception as e:
+            _log.critical(f"КРИТИЧЕСКИ: Файл состояния капитала ({self.state_file}) поврежден! Ошибка: {e}. Блокировка новых сделок.")
+            self.is_corrupt = True
+
+    def _save_state_unlocked(self):
+        if self.is_corrupt:
+            return
+        data = {
+            "trading_capital": self._trading_capital,
+            "realized_pnl": self._realized_pnl,
+            "total_fees": self._total_fees,
+            "processed_events": list(self.processed_events)
+        }
+        try:
+            fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(self.state_file)) or '.')
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                json.dump(data, f)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_path, self.state_file)
+        except Exception as e:
+            _log.error(f"Failed to save capital state atomically: {e}")
 
     @property
     def trading_capital(self) -> float:
@@ -104,24 +151,30 @@ class CapitalTracker:
         with self._lock:
             return self._total_fees
 
-    def record_close(self, pnl: float, fees: float = 0.0):
+    def record_close(self, pnl: float, fees: float = 0.0, event_id: str = None):
         """After a position closes: profit returns, loss reduces capital, fees deducted."""
         with self._lock:
+            if event_id:
+                if event_id in self.processed_events:
+                    return
+                self.processed_events.add(event_id)
             self._realized_pnl += pnl
             self._total_fees += fees
             self._trading_capital += pnl - fees
+            self._save_state_unlocked()
 
     def record_fee(self, fee: float):
         """Record an entry fee deduction."""
         with self._lock:
             self._total_fees += fee
             self._trading_capital -= fee
+            self._save_state_unlocked()
 
     def effective_capital(self, real_balance: float) -> float:
         """Requirement 1: effective = min(TRADING_CAPITAL, real_balance)."""
         with self._lock:
             # FAIL-CLOSED: if real_balance is negative (unknown/API error), return 0.0
-            if real_balance < 0:
+            if real_balance < 0 or self.is_corrupt:
                 return 0.0
             return min(self._trading_capital, real_balance)
 

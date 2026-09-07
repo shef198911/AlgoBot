@@ -7,11 +7,20 @@ from config import MAX_CAPITAL_USDT
 class TestTraderExecutorRecovery(unittest.TestCase):
     def setUp(self):
         self.exchange_mock = MagicMock()
+        self.exchange_mock.fetch_positions.return_value = [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 40000.0, 'markPrice': 50000.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 2000.0, 'markPrice': 3000.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 100.0, 'markPrice': 150.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.2, 'markPrice': 0.5},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.05, 'markPrice': 0.1},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 50.0, 'markPrice': 100.0}
+]
         self.exchange_mock.markets = {'BTC/USDT': {}}
         self.exchange_mock.amount_to_precision.return_value = '0.1'
         self.exchange_mock.price_to_precision.return_value = '50000.0'
         
-        self.executor = TraderExecutor(self.exchange_mock)
+        self.executor = TraderExecutor(self.exchange_mock, working_capital=500.0)
+        self.executor.update_real_balance(10000.0)
         # Mock risk engine to bypass it for simpler tests
         self.executor.risk_engine.build_trade_plan = MagicMock(return_value={
             'valid': True,
@@ -22,7 +31,14 @@ class TestTraderExecutorRecovery(unittest.TestCase):
 
     @patch('executor.logger')
     def test_execute_trade_success(self, mock_logger):
-        self.exchange_mock.fetch_positions.return_value = []
+        self.exchange_mock.fetch_positions.return_value = [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0}
+]
         self.exchange_mock.create_market_order.return_value = {'id': 'market123', 'average': 50000.0, 'filled': 0.1}
         self.exchange_mock.create_order.side_effect = [{'id': 'sl123'}, {'id': 'tp123'}]
         
@@ -36,8 +52,23 @@ class TestTraderExecutorRecovery(unittest.TestCase):
     @patch('executor.logger')
     def test_execute_trade_sl_fail_triggers_emergency_close(self, mock_logger):
         self.exchange_mock.fetch_positions.side_effect = [
-            [], # check_position_status
-            [{'symbol': 'BTC/USDT', 'side': 'long', 'info': {'positionAmt': '0.1'}}] # emergency_close
+            [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 40000.0, 'markPrice': 50000.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 2000.0, 'markPrice': 3000.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 100.0, 'markPrice': 150.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.2, 'markPrice': 0.1},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.05, 'markPrice': 0.1},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 50.0, 'markPrice': 100.0}
+],
+            [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 40000.0, 'markPrice': 50000.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 2000.0, 'markPrice': 3000.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 100.0, 'markPrice': 150.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.2, 'markPrice': 0.1},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.05, 'markPrice': 0.1},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 50.0, 'markPrice': 100.0}
+],
+            [{'symbol': 'BTC/USDT', 'side': 'long', 'info': {'positionAmt': '0.1', 'marginType': 'isolated', 'leverage': 20, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}]
         ]
         self.exchange_mock.create_market_order.return_value = {'id': 'market123', 'average': 50000.0, 'filled': 0.1}
         self.exchange_mock.create_order.side_effect = Exception("API SL Error")
@@ -49,7 +80,14 @@ class TestTraderExecutorRecovery(unittest.TestCase):
 
     @patch('executor.logger')
     def test_execute_trade_tp_fail_does_not_close(self, mock_logger):
-        self.exchange_mock.fetch_positions.return_value = []
+        self.exchange_mock.fetch_positions.return_value = [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0}
+]
         self.exchange_mock.create_market_order.return_value = {'id': 'market123', 'average': 50000.0, 'filled': 0.1}
         
         def create_order_mock(symbol, type, side, amount, price=None, params={}):
@@ -66,7 +104,14 @@ class TestTraderExecutorRecovery(unittest.TestCase):
 
     @patch('executor.logger')
     def test_max_capital_limit(self, mock_logger):
-        self.exchange_mock.fetch_positions.return_value = []
+        self.exchange_mock.fetch_positions.return_value = [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0}
+]
         # Pre-fill capital
         self.executor.positions['ETH/USDT'] = {'margin_required': MAX_CAPITAL_USDT - 1}
         
@@ -78,7 +123,14 @@ class TestTraderExecutorRecovery(unittest.TestCase):
         
     @patch('executor.logger')
     def test_unknown_amount_fallback_removed(self, mock_logger):
-        self.exchange_mock.fetch_positions.return_value = []
+        self.exchange_mock.fetch_positions.return_value = [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0}
+]
         # Simulate MARKET order without 'filled' field and fetch_positions returning empty
         self.exchange_mock.create_market_order.return_value = {'id': 'market123', 'average': 50000.0}
         
@@ -113,7 +165,14 @@ class TestTraderExecutorRecovery(unittest.TestCase):
         
     @patch('executor.logger')
     def test_pending_margins_released_on_fail(self, mock_logger):
-        self.exchange_mock.fetch_positions.return_value = []
+        self.exchange_mock.fetch_positions.return_value = [
+    {'symbol': 'BTC/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ETH/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'SOL/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'ADA/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0},
+    {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0}
+]
         # Force market order to fail
         self.exchange_mock.create_market_order.side_effect = Exception("API Market Error")
         

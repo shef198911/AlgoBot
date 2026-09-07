@@ -255,7 +255,11 @@ def main():
             current_usdt_balance = -1.0 # default to unknown state
             try:
                 balance = fetcher.exchange.fetch_balance()
-                current_usdt_balance = balance['total'].get('USDT', 0.0)
+                if 'free' in balance and 'USDT' in balance['free']:
+                    current_usdt_balance = float(balance['free']['USDT'])
+                else:
+                    logger.error("Свободный баланс (free) USDT не найден в ответе биржи!")
+                    current_usdt_balance = -1.0
                 executor.update_real_balance(current_usdt_balance)
             except Exception as e:
                 logger.error(f"Ошибка получения баланса: {e}")

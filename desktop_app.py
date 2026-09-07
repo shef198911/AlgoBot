@@ -792,7 +792,10 @@ class AlgoBotApp:
             except Exception:
                 pass
             balance = self.fetcher.exchange.fetch_balance()
-            usdt = balance['total'].get('USDT', 0.0)
+            if 'free' in balance and 'USDT' in balance['free']:
+                usdt = float(balance['free']['USDT'])
+            else:
+                usdt = -1.0
             self.lbl_balance.value = f"{usdt:,.2f} USDT"
         except Exception as e:
             self.lbl_balance.value = "Ошибка загрузки"
