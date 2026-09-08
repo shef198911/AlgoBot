@@ -101,19 +101,34 @@ class TraderExecutor:
             # VERIFY margin mode and leverage (P0-3, P0-4)
             actual_leverage = None
             try:
-                positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and isinstance(self.exchange.has, dict) and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
-                print(f"DEBUG: symbol={symbol}, positions={positions}")
-                pos_info = next((p for p in (positions or []) if p.get('symbol', '').split(':')[0] == symbol.split(':')[0]), None)
-                print(f"DEBUG: pos_info={pos_info}")
+                # Use raw Binance API if available to bypass CCXT 0-amount filtering
+                if hasattr(self.exchange, 'fapiPrivateV2GetPositionRisk'):
+                    market_id = symbol.replace('/', '')
+                    raw_positions = self.exchange.fapiPrivateV2GetPositionRisk({'symbol': market_id})
+                    pos_info = raw_positions[0] if isinstance(raw_positions, list) and len(raw_positions) > 0 else {}
+                    margin_type = pos_info.get('marginType', '')
+                    lev = pos_info.get('leverage')
+                elif hasattr(self.exchange, 'fapiPrivateV3GetPositionRisk'):
+                    market_id = symbol.replace('/', '')
+                    raw_positions = self.exchange.fapiPrivateV3GetPositionRisk({'symbol': market_id})
+                    pos_info = raw_positions[0] if isinstance(raw_positions, list) and len(raw_positions) > 0 else {}
+                    margin_type = pos_info.get('marginType', '')
+                    lev = pos_info.get('leverage')
+                else:
+                    positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and isinstance(self.exchange.has, dict) and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
+                    p = next((p for p in (positions or []) if p.get('symbol', '').split(':')[0] == symbol.split(':')[0]), None)
+                    if not p:
+                        raise Exception("Position info absent from exchange.")
+                    pos_info = p.get('info', {})
+                    margin_type = p.get('marginType') or pos_info.get('marginType', '')
+                    lev = p.get('leverage') or pos_info.get('leverage')
+
                 if not pos_info:
                     raise Exception("Position info absent from exchange.")
                     
-                raw_info = pos_info.get('info', {})
-                margin_type = pos_info.get('marginType') or raw_info.get('marginType', '')
                 if not margin_type or margin_type.lower() != 'isolated':
                     raise Exception(f"Isolated mode not confirmed for {symbol}, actual is {margin_type}")
                     
-                lev = pos_info.get('leverage') or raw_info.get('leverage')
                 if lev:
                     actual_leverage = int(lev)
                 else:
