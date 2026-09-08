@@ -713,7 +713,7 @@ class AlgoBotApp:
 
     def log_message(self, message, force_tag=None):
         message = re.sub(r'\x1b\[.*?m', '', message)
-        message = re.sub(r'^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2},\d+\s\[.*?\]\s.*?:\s', '', message)
+        message = re.sub(r'^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2},\d+\s\[.*?\]\s(?:[a-zA-Z_0-9]+:\s)?', '', message)
         message = re.sub(r'^\[\d{2}/\d{2}/\d{2}\s\d{2}:\d{2}:\d{2}\]\s\w+\s+', '', message)
 
         if not message.strip():
