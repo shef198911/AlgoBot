@@ -96,6 +96,12 @@ class TraderExecutor:
             f"Reject Reason: {reject_reason}\n"
         )
         self.logger.warning(log_msg)
+        try:
+            import time
+            with open("trade_history.txt", "a", encoding="utf-8") as f:
+                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | REJECT | Ошибка: {reject_reason} | Risk USDT: {risk_usdt:.2f}\n")
+        except Exception:
+            pass
 
     def update_real_balance(self, balance: float):
         """Update real exchange balance (called each trading cycle)."""
@@ -1055,6 +1061,12 @@ class TraderExecutor:
                 self.capital_tracker.record_close(pnl, fees, event_id=event_id, is_estimated=is_estimated)
                 self.logger.info(f"Capital Update [{event_id}]: PnL {pnl:.2f}, Fees {fees:.2f} (Est: {is_estimated}). Bot Equity: {self.capital_tracker.trading_capital:.2f}")
 
+                try:
+                    import time
+                    with open("trade_history.txt", "a", encoding="utf-8") as f:
+                        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | EXIT | Вход: {pos_data.get('entry', 0):.4f} | Выход: {exit_price:.4f} | PnL: {pnl:.2f} USDT\n")
+                except Exception:
+                    pass
                 try:
                     import datetime
                     report = {

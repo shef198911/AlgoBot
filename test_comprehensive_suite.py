@@ -708,7 +708,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
         mock_ex.create_market_order.return_value = {'id': 'm_part', 'average': 50000.0, 'filled': 0.35}
         mock_ex.create_order.side_effect = [{'id': 'sl_part'}, {'id': 'tp_part'}]
-        mock_ex.fetch_open_orders.return_value = [{'id': 'sl_part', 'symbol': 'BTC/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 49000.0, 'amount': 0.35, 'status': 'open'}]
+        mock_ex.fetch_open_orders.return_value = [{'id': 'sl_part', 'symbol': 'BTC/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 48500.0, 'amount': 0.35, 'status': 'open'}]
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
@@ -791,7 +791,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.create_market_order.return_value = {'id': 'm_entry', 'average': 50000.0, 'filled': 0.5}
         # First call (SL) succeeds, second call (TP) fails
         mock_ex.create_order.side_effect = [{'id': 'sl_ok'}, Exception("TP rejected by exchange")]
-        mock_ex.fetch_open_orders.return_value = [{'id': 'sl_ok', 'symbol': 'BTC/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 49000.0, 'amount': 0.5, 'status': 'open'}]
+        mock_ex.fetch_open_orders.return_value = [{'id': 'sl_ok', 'symbol': 'BTC/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 48500.0, 'amount': 0.5, 'status': 'open'}]
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
         executor.risk_engine.build_trade_plan = MagicMock(return_value={
