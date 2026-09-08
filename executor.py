@@ -164,7 +164,21 @@ class TraderExecutor:
             risk_distance = 0.0
 
             if STRUCTURE_RISK_ENABLED and setup_type and engine_context:
-                trade_plan = self.risk_engine.build_trade_plan(direction_str, current_price, setup_type, engine_context, atr_value)
+                try:
+                    from config import MIN_POSITION_NOTIONAL_USDT
+                except ImportError:
+                    MIN_POSITION_NOTIONAL_USDT = 10.0
+                
+                # Calculate max allowed distance based on min notional
+                # risk_usdt = amount * sl_distance
+                # notional = amount * current_price >= MIN_POSITION_NOTIONAL_USDT
+                # amount >= MIN_POSITION_NOTIONAL_USDT / current_price
+                # sl_distance <= risk_usdt / (MIN_POSITION_NOTIONAL_USDT / current_price)
+                max_acceptable_distance = (risk_usdt * current_price) / max(MIN_POSITION_NOTIONAL_USDT, 1.0)
+                
+                trade_plan = self.risk_engine.build_trade_plan(
+                    direction_str, current_price, setup_type, engine_context, atr_value, max_distance=max_acceptable_distance
+                )
                 if not trade_plan.get('valid'):
                     record_funnel_event('RISK_FAIL')
                     err = f"Сделка {symbol} отклонена Risk Engine: {trade_plan.get('reason')}"
@@ -334,6 +348,8 @@ class TraderExecutor:
                 fees_estimate=fees_est,
                 confidence_mult=ai_confidence_multiplier(ai_confidence),
             )
+            
+            self.logger.info(f"ОТКРЫВАЮ СДЕЛКУ: {symbol} {side}")
 
             # Risk Engine and Capital checks passed successfully!
             record_funnel_event('RISK_PASS')

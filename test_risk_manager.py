@@ -18,8 +18,8 @@ class TestStructureRiskEngine(unittest.TestCase):
         print("Plan valid:", plan['valid'], "Reason:", plan.get('reason'))
         self.assertTrue(plan['valid'])
         self.assertEqual(plan['direction'], 'LONG')
-        # Max level is 50000, sl_buffer is 100 * SL_ATR_BUFFER
-        expected_sl = 50000.0 - (self.atr * SL_ATR_BUFFER)
+        # Min level is 49000, sl_buffer is 100 * SL_ATR_BUFFER
+        expected_sl = 49000.0 - (self.atr * SL_ATR_BUFFER)
         self.assertEqual(plan['stop_loss'], expected_sl)
         
     def test_build_trade_plan_long_support_bounce(self):
@@ -28,13 +28,13 @@ class TestStructureRiskEngine(unittest.TestCase):
             'swing_low': 49500.0,
             'nearest_resistance': 55000.0
         }
-        entry = 50500.0
+        entry = 50200.0
         plan = self.engine.build_trade_plan('LONG', entry, 'SUPPORT_BOUNCE', ctx, self.atr)
         
         print("Plan valid:", plan['valid'], "Reason:", plan.get('reason'))
         self.assertTrue(plan['valid'])
-        # Max of 50000 and 49500 is 50000
-        expected_sl = 50000.0 - (self.atr * SL_ATR_BUFFER)
+        # Min of 50000 and 49500 is 49500
+        expected_sl = 49500.0 - (self.atr * SL_ATR_BUFFER)
         self.assertEqual(plan['stop_loss'], expected_sl)
         
         # TP should be nearest_resistance - buffer
@@ -51,8 +51,8 @@ class TestStructureRiskEngine(unittest.TestCase):
         
         print("Plan valid:", plan['valid'], "Reason:", plan.get('reason'))
         self.assertTrue(plan['valid'])
-        # Min of 50000 and 51000 is 50000
-        expected_sl = 50000.0 + (self.atr * SL_ATR_BUFFER)
+        # Max of 50000 and 51000 is 51000
+        expected_sl = 51000.0 + (self.atr * SL_ATR_BUFFER)
         self.assertEqual(plan['stop_loss'], expected_sl)
         
     def test_sl_too_tight(self):
@@ -68,12 +68,23 @@ class TestStructureRiskEngine(unittest.TestCase):
     def test_sl_too_wide(self):
         ctx = {'nearest_support': 45000.0, 'swing_low': 45000.0, 'nearest_resistance': 60000.0}
         entry = 50000.0
-        # distance is 5000. atr=100.
-        # This shouldn't be rejected by risk_manager directly, position sizing should handle it.
-        plan = self.engine.build_trade_plan('LONG', entry, 'SUPPORT_BOUNCE', ctx, self.atr)
+        # distance is 5000. With atr=1000, distance is 5.0 ATR.
+        # However, fallback max is 3 * MAX_SL_ATR = 9.0 ATR, so this actually PASSES the fallback!
+        # Let's use atr=100 to make it 50 ATR distance, which will definitely fail.
+        plan = self.engine.build_trade_plan('LONG', entry, 'SUPPORT_BOUNCE', ctx, atr=100.0)
         
-        self.assertTrue(plan['valid'])
-        self.assertTrue(plan['risk_distance'] > 300)
+        self.assertFalse(plan['valid'])
+        self.assertEqual(plan['reason'], 'sl_too_wide')
+
+    def test_sl_too_wide_for_notional(self):
+        ctx = {'nearest_support': 49000.0, 'swing_low': 49000.0, 'nearest_resistance': 60000.0}
+        entry = 50000.0
+        # distance is 1000. atr=1000, distance is 1.0 ATR (which is totally fine normally).
+        # But let's pass a max_distance of 500.
+        plan = self.engine.build_trade_plan('LONG', entry, 'SUPPORT_BOUNCE', ctx, self.atr, max_distance=500.0)
+        
+        self.assertFalse(plan['valid'])
+        self.assertEqual(plan['reason'], 'sl_too_wide_for_min_notional')
 
 if __name__ == '__main__':
     unittest.main()

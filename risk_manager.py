@@ -8,157 +8,85 @@ class StructureRiskEngine:
     def __init__(self):
         pass
 
-    def _select_invalidation_long(self, setup_type: str, ctx: Dict[str, Any], entry: float, atr: float) -> tuple:
-        invalidation_level = None
-        reason = ""
-
-        if setup_type == 'BREAKOUT_RETEST':
-            broken_level = ctx.get('broken_level')
-            swing_low = ctx.get('swing_low')
-            levels = []
-            if broken_level is not None:
-                levels.append((broken_level, "below_retest_support"))
-            if swing_low is not None:
-                levels.append((swing_low, "below_swing_low"))
-            if levels:
-                # For LONG breakout retest, we want the highest structural invalidation point (closest to entry)
-                best = max(levels, key=lambda x: x[0])
-                invalidation_level = best[0]
-                reason = best[1]
-
-        elif setup_type == 'SUPPORT_BOUNCE':
-            sup = ctx.get('nearest_support')
-            swing_low = ctx.get('swing_low')
-            candidates = []
-            if sup is not None:
-                candidates.append((sup, "below_support_zone"))
-            if swing_low is not None:
-                candidates.append((swing_low, "below_swing_low"))
-            if candidates:
-                # For LONG: pick the HIGHEST (closest to entry) level
-                best = max(candidates, key=lambda x: x[0])
-                invalidation_level = best[0]
-                reason = best[1]
-
-        elif setup_type == 'TREND_PULLBACK':
-            sup = ctx.get('nearest_support')
-            swing_low = ctx.get('swing_low')
-            candidates = []
-            if sup is not None:
-                candidates.append((sup, "below_pullback_support"))
-            if swing_low is not None:
-                candidates.append((swing_low, "below_swing_low"))
-            if candidates:
-                best = max(candidates, key=lambda x: x[0])
-                invalidation_level = best[0]
-                reason = best[1]
-
-        elif setup_type == 'LIQUIDITY_SWEEP_LONG':
-            sweep_low = ctx.get('sweep_low')
-            if sweep_low is not None:
-                invalidation_level = sweep_low
-                reason = "below_sweep_low"
-
-        if invalidation_level is None:
-            sup = ctx.get('nearest_support')
-            swing_low = ctx.get('swing_low')
-            if sup and swing_low:
-                invalidation_level = max(sup, swing_low)
-                reason = "below_nearest_support_or_swing_low"
-            elif sup:
-                invalidation_level = sup
-                reason = "below_nearest_support"
-            elif swing_low:
-                invalidation_level = swing_low
-                reason = "below_swing_low"
-            else:
-                invalidation_level = entry - (atr * 2.0)
-                reason = "fallback_atr"
-
-        return invalidation_level, reason
-
-    def _select_invalidation_short(self, setup_type: str, ctx: Dict[str, Any], entry: float, atr: float) -> tuple:
-        invalidation_level = None
-        reason = ""
-
-        if setup_type == 'BREAKDOWN_RETEST':
-            broken_level = ctx.get('broken_level')
-            swing_high = ctx.get('swing_high')
-            levels = []
-            if broken_level is not None:
-                levels.append((broken_level, "above_retest_resistance"))
-            if swing_high is not None:
-                levels.append((swing_high, "above_swing_high"))
-            if levels:
-                # For SHORT breakout retest, we want the lowest invalidation point (closest to entry)
-                best = min(levels, key=lambda x: x[0])
-                invalidation_level = best[0]
-                reason = best[1]
-
-        elif setup_type == 'RESISTANCE_REJECTION':
-            res = ctx.get('nearest_resistance')
-            swing_high = ctx.get('swing_high')
-            rej_high = ctx.get('rejection_high')
-            candidates = []
-            if res is not None:
-                candidates.append((res, "above_resistance"))
-            if swing_high is not None:
-                candidates.append((swing_high, "above_swing_high"))
-            if rej_high is not None:
-                candidates.append((rej_high, "above_rejection_high"))
-            if candidates:
-                # For SHORT: pick the LOWEST (closest to entry) level
-                best = min(candidates, key=lambda x: x[0])
-                invalidation_level = best[0]
-                reason = best[1]
-
-        elif setup_type == 'TREND_PULLBACK':
-            res = ctx.get('nearest_resistance')
-            swing_high = ctx.get('swing_high')
-            candidates = []
-            if res is not None:
-                candidates.append((res, "above_pullback_resistance"))
-            if swing_high is not None:
-                candidates.append((swing_high, "above_swing_high"))
-            if candidates:
-                best = min(candidates, key=lambda x: x[0])
-                invalidation_level = best[0]
-                reason = best[1]
-
-        elif setup_type == 'LIQUIDITY_SWEEP_SHORT':
-            sweep_high = ctx.get('sweep_high')
-            if sweep_high is not None:
-                invalidation_level = sweep_high
-                reason = "above_sweep_high"
-
-        if invalidation_level is None:
-            res = ctx.get('nearest_resistance')
-            swing_high = ctx.get('swing_high')
-            if res and swing_high:
-                invalidation_level = min(res, swing_high)
-                reason = "above_nearest_resistance_or_swing_high"
-            elif res:
-                invalidation_level = res
-                reason = "above_nearest_resistance"
-            elif swing_high:
-                invalidation_level = swing_high
-                reason = "above_swing_high"
-            else:
-                invalidation_level = entry + (atr * 2.0)
-                reason = "fallback_atr"
-
-        return invalidation_level, reason
+    def _get_relevant_swing(self, primary_level: float, swing_level: Optional[float], atr: float) -> Optional[float]:
+        # Only consider swing low/high relevant if it's within 1.5 ATR of the primary level
+        if swing_level is None:
+            return None
+        if abs(primary_level - swing_level) <= atr * 1.5:
+            return swing_level
+        return None
 
     def calculate_stop_loss(self, direction: str, entry: float, setup_type: str, ctx: Dict[str, Any], atr: float) -> Dict[str, Any]:
-        """
-        Calculate structure-based stop loss.
-        """
-        if direction == 'LONG':
-            invalidation_level, reason = self._select_invalidation_long(setup_type, ctx, entry, atr)
-            sl = invalidation_level - (atr * SL_ATR_BUFFER)
-            risk_distance = entry - sl
+        invalidation_level = None
+        reason = ""
 
-            if risk_distance < atr * MIN_SL_ATR:
+        if direction == 'LONG':
+            if setup_type == 'BREAKOUT_RETEST':
+                broken_level = ctx.get('broken_level')
+                swing_low = ctx.get('swing_low')
+                levels = []
+                if broken_level is not None:
+                    levels.append((broken_level, "below_retest_support"))
+                    rel_swing = self._get_relevant_swing(broken_level, swing_low, atr)
+                    if rel_swing and rel_swing < broken_level:
+                        levels.append((rel_swing, "below_relevant_swing_low"))
+                elif swing_low is not None:
+                    levels.append((swing_low, "below_swing_low"))
+                
+                if levels:
+                    # min() correctly picks the furthest invalidation level for LONG
+                    best = min(levels, key=lambda x: x[0])
+                    invalidation_level = best[0]
+                    reason = best[1]
+            
+            elif setup_type == 'SUPPORT_BOUNCE' or setup_type == 'TREND_PULLBACK':
+                sup = ctx.get('nearest_support')
+                swing_low = ctx.get('swing_low')
+                levels = []
+                if sup is not None:
+                    levels.append((sup, "below_support_zone"))
+                    rel_swing = self._get_relevant_swing(sup, swing_low, atr)
+                    if rel_swing and rel_swing < sup:
+                        levels.append((rel_swing, "below_relevant_swing_low"))
+                elif swing_low is not None:
+                    levels.append((swing_low, "below_swing_low"))
+                    
+                if levels:
+                    best = min(levels, key=lambda x: x[0])
+                    invalidation_level = best[0]
+                    reason = best[1]
+                    
+            elif setup_type == 'LIQUIDITY_SWEEP_LONG':
+                sweep_low = ctx.get('sweep_low')
+                if sweep_low is not None:
+                    invalidation_level = sweep_low
+                    reason = "below_sweep_low"
+                    
+            if invalidation_level is None:
+                sup = ctx.get('nearest_support')
+                swing_low = ctx.get('swing_low')
+                if sup and swing_low:
+                    # Only group if close, otherwise pick sup
+                    rel_swing = self._get_relevant_swing(sup, swing_low, atr)
+                    if rel_swing:
+                        invalidation_level = min(sup, rel_swing)
+                        reason = "below_nearest_support_and_relevant_swing_low"
+                    else:
+                        invalidation_level = sup
+                        reason = "below_nearest_support"
+                elif sup:
+                    invalidation_level = sup
+                    reason = "below_nearest_support"
+                elif swing_low:
+                    invalidation_level = swing_low
+                    reason = "below_swing_low"
+                else:
+                    invalidation_level = entry - (atr * 2.0)
+                    reason = "fallback_atr"
+
+            sl = invalidation_level - (atr * SL_ATR_BUFFER)
+
+            if (entry - sl) < atr * MIN_SL_ATR:
                 swing_low = ctx.get('swing_low')
                 if swing_low and swing_low < invalidation_level:
                     invalidation_level = swing_low
@@ -173,11 +101,75 @@ class StructureRiskEngine:
             }
 
         elif direction == 'SHORT':
-            invalidation_level, reason = self._select_invalidation_short(setup_type, ctx, entry, atr)
-            sl = invalidation_level + (atr * SL_ATR_BUFFER)
-            risk_distance = sl - entry
+            if setup_type == 'BREAKDOWN_RETEST':
+                broken_level = ctx.get('broken_level')
+                swing_high = ctx.get('swing_high')
+                levels = []
+                if broken_level is not None:
+                    levels.append((broken_level, "above_retest_resistance"))
+                    rel_swing = self._get_relevant_swing(broken_level, swing_high, atr)
+                    if rel_swing and rel_swing > broken_level:
+                        levels.append((rel_swing, "above_relevant_swing_high"))
+                elif swing_high is not None:
+                    levels.append((swing_high, "above_swing_high"))
+                
+                if levels:
+                    # max() correctly picks the furthest invalidation level for SHORT
+                    best = max(levels, key=lambda x: x[0])
+                    invalidation_level = best[0]
+                    reason = best[1]
+            
+            elif setup_type == 'RESISTANCE_REJECTION' or setup_type == 'TREND_PULLBACK':
+                res = ctx.get('nearest_resistance')
+                swing_high = ctx.get('swing_high')
+                rej_high = ctx.get('rejection_high')
+                levels = []
+                if res is not None:
+                    levels.append((res, "above_resistance"))
+                    rel_swing = self._get_relevant_swing(res, swing_high, atr)
+                    if rel_swing and rel_swing > res:
+                        levels.append((rel_swing, "above_relevant_swing_high"))
+                elif swing_high is not None:
+                    levels.append((swing_high, "above_swing_high"))
+                
+                if rej_high is not None:
+                    levels.append((rej_high, "above_rejection_high"))
+                    
+                if levels:
+                    best = max(levels, key=lambda x: x[0])
+                    invalidation_level = best[0]
+                    reason = best[1]
+                    
+            elif setup_type == 'LIQUIDITY_SWEEP_SHORT':
+                sweep_high = ctx.get('sweep_high')
+                if sweep_high is not None:
+                    invalidation_level = sweep_high
+                    reason = "above_sweep_high"
 
-            if risk_distance < atr * MIN_SL_ATR:
+            if invalidation_level is None:
+                res = ctx.get('nearest_resistance')
+                swing_high = ctx.get('swing_high')
+                if res and swing_high:
+                    rel_swing = self._get_relevant_swing(res, swing_high, atr)
+                    if rel_swing:
+                        invalidation_level = max(res, rel_swing)
+                        reason = "above_nearest_resistance_and_relevant_swing_high"
+                    else:
+                        invalidation_level = res
+                        reason = "above_nearest_resistance"
+                elif res:
+                    invalidation_level = res
+                    reason = "above_nearest_resistance"
+                elif swing_high:
+                    invalidation_level = swing_high
+                    reason = "above_swing_high"
+                else:
+                    invalidation_level = entry + (atr * 2.0)
+                    reason = "fallback_atr"
+
+            sl = invalidation_level + (atr * SL_ATR_BUFFER)
+
+            if (sl - entry) < atr * MIN_SL_ATR:
                 swing_high = ctx.get('swing_high')
                 if swing_high and swing_high > invalidation_level:
                     invalidation_level = swing_high
@@ -258,40 +250,7 @@ class StructureRiskEngine:
             return 0.0
         return reward / risk
 
-    def _log_risk_plan(self, symbol: str, direction: str, setup_type: str, entry: float,
-                       atr: float, sl_info: Dict, tp_info: Dict, risk_distance: float,
-                       rr: float, reject_reason: str):
-        sl = sl_info.get('stop_loss', 0)
-        structural_level = sl_info.get('structural_level', 0)
-        sl_atr_ratio = risk_distance / atr if atr > 0 else 0
-        sl_pct = (risk_distance / entry * 100) if entry > 0 else 0
-        tp1 = tp_info.get('tp1', 0) if tp_info else 0
-
-        _log.warning(
-            f"\n{'='*60}\n"
-            f"  RISK PLAN — REJECTED\n"
-            f"{'='*60}\n"
-            f"  Symbol:            {symbol}\n"
-            f"  Direction:         {direction}\n"
-            f"  Setup:             {setup_type}\n"
-            f"  Entry:             {entry}\n"
-            f"  ATR:               {atr:.6f}\n"
-            f"  Structural level:  {structural_level}\n"
-            f"  SL:                {sl}\n"
-            f"  SL distance:       {risk_distance:.6f}\n"
-            f"  SL/ATR:            {sl_atr_ratio:.2f}\n"
-            f"  SL distance %:     {sl_pct:.2f}%\n"
-            f"  TP:                {tp1}\n"
-            f"  RR:                {rr:.2f}\n"
-            f"  MAX_SL_ATR:        {MAX_SL_ATR}\n"
-            f"  MIN_SL_ATR:        {MIN_SL_ATR}\n"
-            f"  MIN_RR:            {MIN_RR}\n"
-            f"  SL Reason:         {sl_info.get('reason', '')}\n"
-            f"  Reject:            {reject_reason}\n"
-            f"{'='*60}"
-        )
-
-    def build_trade_plan(self, direction: str, entry: float, setup_type: str, ctx: Dict[str, Any], atr: float, symbol: str = "") -> Dict[str, Any]:
+    def build_trade_plan(self, direction: str, entry: float, setup_type: str, ctx: Dict[str, Any], atr: float, max_distance: Optional[float] = None) -> Dict[str, Any]:
         if not ctx:
             return {"valid": False, "reason": "no_context"}
 
@@ -303,30 +262,31 @@ class StructureRiskEngine:
         risk_distance = abs(entry - sl)
 
         if risk_distance < atr * MIN_SL_ATR:
-            tp_info = self.calculate_targets(direction, entry, sl, setup_type, ctx, atr)
-            self._log_risk_plan(symbol, direction, setup_type, entry, atr, sl_info, tp_info, risk_distance, 0.0, "sl_too_tight")
             return {"valid": False, "reason": "sl_too_tight", "risk_distance": risk_distance}
 
-        # Do not reject sl_too_wide. Position sizing in executor will adapt amount to keep dollar risk within limits.
+        if max_distance is not None:
+            if risk_distance > max_distance:
+                return {"valid": False, "reason": "sl_too_wide_for_min_notional", "risk_distance": risk_distance}
+        else:
+            # When max_distance is not provided, we don't reject blindly on MAX_SL_ATR because we want position sizing to handle it.
+            # However, if it's absurdly wide (e.g. > 10 ATR), we reject it.
+            if risk_distance > atr * (MAX_SL_ATR * 3):
+                return {"valid": False, "reason": "sl_too_wide", "risk_distance": risk_distance}
 
         tp_info = self.calculate_targets(direction, entry, sl, setup_type, ctx, atr)
         tp1 = tp_info.get("tp1")
         if not tp1:
-            self._log_risk_plan(symbol, direction, setup_type, entry, atr, sl_info, tp_info, risk_distance, 0.0, "tp_calc_failed")
             return {"valid": False, "reason": "tp_calc_failed"}
 
         if direction == 'LONG':
             if sl >= entry or tp1 <= entry:
-                self._log_risk_plan(symbol, direction, setup_type, entry, atr, sl_info, tp_info, risk_distance, 0.0, "invalid_price_geometry")
                 return {"valid": False, "reason": "invalid_price_geometry"}
         else:
             if sl <= entry or tp1 >= entry:
-                self._log_risk_plan(symbol, direction, setup_type, entry, atr, sl_info, tp_info, risk_distance, 0.0, "invalid_price_geometry")
                 return {"valid": False, "reason": "invalid_price_geometry"}
                 
         rr = self.calculate_rr(direction, entry, sl, tp1)
         if rr < MIN_RR:
-            self._log_risk_plan(symbol, direction, setup_type, entry, atr, sl_info, tp_info, risk_distance, rr, f"rr_too_low_{rr:.2f}")
             return {"valid": False, "reason": f"rr_too_low_{rr:.2f}", "rr": rr}
 
         return {
@@ -344,3 +304,4 @@ class StructureRiskEngine:
             "tp_reason": tp_info.get("reason"),
             "structural_level": sl_info.get("structural_level")
         }
+

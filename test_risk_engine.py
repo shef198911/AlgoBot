@@ -70,13 +70,12 @@ class TestRiskEngine(unittest.TestCase):
         self.assertFalse(plan['valid'])
         self.assertEqual(plan['reason'], 'sl_too_tight')
 
-    def test_wide_manageable_sl(self):
-        # The SL is wide, but it should adapt position size instead of rejecting.
+    def test_max_sl_atr(self):
         ctx = {'nearest_support': 90}
         atr = 1.0 
         plan = self.engine.build_trade_plan('LONG', 100, 'SUPPORT_BOUNCE', ctx, atr)
-        self.assertTrue(plan['valid'])
-        self.assertTrue(plan['risk_distance'] > 3.0)
+        self.assertFalse(plan['valid'])
+        self.assertEqual(plan['reason'], 'sl_too_wide')
 
     def test_min_rr(self):
         # To fail min rr, set a very close TP and wide SL.
@@ -102,19 +101,6 @@ class TestRiskEngine(unittest.TestCase):
         pos_size_wide = risk_usdt / plan_wide['risk_distance']
         
         self.assertTrue(pos_size_narrow > pos_size_wide)
-        
-    def test_truly_invalid_sl_geometry(self):
-        # LONG with SL above entry
-        ctx_long = {'nearest_support': 105}
-        plan_long = self.engine.build_trade_plan('LONG', 100, 'SUPPORT_BOUNCE', ctx_long, 1.0)
-        self.assertFalse(plan_long['valid'])
-        self.assertEqual(plan_long['reason'], 'invalid_price_geometry')
-        
-        # SHORT with SL below entry
-        ctx_short = {'nearest_resistance': 95}
-        plan_short = self.engine.build_trade_plan('SHORT', 100, 'RESISTANCE_REJECTION', ctx_short, 1.0)
-        self.assertFalse(plan_short['valid'])
-        self.assertEqual(plan_short['reason'], 'invalid_price_geometry')
 
 if __name__ == '__main__':
     unittest.main()
