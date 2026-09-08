@@ -58,6 +58,18 @@ class TestExecutor(unittest.TestCase):
             {'id': 'tp_123'}
         ]
         
+        self.mock_exchange.fetch_open_orders.return_value = [
+            {
+                'id': 'sl_123',
+                'symbol': 'TEST/USDT',
+                'type': 'stop_market',
+                'reduceOnly': True,
+                'stopPrice': 100.0,
+                'amount': 10.0,
+                'status': 'open'
+            }
+        ]
+        
         self.executor.risk_engine.build_trade_plan.return_value = {
             'valid': True,
             'stop_loss': 100.0,
@@ -145,6 +157,18 @@ class TestExecutor(unittest.TestCase):
                 
         self.mock_exchange.create_order.side_effect = create_order_side_effect
         
+        self.mock_exchange.fetch_open_orders.return_value = [
+            {
+                'id': 'sl_123',
+                'symbol': 'TEST/USDT',
+                'type': 'stop_market',
+                'reduceOnly': True,
+                'stopPrice': 99.0,
+                'amount': 10.0,
+                'status': 'open'
+            }
+        ]
+        
         self.executor.risk_engine.build_trade_plan.return_value = {
             'valid': True,
             'stop_loss': 99.0,
@@ -161,6 +185,132 @@ class TestExecutor(unittest.TestCase):
         self.assertEqual(pos['sl_order_id'], 'sl_123')
         self.assertIsNone(pos['tp_order_id'])
         self.assertEqual(pos['amount'], 10.0)
+
+    @patch('executor.json')
+    @patch('executor.open')
+    @patch('time.sleep', return_value=None)
+    def test_04_unknown_liquidation_emergency_close(self, mock_sleep, mock_open, mock_json):
+        self.mock_exchange.create_market_order.side_effect = [
+            {'id': 'market_id_123', 'average': 100.0, 'filled': 10.0},
+            {'id': 'emergency_close_123'}
+        ]
+        self.mock_exchange.create_order.return_value = {'id': 'sl_123'}
+        self.mock_exchange.fetch_open_orders.return_value = [{'id': 'sl_123', 'symbol': 'TEST/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 99.0, 'amount': 10.0, 'status': 'open'}]
+        # Set liquidation to None explicitly
+        self.mock_exchange.fetch_positions.return_value = [
+            {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 100.0, 'liquidationPrice': None, 'markPrice': 100.0}
+        ]
+        self.executor.risk_engine.build_trade_plan.return_value = {
+            'valid': True, 'stop_loss': 99.0, 'take_profit': 105.0, 'risk_distance': 1.0, 'risk_usdt': 10.0
+        }
+        result = self.executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.5)
+        self.assertFalse(result)
+        self.assertNotIn('TEST/USDT', self.executor.positions)
+
+    @patch('executor.json')
+    @patch('executor.open')
+    @patch('time.sleep', return_value=None)
+    def test_05_unknown_liquidation_and_emergency_close_failure(self, mock_sleep, mock_open, mock_json):
+        self.mock_exchange.create_market_order.side_effect = [
+            {'id': 'market_id_123', 'average': 100.0, 'filled': 10.0},
+            Exception("Emergency close failed")
+        ]
+        self.mock_exchange.create_order.return_value = {'id': 'sl_123'}
+        self.mock_exchange.fetch_open_orders.return_value = [{'id': 'sl_123', 'symbol': 'TEST/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 99.0, 'amount': 10.0, 'status': 'open'}]
+        self.mock_exchange.fetch_positions.return_value = [
+            {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 100.0, 'liquidationPrice': None, 'markPrice': 100.0}
+        ]
+        self.executor.risk_engine.build_trade_plan.return_value = {
+            'valid': True, 'stop_loss': 99.0, 'take_profit': 105.0, 'risk_distance': 1.0, 'risk_usdt': 10.0
+        }
+        result = self.executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.5)
+        self.assertFalse(result)
+        self.assertIn('TEST/USDT', self.executor.positions)
+        self.assertEqual(self.executor.positions['TEST/USDT']['status'], 'UNKNOWN')
+
+    @patch('executor.json')
+    @patch('executor.open')
+    @patch('time.sleep', return_value=None)
+    def test_06_missing_fetch_open_orders_emergency_close(self, mock_sleep, mock_open, mock_json):
+        self.mock_exchange.create_market_order.side_effect = [{'id': 'm1', 'average': 100.0, 'filled': 10.0}, {'id': 'ec'}]
+        self.mock_exchange.create_order.return_value = {'id': 'sl_123'}
+        self.mock_exchange.fetch_open_orders.side_effect = Exception("API Error")
+        self.executor.risk_engine.build_trade_plan.return_value = {'valid': True, 'stop_loss': 99.0, 'take_profit': 105.0, 'risk_distance': 1.0, 'risk_usdt': 10.0}
+        result = self.executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.5)
+        self.assertFalse(result)
+
+    @patch('executor.json')
+    @patch('executor.open')
+    @patch('time.sleep', return_value=None)
+    def test_07_missing_sl_in_returned_orders_emergency_close(self, mock_sleep, mock_open, mock_json):
+        self.mock_exchange.create_market_order.side_effect = [{'id': 'm1', 'average': 100.0, 'filled': 10.0}, {'id': 'ec'}]
+        self.mock_exchange.create_order.return_value = {'id': 'sl_123'}
+        # sl_123 missing from returned open orders
+        self.mock_exchange.fetch_open_orders.return_value = [{'id': 'other_id', 'symbol': 'TEST/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 99.0, 'amount': 10.0, 'status': 'open'}]
+        self.executor.risk_engine.build_trade_plan.return_value = {'valid': True, 'stop_loss': 99.0, 'take_profit': 105.0, 'risk_distance': 1.0, 'risk_usdt': 10.0}
+        result = self.executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.5)
+        self.assertFalse(result)
+
+    @patch('executor.json')
+    @patch('executor.open')
+    @patch('time.sleep', return_value=None)
+    def test_08_incorrect_reduceOnly_emergency_close(self, mock_sleep, mock_open, mock_json):
+        self.mock_exchange.create_market_order.side_effect = [{'id': 'm1', 'average': 100.0, 'filled': 10.0}, {'id': 'ec'}]
+        self.mock_exchange.create_order.return_value = {'id': 'sl_123'}
+        self.mock_exchange.fetch_open_orders.return_value = [{'id': 'sl_123', 'symbol': 'TEST/USDT', 'type': 'stop_market', 'reduceOnly': False, 'stopPrice': 99.0, 'amount': 10.0, 'status': 'open'}]
+        self.executor.risk_engine.build_trade_plan.return_value = {'valid': True, 'stop_loss': 99.0, 'take_profit': 105.0, 'risk_distance': 1.0, 'risk_usdt': 10.0}
+        result = self.executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.5)
+        self.assertFalse(result)
+
+    @patch('executor.json')
+    @patch('executor.open')
+    @patch('time.sleep', return_value=None)
+    def test_09_incorrect_stopPrice_emergency_close(self, mock_sleep, mock_open, mock_json):
+        self.mock_exchange.create_market_order.side_effect = [{'id': 'm1', 'average': 100.0, 'filled': 10.0}, {'id': 'ec'}]
+        self.mock_exchange.create_order.return_value = {'id': 'sl_123'}
+        self.mock_exchange.fetch_open_orders.return_value = [{'id': 'sl_123', 'symbol': 'TEST/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 95.0, 'amount': 10.0, 'status': 'open'}]
+        self.executor.risk_engine.build_trade_plan.return_value = {'valid': True, 'stop_loss': 99.0, 'take_profit': 105.0, 'risk_distance': 1.0, 'risk_usdt': 10.0}
+        result = self.executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.5)
+        self.assertFalse(result)
+
+    @patch('executor.json')
+    @patch('executor.open')
+    @patch('time.sleep', return_value=None)
+    def test_10_insufficient_quantity_emergency_close(self, mock_sleep, mock_open, mock_json):
+        self.mock_exchange.create_market_order.side_effect = [{'id': 'm1', 'average': 100.0, 'filled': 10.0}, {'id': 'ec'}]
+        self.mock_exchange.create_order.return_value = {'id': 'sl_123'}
+        self.mock_exchange.fetch_open_orders.return_value = [{'id': 'sl_123', 'symbol': 'TEST/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 99.0, 'amount': 5.0, 'status': 'open'}]
+        self.executor.risk_engine.build_trade_plan.return_value = {'valid': True, 'stop_loss': 99.0, 'take_profit': 105.0, 'risk_distance': 1.0, 'risk_usdt': 10.0}
+        result = self.executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.5)
+        self.assertFalse(result)
+
+    @patch('executor.json')
+    @patch('executor.open')
+    def test_11_reconciliation_exact_once(self, mock_open, mock_json):
+        # We need to simulate restart and EXACT ONCE reconciliation
+        # Add a mock position that doesn't have an SL
+        self.executor.positions = {'TEST/USDT': {'amount': 10.0, 'entry': 100.0, 'sl_price': 99.0, 'side': 'buy', 'tp_order_id': 'existing_tp_123', 'tp_price': 105.0}}
+        # SL order is missing on exchange, but TP is present
+        self.mock_exchange.fetch_open_orders.return_value = [
+            {'id': 'tp_123', 'symbol': 'TEST/USDT', 'type': 'take_profit_market', 'info': {'origType': 'TAKE_PROFIT_MARKET'}, 'stopPrice': 105.0, 'amount': 10.0, 'status': 'open'}
+        ]
+        
+        self.mock_exchange.fetch_positions.return_value = [
+            {'symbol': 'TEST/USDT', 'info': {'positionAmt': '10'}, 'entryPrice': 100.0}
+        ]
+        
+        # When reconcile is called, it should create exactly ONE stop order
+        self.mock_exchange.create_order.return_value = {'id': 'new_sl_123'}
+        
+        # Mocking check_position_status
+        self.executor.check_position_status('TEST/USDT')
+        
+        # Verify create_order was called exactly once to restore the missing SL
+        self.assertEqual(self.mock_exchange.create_order.call_count, 1)
+        args, kwargs = self.mock_exchange.create_order.call_args
+        self.assertEqual(args[0], 'TEST/USDT')
+        self.assertEqual(args[1], 'STOP_MARKET')
+        self.assertEqual(kwargs['params']['stopPrice'], 98.0)
 
 if __name__ == '__main__':
     unittest.main()

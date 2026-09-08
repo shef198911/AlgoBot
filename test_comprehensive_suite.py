@@ -164,6 +164,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
         mock_ex.create_market_order.return_value = {'id': 'm1', 'filled': 0.02, 'average': 50000.0}
         mock_ex.create_order.side_effect = [{'id': 'sl1'}, {'id': 'tp1'}]
+        mock_ex.fetch_open_orders.return_value = [{'id': 'sl1', 'symbol': 'BTC/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 49500.0, 'amount': 0.02, 'status': 'open'}]
         
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
@@ -266,6 +267,7 @@ class TestComprehensiveSuite(unittest.TestCase):
                 return {'id': 'sl_ok'}
             raise Exception("TP rejected")
         mock_ex.create_order.side_effect = create_order_mock
+        mock_ex.fetch_open_orders.return_value = [{'id': 'sl_ok', 'symbol': 'SOL/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 145.0, 'amount': 2.0, 'status': 'open'}]
         
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
@@ -328,6 +330,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         # Requested 1000, filled 600
         mock_ex.create_market_order.return_value = {'id': 'm1', 'filled': 600.0, 'average': 0.10}
         mock_ex.create_order.side_effect = [{'id': 'sl1'}, {'id': 'tp1'}]
+        mock_ex.fetch_open_orders.return_value = [{'id': 'sl1', 'symbol': 'DOGE/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 0.096, 'amount': 600.0, 'status': 'open'}]
         
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
@@ -554,6 +557,7 @@ class TestComprehensiveSuite(unittest.TestCase):
     {'symbol': 'DOGE/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 0.05, 'markPrice': 0.1},
     {'symbol': 'TEST/USDT', 'info': {'marginType': 'isolated', 'leverage': 20, 'positionAmt': '0'}, 'entryPrice': 0.0, 'liquidationPrice': 50.0, 'markPrice': 100.0}
 ]
+        mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
         # Market order created without filled amount
         mock_ex.create_market_order.return_value = {'id': 'm_unk', 'average': 50000.0}
         # fetch_positions returns empty or error
@@ -567,6 +571,9 @@ class TestComprehensiveSuite(unittest.TestCase):
 ]
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
+        executor.risk_engine.build_trade_plan = MagicMock(return_value={
+            'valid': True, 'risk_distance': 500.0, 'stop_loss': 49500.0, 'take_profit': 51000.0
+        })
         
         success = executor.execute_trade('BTC/USDT', 'buy', 1.0, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
         self.assertFalse(success)
@@ -698,10 +705,15 @@ class TestComprehensiveSuite(unittest.TestCase):
 ],
             [{'symbol': 'BTC/USDT', 'side': 'long', 'info': {'positionAmt': '0.35', 'marginType': 'isolated', 'leverage': 20, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}]
         ]
+        mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
         mock_ex.create_market_order.return_value = {'id': 'm_part', 'average': 50000.0, 'filled': 0.35}
         mock_ex.create_order.side_effect = [{'id': 'sl_part'}, {'id': 'tp_part'}]
+        mock_ex.fetch_open_orders.return_value = [{'id': 'sl_part', 'symbol': 'BTC/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 49000.0, 'amount': 0.35, 'status': 'open'}]
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
+        executor.risk_engine.build_trade_plan = MagicMock(return_value={
+            'valid': True, 'risk_distance': 500.0, 'stop_loss': 49500.0, 'take_profit': 51000.0
+        })
         
         success = executor.execute_trade('BTC/USDT', 'buy', 1.0, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
         self.assertTrue(success)
@@ -732,6 +744,7 @@ class TestComprehensiveSuite(unittest.TestCase):
 ], # check_position_status at start
             [{'symbol': 'BTC/USDT', 'side': 'long', 'info': {'positionAmt': '0.5', 'marginType': 'isolated', 'leverage': 20, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}] # post-order check
         ]
+        mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
         mock_ex.create_market_order.side_effect = [
             {'id': 'm_entry', 'average': 50000.0, 'filled': 0.5},
             {'id': 'm_close', 'average': 49950.0, 'filled': 0.5}
@@ -739,6 +752,9 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.create_order.side_effect = Exception("Binance SL Error: Insufficient margin for stop loss")
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
+        executor.risk_engine.build_trade_plan = MagicMock(return_value={
+            'valid': True, 'risk_distance': 500.0, 'stop_loss': 49500.0, 'take_profit': 51000.0
+        })
         
         success = executor.execute_trade('BTC/USDT', 'buy', 0.5, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
         self.assertFalse(success)
@@ -771,11 +787,16 @@ class TestComprehensiveSuite(unittest.TestCase):
 ], # check_position_status at start
             [{'symbol': 'BTC/USDT', 'side': 'long', 'info': {'positionAmt': '0.5', 'marginType': 'isolated', 'leverage': 20, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}] # post-order check
         ]
+        mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
         mock_ex.create_market_order.return_value = {'id': 'm_entry', 'average': 50000.0, 'filled': 0.5}
         # First call (SL) succeeds, second call (TP) fails
         mock_ex.create_order.side_effect = [{'id': 'sl_ok'}, Exception("TP rejected by exchange")]
+        mock_ex.fetch_open_orders.return_value = [{'id': 'sl_ok', 'symbol': 'BTC/USDT', 'type': 'stop_market', 'reduceOnly': True, 'stopPrice': 49000.0, 'amount': 0.5, 'status': 'open'}]
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
+        executor.risk_engine.build_trade_plan = MagicMock(return_value={
+            'valid': True, 'risk_distance': 500.0, 'stop_loss': 49500.0, 'take_profit': 51000.0
+        })
         
         success = executor.execute_trade('BTC/USDT', 'buy', 0.5, 50000.0, 100.0, 0.05, 'BREAKOUT_RETEST')
         self.assertTrue(success) # Position was successfully opened and protected by SL

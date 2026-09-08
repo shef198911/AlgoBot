@@ -289,7 +289,7 @@ class TraderExecutor:
             # --- Liquidation safety pre-check (Requirement 7) ---
             try:
                 prec = self.exchange.price_to_precision(symbol, sl_price)
-                if prec.__class__.__name__ != 'MagicMock':
+                if prec is not None:
                     sl_price_fmt = float(prec)
                 else:
                     sl_price_fmt = sl_price
@@ -357,13 +357,13 @@ class TraderExecutor:
 
             try:
                 prec = self.exchange.price_to_precision(symbol, sl_price)
-                if prec.__class__.__name__ != 'MagicMock':
+                if prec is not None:
                     sl_price = float(prec)
             except Exception:
                 pass
             try:
                 prec = self.exchange.price_to_precision(symbol, tp_price)
-                if prec.__class__.__name__ != 'MagicMock':
+                if prec is not None:
                     tp_price = float(prec)
             except Exception:
                 pass
@@ -442,21 +442,13 @@ class TraderExecutor:
             actual_liquidation_price = None
             actual_mark_price = actual_price
             try:
-                import sys
-                in_test = 'unittest' in sys.modules or 'pytest' in sys.modules
                 for pos in (positions or []):
                     if isinstance(pos, dict):
                         pos_sym = pos.get('symbol', '')
                         if pos_sym.split(':')[0] == symbol.split(':')[0]:
                             raw_info = pos.get('info', {})
                             liq_p = pos.get('liquidationPrice') or raw_info.get('liquidationPrice')
-                            
-                            if not liq_p and in_test:
-                                liq_p = float(sl_price) * 0.8 if direction_str == 'LONG' else float(sl_price) * 1.2
-                            
                             mark_p = pos.get('markPrice') or raw_info.get('markPrice')
-                            if not mark_p and in_test:
-                                mark_p = current_price
                                 
                             if liq_p:
                                 actual_liquidation_price = float(liq_p)
@@ -471,9 +463,14 @@ class TraderExecutor:
                 self.last_error = "UNKNOWN_LIQUIDATION"
                 closure_confirmed = self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
                 if not closure_confirmed:
-                    if symbol in self.positions:
-                        self.positions[symbol]['status'] = 'UNKNOWN'
-                        self._save_live_state()
+                    if symbol not in self.positions:
+                        self.positions[symbol] = {
+                            'side': actual_side,
+                            'amount': actual_position_amount,
+                            'entry': actual_price
+                        }
+                    self.positions[symbol]['status'] = 'UNKNOWN'
+                    self._save_live_state()
                 return False
             else:
                 if direction_str == 'LONG':
@@ -486,9 +483,14 @@ class TraderExecutor:
                     self.last_error = "LIQUIDATION_RISK"
                     closure_confirmed = self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
                     if not closure_confirmed:
-                        if symbol in self.positions:
-                            self.positions[symbol]['status'] = 'UNKNOWN'
-                            self._save_live_state()
+                        if symbol not in self.positions:
+                            self.positions[symbol] = {
+                                'side': actual_side,
+                                'amount': actual_position_amount,
+                                'entry': actual_price
+                            }
+                        self.positions[symbol]['status'] = 'UNKNOWN'
+                        self._save_live_state()
                     return False
             # Partial fill / Actual amount: update margin based on actual filled amount from exchange
             margin_required = (actual_position_amount * actual_price) / actual_leverage
@@ -505,27 +507,24 @@ class TraderExecutor:
             if sl_order_id:
                 try:
                     open_orders = self.exchange.fetch_open_orders(symbol)
-                    if type(open_orders).__name__ == 'MagicMock':
-                        sl_verified = True
-                    else:
-                        for o in open_orders:
-                            if str(o.get('id')) == str(sl_order_id):
-                                is_sym = (o.get('symbol') == symbol)
-                                o_type = str(o.get('type', '')).lower()
-                                is_stop = 'stop' in o_type or 'market' in o_type
-                                is_reduce = (o.get('reduceOnly') is True) or (str(o.get('info', {}).get('reduceOnly', '')).lower() == 'true')
-                                o_stop = o.get('stopPrice') or o.get('info', {}).get('stopPrice')
-                                is_stop_match = False
-                                if o_stop:
-                                    is_stop_match = abs(float(o_stop) - float(sl_price)) / float(sl_price) < 0.01
-                                is_qty = float(o.get('amount') or 0) >= float(actual_position_amount) * 0.999
-                                is_active = str(o.get('status', '')).lower() in ['open', 'new']
-                                
-                                if is_sym and is_stop and is_reduce and is_stop_match and is_qty and is_active:
-                                    sl_verified = True
-                                else:
-                                    self.logger.critical(f"SL verification failed: sym={is_sym}, stop={is_stop}, reduce={is_reduce}, match={is_stop_match}, qty={is_qty}, active={is_active}")
-                                break
+                    for o in open_orders:
+                        if str(o.get('id')) == str(sl_order_id):
+                            is_sym = (o.get('symbol') == symbol)
+                            o_type = str(o.get('type', '')).lower()
+                            is_stop = 'stop' in o_type or 'market' in o_type
+                            is_reduce = (o.get('reduceOnly') is True) or (str(o.get('info', {}).get('reduceOnly', '')).lower() == 'true')
+                            o_stop = o.get('stopPrice') or o.get('info', {}).get('stopPrice')
+                            is_stop_match = False
+                            if o_stop:
+                                is_stop_match = abs(float(o_stop) - float(sl_price)) / float(sl_price) < 0.01
+                            is_qty = float(o.get('amount') or 0) >= float(actual_position_amount) * 0.999
+                            is_active = str(o.get('status', '')).lower() in ['open', 'new']
+                            
+                            if is_sym and is_stop and is_reduce and is_stop_match and is_qty and is_active:
+                                sl_verified = True
+                            else:
+                                self.logger.critical(f"SL verification failed: sym={is_sym}, stop={is_stop}, reduce={is_reduce}, match={is_stop_match}, qty={is_qty}, active={is_active}")
+                            break
                 except Exception as e:
                     self.logger.error(f"SL verification error: {e}")
 
