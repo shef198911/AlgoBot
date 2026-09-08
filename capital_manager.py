@@ -101,6 +101,7 @@ class CapitalTracker:
 
     def _load_state(self):
         if not os.path.exists(self.state_file):
+            self.estimated_pnls = {}
             self._save_state_unlocked()
             return
             
@@ -111,6 +112,7 @@ class CapitalTracker:
             self._realized_pnl = float(data.get('realized_pnl', 0.0))
             self._total_fees = float(data.get('total_fees', 0.0))
             self.processed_events = set(data.get('processed_events', []))
+            self.estimated_pnls = data.get('estimated_pnls', {})
             self.is_corrupt = False
             _log.info(f"Loaded capital state: {self._trading_capital} USDT")
         except Exception as e:
@@ -124,7 +126,8 @@ class CapitalTracker:
             "trading_capital": self._trading_capital,
             "realized_pnl": self._realized_pnl,
             "total_fees": self._total_fees,
-            "processed_events": list(self.processed_events)
+            "processed_events": list(self.processed_events),
+            "estimated_pnls": getattr(self, 'estimated_pnls', {})
         }
         try:
             fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(self.state_file)) or '.')
@@ -134,7 +137,8 @@ class CapitalTracker:
                 os.fsync(f.fileno())
             os.replace(temp_path, self.state_file)
         except Exception as e:
-            _log.error(f"Failed to save capital state atomically: {e}")
+            _log.critical(f"КРИТИЧЕСКИ: Failed to save capital state atomically: {e}. Blocking new entries.")
+            self.is_corrupt = True
 
     @property
     def trading_capital(self) -> float:
@@ -151,17 +155,42 @@ class CapitalTracker:
         with self._lock:
             return self._total_fees
 
-    def record_close(self, pnl: float, fees: float = 0.0, event_id: str = None):
+    def record_close(self, pnl: float, fees: float = 0.0, event_id: str = None, is_estimated: bool = False):
         """After a position closes: profit returns, loss reduces capital, fees deducted."""
         with self._lock:
             if event_id:
                 if event_id in self.processed_events:
                     return
-                self.processed_events.add(event_id)
-            self._realized_pnl += pnl
-            self._total_fees += fees
-            self._trading_capital += pnl - fees
-            self._save_state_unlocked()
+                if is_estimated and event_id in getattr(self, 'estimated_pnls', {}):
+                    return
+
+            if is_estimated:
+                if event_id:
+                    if not hasattr(self, 'estimated_pnls'):
+                        self.estimated_pnls = {}
+                    self.estimated_pnls[event_id] = {'pnl': pnl, 'fees': fees}
+                self._realized_pnl += pnl
+                self._total_fees += fees
+                self._trading_capital += pnl - fees
+                self._save_state_unlocked()
+            else:
+                # Actual exchange data
+                if event_id and hasattr(self, 'estimated_pnls') and event_id in self.estimated_pnls:
+                    est = self.estimated_pnls[event_id]
+                    corr_pnl = pnl - est['pnl']
+                    corr_fees = fees - est['fees']
+                    self._realized_pnl += corr_pnl
+                    self._total_fees += corr_fees
+                    self._trading_capital += corr_pnl - corr_fees
+                    del self.estimated_pnls[event_id]
+                else:
+                    self._realized_pnl += pnl
+                    self._total_fees += fees
+                    self._trading_capital += pnl - fees
+                
+                if event_id:
+                    self.processed_events.add(event_id)
+                self._save_state_unlocked()
 
     def record_fee(self, fee: float):
         """Record an entry fee deduction."""
