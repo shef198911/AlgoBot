@@ -52,6 +52,51 @@ class TraderExecutor:
         """Requirement 1: effective_capital = min(TRADING_CAPITAL, actual_available_balance)."""
         return self.capital_tracker.effective_capital(self.real_balance)
 
+
+    def _log_risk_reject(self, symbol, direction, setup_type, entry, atr, sl, tp, risk_usdt, current_price, actual_leverage, reject_reason, risk_distance=None):
+        if risk_distance is None and sl:
+            risk_distance = abs(entry - sl)
+        elif risk_distance is None:
+            risk_distance = 0.0
+            
+        sl_atr = risk_distance / atr if atr else 0.0
+        sl_pct = (risk_distance / current_price) * 100 if current_price else 0.0
+        
+        # Calculate theoretical size
+        position_size = risk_usdt / risk_distance if risk_distance > 0 else 0.0
+        notional = position_size * current_price
+        margin = notional / actual_leverage if actual_leverage else 0.0
+        
+        rr = 0.0
+        if sl and tp and risk_distance > 0:
+            reward = abs(tp - entry)
+            rr = reward / risk_distance
+            
+        try:
+            from config import MAX_SL_ATR
+        except ImportError:
+            MAX_SL_ATR = 3.0
+            
+        log_msg = (
+            f"\nRISK DIAGNOSTIC LOG (REJECTED)\n"
+            f"{symbol} {direction}\n"
+            f"Setup: {setup_type}\n"
+            f"Entry: {entry:.4f}\n"
+            f"ATR: {atr:.4f}\n"
+            f"SL: {sl if sl else 0.0:.4f} (Distance: {risk_distance:.4f})\n"
+            f"SL/ATR: {sl_atr:.2f}\n"
+            f"SL %: {sl_pct:.2f}%\n"
+            f"TP: {tp if tp else 0.0:.4f}\n"
+            f"RR: {rr:.2f}\n"
+            f"Risk USDT: {risk_usdt:.2f}\n"
+            f"Theoretical Position Size: {position_size}\n"
+            f"Theoretical Notional: {notional:.2f} USDT\n"
+            f"Theoretical Margin: {margin:.2f} USDT\n"
+            f"MAX_SL_ATR config: {MAX_SL_ATR}\n"
+            f"Reject Reason: {reject_reason}\n"
+        )
+        self.logger.warning(log_msg)
+
     def update_real_balance(self, balance: float):
         """Update real exchange balance (called each trading cycle)."""
         self.real_balance = balance
@@ -181,6 +226,7 @@ class TraderExecutor:
                 )
                 if not trade_plan.get('valid'):
                     record_funnel_event('RISK_FAIL')
+                    self._log_risk_reject(symbol, direction_str, setup_type, current_price, atr_value, trade_plan.get('stop_loss'), trade_plan.get('take_profit'), risk_usdt, current_price, actual_leverage, trade_plan.get('reason'), trade_plan.get('risk_distance'))
                     err = f"Сделка {symbol} отклонена Risk Engine: {trade_plan.get('reason')}"
                     self.logger.warning(err)
                     self.last_error = err
@@ -208,6 +254,7 @@ class TraderExecutor:
             
             if not size_plan.get('valid'):
                 record_funnel_event('RISK_FAIL')
+                self._log_risk_reject(symbol, direction_str, setup_type, current_price, atr_value, sl_price, tp_price, risk_usdt, current_price, actual_leverage, size_plan.get('reason'), risk_distance)
                 err = f"Сделка {symbol} отклонена: недопустимый размер позиции ({size_plan.get('reason')})"
                 self.logger.warning(err)
                 self.last_error = err
@@ -220,6 +267,7 @@ class TraderExecutor:
             
             if risk_usdt_actual > risk_usdt * 1.05:
                 record_funnel_event('RISK_FAIL')
+                self._log_risk_reject(symbol, direction_str, setup_type, current_price, atr_value, sl_price, tp_price, risk_usdt, current_price, actual_leverage, 'risk_exceeded_after_precision', risk_distance)
                 err = f"Worst-case risk {risk_usdt_actual:.2f} exceeds limit {risk_usdt:.2f} by >5% after precision rounding."
                 self.logger.warning(err)
                 self.last_error = err
@@ -244,6 +292,7 @@ class TraderExecutor:
                     if symbol in self.pending_margins:
                         del self.pending_margins[symbol]
                     record_funnel_event('RISK_FAIL')
+                    self._log_risk_reject(symbol, direction_str, setup_type, current_price, atr_value, sl_price, tp_price, risk_usdt, current_price, actual_leverage, 'portfolio_risk_exceeded', risk_distance)
                     err = f"Общий риск портфеля превышен! Добавив {risk_usdt_actual:.2f}, риск станет {current_portfolio_risk + risk_usdt_actual:.2f} > лимит {max_portfolio_risk_usdt:.2f}."
                     self.logger.warning(err)
                     self.last_error = err
