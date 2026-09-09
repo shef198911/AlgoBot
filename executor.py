@@ -336,7 +336,6 @@ class TraderExecutor:
 
             # 10. FINAL PORTFOLIO RISK
             current_portfolio_risk = get_portfolio_risk_usdt(self.positions)
-            print(f"DEBUG_PORTFOLIO: positions={self.positions}, current={current_portfolio_risk}, risk_usdt={risk_usdt_actual}")
             from config import MAX_TOTAL_PORTFOLIO_RISK_PCT
             max_portfolio_risk = effective_cap * MAX_TOTAL_PORTFOLIO_RISK_PCT / 100.0
             projected_portfolio_risk = current_portfolio_risk + risk_usdt_actual
@@ -786,7 +785,6 @@ class TraderExecutor:
                     try:
                         entry_ts = pos_data.get('timestamp', time.time() * 1000 - 120000)
                         closed_trades = self.exchange.fetch_my_trades(symbol, since=int(entry_ts - 60000), limit=1000)
-                        self.logger.warning(f"DEBUG_FETCH_TRADES: {closed_trades}")
                         close_side = 'sell' if pos_data.get('side') in ['buy', 'long'] else 'buy'
                         
                         entry_order_id = str(pos_data.get('entry_order_id', ''))
