@@ -158,6 +158,16 @@ class CapitalTracker:
     def record_close(self, pnl: float, fees: float = 0.0, event_id: str = None, is_estimated: bool = False):
         """After a position closes: profit returns, loss reduces capital, fees deducted."""
         with self._lock:
+            if pnl is None:
+                raise ValueError(
+                    "record_close requires known PnL"
+                )
+
+            if fees is None:
+                fees = 0.0
+
+            fees = float(fees)
+            pnl = float(pnl)
             if event_id:
                 if event_id in self.processed_events:
                     return
@@ -265,11 +275,34 @@ def get_free_capital(effective_cap: float, positions: dict, pending_margins: dic
 
 def get_portfolio_risk_usdt(positions: dict) -> float:
     """Sum of risk_usdt across all open positions."""
-    return sum(
-        float(pos.get('risk_usdt_actual', pos.get('risk_usdt_requested', pos.get('risk_usdt', 0.0))))
-        for pos in positions.values()
-        if pos.get('status') in ('OPEN', 'UNKNOWN', None)
-    )
+    total_risk = 0.0
+
+    for pos in positions.values():
+        status = pos.get('status')
+
+        if status not in ('OPEN', 'UNKNOWN', None):
+            continue
+
+        actual_risk = pos.get('risk_usdt_actual')
+
+        # UNKNOWN position with unknown risk must fail closed.
+        if status == 'UNKNOWN' and actual_risk is None:
+            return float('inf')
+
+        if actual_risk is None:
+            return float('inf')
+
+        try:
+            actual_risk = float(actual_risk)
+        except (TypeError, ValueError):
+            return float('inf')
+
+        if actual_risk < 0:
+            return float('inf')
+
+        total_risk += actual_risk
+
+    return total_risk
 
 
 def get_open_position_count(positions: dict) -> int:
@@ -384,26 +417,23 @@ def calculate_position_size(
 
     if margin_required > margin_cap:
 
-        margin_required = margin_cap
-
-        notional_usdt = (
-            margin_required * leverage
-        )
-
-        amount_coin = (
-            notional_usdt / current_price
-        )
+        # Shrink strictly downward to the available margin.
+        # Never round upward after the margin cap.
+        max_notional_after_shrink = margin_cap * leverage
+        amount_before_precision = max_notional_after_shrink / current_price
 
         if exchange_precision_fn:
             try:
                 amount_coin = float(
-                    exchange_precision_fn(amount_coin)
+                    exchange_precision_fn(amount_before_precision)
                 )
             except Exception as e:
                 return {
                     "valid": False,
                     "reason": f"amount_precision_failed_after_shrink: {e}"
                 }
+        else:
+            amount_coin = float(amount_before_precision)
 
         if amount_coin <= 0:
             return {
@@ -411,13 +441,17 @@ def calculate_position_size(
                 "reason": "amount_zero_after_margin_shrink"
             }
 
-        notional_usdt = (
-            amount_coin * current_price
-        )
+        notional_usdt = amount_coin * current_price
+        margin_required = notional_usdt / leverage
 
-        margin_required = (
-            notional_usdt / leverage
-        )
+        # Precision must never push the position above the margin cap.
+        if margin_required > margin_cap + 1e-8:
+            return {
+                "valid": False,
+                "reason": "margin_exceeded_after_precision",
+                "margin_required": float(margin_required),
+                "margin_cap": float(margin_cap),
+            }
 
     risk_usdt_actual = (
         amount_coin * sl_distance
@@ -425,7 +459,6 @@ def calculate_position_size(
 
     # Final hard checks
     if risk_usdt_actual > requested_risk + 1e-8:
-        print(f"DEBUG: amount_coin={amount_coin}, sl_distance={sl_distance}, risk_usdt_actual={risk_usdt_actual}, requested_risk={requested_risk}")
         return {
             "valid": False,
             "reason": "actual_risk_exceeds_requested_risk",

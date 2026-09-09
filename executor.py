@@ -396,14 +396,61 @@ class TraderExecutor:
             self.last_trade_plan = final_trade_plan
 
             with self.capital_lock:
-                self.pending_margins[symbol] = actual_margin
+                # Recalculate immediately before reservation.
+                current_allocated_margin = get_allocated_margin(
+                    self.positions,
+                    self.pending_margins
+                )
+
+                if (
+                    current_allocated_margin + actual_margin
+                    > max_total_margin + 1e-8
+                ):
+                    err = (
+                        f"Atomic margin reservation failed for "
+                        f"{symbol}: "
+                        f"allocated={current_allocated_margin:.8f}, "
+                        f"new={actual_margin:.8f}, "
+                        f"limit={max_total_margin:.8f}"
+                    )
+
+                    self.logger.warning(err)
+                    self.last_error = err
+                    record_funnel_event('RISK_FAIL')
+                    return False
+
+                if symbol in self.positions:
+                    self.last_error = (
+                        f"Position appeared before reservation: {symbol}"
+                    )
+                    return False
+
+                self.pending_margins[symbol] = float(actual_margin)
 
             # 14. MARKET ORDER
-            self.logger.info(f"Выставляем рыночный ордер: {amount_coin} {symbol}...")
-            order = self.exchange.create_market_order(symbol, side, amount_coin)
-            
-            entry_order_id = str(order.get('id')) if order else None
-            self.logger.info(f"✅ Базовый ордер исполнен! ID: {entry_order_id}")
+            self.logger.info(f"Submitting market order: {amount_coin} {symbol}...")
+            try:
+                order = self.exchange.create_market_order(symbol, side, amount_coin)
+                entry_order_id = str(order.get('id')) if order else None
+                self.logger.info(f"Market order fulfilled! ID: {entry_order_id}")
+            except Exception as e:
+                self.logger.critical(
+                    f"FATAL: Entry creation failed for {symbol}: {e}"
+                )
+
+                with self.capital_lock:
+                    self.pending_margins.pop(symbol, None)
+
+                err_str = str(e).lower()
+
+                if "insufficient" in err_str or "margin" in err_str:
+                    self.last_error = "INSUFFICIENT_MARGIN_EXCHANGE"
+                elif "leverage" in err_str:
+                    self.last_error = "LEVERAGE_REJECTED"
+                else:
+                    self.last_error = f"ENTRY_FAILED:{e}"
+
+                return False
 
             # 15. ПОСЛЕ MARKET - FACTUAL DATA
             actual_price = float(order.get('average') or order.get('price') or current_price)
@@ -502,8 +549,11 @@ class TraderExecutor:
                 sl_order_id = str(sl_order.get('id'))
                 self.logger.info(f"✅ Установлен SL: {sl_price}")
             except Exception as e:
-                self.logger.critical(f"FATAL: Не удалось выставить SL для {symbol}: {e}. Инициирую экстренное закрытие.")
-                self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
+                self.logger.critical(
+                    f"FATAL: Не удалось разместить SL для {symbol}: {e}. "
+                    f"Выполняется экстренное закрытие."
+                )
+                self._place_sl_and_emergency_close(symbol, actual_side, actual_position_amount, sl_price)
                 self.last_error = "SL_PLACEMENT_FAILED"
                 with self.capital_lock:
                     self.pending_margins.pop(symbol, None)
@@ -565,36 +615,85 @@ class TraderExecutor:
                 self.pending_margins.pop(symbol, None)
             return False
 
-    def _place_sl_and_emergency_close(self, symbol, actual_side, actual_position_amount, sl_price):
-        close_side = 'sell' if actual_side in ['buy', 'long'] else 'buy'
+    def _place_sl_and_emergency_close(
+        self,
+        symbol,
+        actual_side,
+        actual_position_amount,
+        sl_price
+    ):
+        close_side = (
+            'sell'
+            if actual_side in ['buy', 'long']
+            else 'buy'
+        )
+
         sl_order_id = None
+        sl_verified = False
+
         try:
-            sl_order = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, actual_position_amount, params={'stopPrice': sl_price, 'reduceOnly': True})
-            sl_order_id = str(sl_order.get('id'))
-        except Exception:
-            pass
-        
-        self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
+            sl_order = self.exchange.create_order(
+                symbol,
+                'STOP_MARKET',
+                close_side,
+                actual_position_amount,
+                params={
+                    'stopPrice': sl_price,
+                    'reduceOnly': True
+                }
+            )
+
+            if sl_order and sl_order.get('id'):
+                sl_order_id = str(sl_order['id'])
+
+                open_orders = self.exchange.fetch_open_orders(symbol)
+
+                for order in open_orders or []:
+                    if (
+                        str(order.get('id')) == sl_order_id
+                        and order.get('reduceOnly', False)
+                    ):
+                        sl_verified = True
+                        break
+
+        except Exception as e:
+            self.logger.critical(
+                f"Emergency SL creation failed for "
+                f"{symbol}: {e}"
+            )
+
+        # Emergency close is mandatory after a post-fill
+        # risk/margin violation.
+        close_result = self.emergency_close(
+            symbol,
+            fallback_amount=actual_position_amount,
+            side=actual_side
+        )
+
         with self.capital_lock:
             self.pending_margins.pop(symbol, None)
-        
-        if sl_order_id:
-            # We must create an UNKNOWN state because we just did an emergency close that might fail, but we have a live SL
-            with self.state_lock:
-                self.positions[symbol] = {
-                    'side': actual_side,
-                    'amount': actual_position_amount,
-                    'status': 'UNKNOWN',
-                    'sl_order_id': sl_order_id,
-                    'tp_order_id': None,
-                    'entry_order_id': None,
-                    'risk_usdt_requested': 0.0,
-                    'risk_usdt_actual': 0.0,
-                    'margin_required': 0.0,
-                    'empty_checks': 0,
-                    'tp_retries': 0
-                }
-            self._save_live_state()
+
+        # If emergency close cannot be confirmed, preserve
+        # an UNKNOWN state instead of pretending the position
+        # is closed.
+        with self.state_lock:
+            self.positions[symbol] = {
+                'side': actual_side,
+                'amount': float(actual_position_amount),
+                'status': 'UNKNOWN',
+                'sl_order_id': sl_order_id if sl_verified else None,
+                'tp_order_id': None,
+                'entry_order_id': None,
+                'risk_usdt_requested': 0.0,
+                'risk_usdt_actual': None,
+                'margin_required': 0.0,
+                'empty_checks': 0,
+                'tp_retries': 0,
+                'protection_verified': bool(sl_verified)
+            }
+
+        self._save_live_state()
+
     def _save_live_state(self):
         with self.state_lock:
             try:
@@ -662,7 +761,16 @@ class TraderExecutor:
                         }
                     else:
                         pos_data = self.positions[symbol]
-                        pos_data['status'] = 'OPEN'
+                        if (
+                            pos_data.get('status') == 'UNKNOWN'
+                            and (
+                                pos_data.get('risk_usdt_actual') is None
+                                or pos_data.get('entry') is None
+                            )
+                        ):
+                            pos_data['status'] = 'UNKNOWN'
+                        else:
+                            pos_data['status'] = 'OPEN'
                         pos_data['empty_checks'] = 0
                         if pos_data.get('amount') != exchange_amt:
                             pos_data['amount'] = exchange_amt
@@ -777,7 +885,7 @@ class TraderExecutor:
                     except Exception:
                         pass
                         
-                    pnl = 0.0
+                    pnl = None
                     fees = 0.0
                     exit_price = pos_data.get('sl_price', 0.0)
                     exchange_pnl_available = False
@@ -787,16 +895,51 @@ class TraderExecutor:
                         closed_trades = self.exchange.fetch_my_trades(symbol, since=int(entry_ts - 60000), limit=1000)
                         close_side = 'sell' if pos_data.get('side') in ['buy', 'long'] else 'buy'
                         
-                        entry_order_id = str(pos_data.get('entry_order_id', ''))
+                        entry_order_id = pos_data.get('entry_order_id')
+
+                        if entry_order_id:
+                            entry_order_id = str(entry_order_id)
                         
                         if pos_data.get('entry_fee_pending'):
-                            try:
-                                trade_info = self.exchange.fetch_order(entry_order_id, symbol)
-                                if trade_info and trade_info.get('fee'):
-                                    entry_fee = float(trade_info['fee'].get('cost', 0.0))
-                                    self.capital_tracker.record_fee(entry_fee, event_id=f"entry_fee:{symbol}:{entry_order_id}")
-                            except Exception:
-                                pass
+                            entry_order_id = pos_data.get('entry_order_id')
+
+                            if entry_order_id:
+                                try:
+                                    trade_info = self.exchange.fetch_order(
+                                        str(entry_order_id),
+                                        symbol
+                                    )
+
+                                    fee_data = (
+                                        trade_info.get('fee')
+                                        if trade_info
+                                        else None
+                                    )
+
+                                    if fee_data is not None:
+                                        fee_cost = fee_data.get('cost')
+
+                                        if fee_cost is not None:
+                                            entry_fee = float(fee_cost)
+
+                                            self.capital_tracker.record_fee(
+                                                entry_fee,
+                                                event_id=(
+                                                    f"entry_fee:"
+                                                    f"{symbol}:"
+                                                    f"{entry_order_id}"
+                                                )
+                                            )
+
+                                            pos_data['entry_fee'] = entry_fee
+                                            pos_data['entry_fee_known'] = True
+                                            pos_data['entry_fee_pending'] = False
+
+                                except Exception as e:
+                                    self.logger.warning(
+                                        f"Unable to recover entry fee for "
+                                        f"{symbol}: {e}"
+                                    )
                                 
                         recent_closes = [t for t in (closed_trades or []) if t.get('side') == close_side and t.get('timestamp', 0) >= entry_ts]
                         
@@ -826,15 +969,37 @@ class TraderExecutor:
 
                     is_estimated = False
                     if not exchange_pnl_available:
-                        exit_price = exit_price or pos_data.get('sl_price', 0.0)
-                        entry = pos_data.get('entry', 0.0)
+                        exit_price = exit_price or pos_data.get('sl_price')
+                        entry = pos_data.get('entry')
                         amt = pos_data.get('amount')
-                        if amt is None:
-                            amt = 0.0
-                        if exit_price and entry and amt:
-                            direction = 1 if pos_data.get('side') in ['buy', 'long'] else -1
-                            pnl = (exit_price - entry) * amt * direction
-                        is_estimated = True
+
+                        if (
+                            exit_price is not None
+                            and entry is not None
+                            and amt is not None
+                            and float(amt) > 0
+                        ):
+                            direction = (
+                                1
+                                if pos_data.get('side') in ['buy', 'long']
+                                else -1
+                            )
+
+                            pnl = (
+                                (float(exit_price) - float(entry))
+                                * float(amt)
+                                * direction
+                            )
+
+                            is_estimated = True
+                        else:
+                            # We do not know the PnL.
+                            # Do NOT invent zero.
+                            self.logger.critical(
+                                f"Cannot determine PnL for closed position "
+                                f"{symbol}. Keeping state for reconciliation."
+                            )
+                            return "UNKNOWN"
                         
                     event_id = f"close:{symbol}:{pos_data.get('entry_order_id', time.time())}"
                     
