@@ -192,11 +192,36 @@ class CapitalTracker:
                     self.processed_events.add(event_id)
                 self._save_state_unlocked()
 
-    def record_fee(self, fee: float):
-        """Record an entry fee deduction."""
+    def record_fee(
+        self,
+        fee: float,
+        event_id: str = None
+    ):
+        """
+        Record a fee exactly once.
+        """
+
         with self._lock:
+
+            if event_id and event_id in self.processed_events:
+                return
+
+            fee = float(fee)
+
+            if fee < 0:
+                raise ValueError(
+                    "fee cannot be negative"
+                )
+
             self._total_fees += fee
+
             self._trading_capital -= fee
+
+            if event_id:
+                self.processed_events.add(
+                    event_id
+                )
+
             self._save_state_unlocked()
 
     def effective_capital(self, real_balance: float) -> float:
@@ -241,7 +266,7 @@ def get_free_capital(effective_cap: float, positions: dict, pending_margins: dic
 def get_portfolio_risk_usdt(positions: dict) -> float:
     """Sum of risk_usdt across all open positions."""
     return sum(
-        pos.get('risk_usdt', 0.0)
+        float(pos.get('risk_usdt_actual', pos.get('risk_usdt_requested', pos.get('risk_usdt', 0.0))))
         for pos in positions.values()
         if pos.get('status') in ('OPEN', 'UNKNOWN', None)
     )
@@ -263,66 +288,173 @@ def calculate_position_size(
     effective_capital: float,
     allocated_margin: float,
     exchange_precision_fn=None,
-) -> Dict[str, Any]:
-    """
-    Calculate position size from risk budget + stop-loss distance + leverage.
+) -> dict:
 
-    Returns dict with:
-      amount_coin, notional_usdt, margin_required, risk_usdt_actual
-    Or {'valid': False, 'reason': ...} if position is too small/impossible.
-    """
+    if risk_usdt <= 0:
+        return {
+            "valid": False,
+            "reason": "risk_usdt_zero_or_negative"
+        }
+
     if sl_distance <= 0:
-        return {"valid": False, "reason": "sl_distance_zero_or_negative"}
+        return {
+            "valid": False,
+            "reason": "sl_distance_zero_or_negative"
+        }
 
-    # Core formula: amount = risk_usdt / sl_distance_per_unit
-    amount_coin = risk_usdt / sl_distance
+    if current_price <= 0:
+        return {
+            "valid": False,
+            "reason": "current_price_zero_or_negative"
+        }
 
-    # Apply exchange precision
+    if leverage <= 0:
+        return {
+            "valid": False,
+            "reason": "invalid_leverage"
+        }
+
+    from config import MAX_RISK_PER_TRADE_PCT
+    max_trade_risk = (
+        effective_capital
+        * MAX_RISK_PER_TRADE_PCT
+        / 100.0
+    )
+
+    requested_risk = min(
+        float(risk_usdt),
+        float(max_trade_risk)
+    )
+
+    amount_coin = requested_risk / sl_distance
+
+    # Exchange precision
     if exchange_precision_fn:
         try:
-            prec = exchange_precision_fn(amount_coin)
-            if prec.__class__.__name__ != 'MagicMock':
-                amount_coin = float(prec)
-        except Exception:
-            pass
+            amount_coin = float(
+                exchange_precision_fn(amount_coin)
+            )
+        except Exception as e:
+            return {
+                "valid": False,
+                "reason": f"amount_precision_failed: {e}"
+            }
 
     if amount_coin <= 0:
-        return {"valid": False, "reason": "amount_zero_after_precision"}
+        return {
+            "valid": False,
+            "reason": "amount_zero_after_precision"
+        }
 
-    notional_usdt = amount_coin * current_price
-    margin_required = notional_usdt / leverage
+    notional_usdt = (
+        amount_coin * current_price
+    )
 
-    # Check margin fits within available free capital
-    max_total_margin = effective_capital * (MAX_TOTAL_ALLOCATED_MARGIN_PCT / 100.0)
-    available_for_margin = max_total_margin - allocated_margin
-    max_per_position = effective_capital * (MAX_MARGIN_PER_POSITION_PCT / 100.0)
+    margin_required = (
+        notional_usdt / leverage
+    )
 
-    margin_cap = min(available_for_margin, max_per_position)
+    max_total_margin = (
+        effective_capital
+        * MAX_TOTAL_ALLOCATED_MARGIN_PCT
+        / 100.0
+    )
 
-    if margin_required > margin_cap and margin_cap > 0:
-        # Shrink position to fit
+    max_position_margin = (
+        effective_capital
+        * MAX_MARGIN_PER_POSITION_PCT
+        / 100.0
+    )
+
+    available_margin = max(
+        max_total_margin - allocated_margin,
+        0.0
+    )
+
+    margin_cap = min(
+        max_position_margin,
+        available_margin
+    )
+
+    if margin_cap <= 0:
+        return {
+            "valid": False,
+            "reason": "no_margin_capacity"
+        }
+
+    if margin_required > margin_cap:
+
         margin_required = margin_cap
-        notional_usdt = margin_required * leverage
-        amount_coin = notional_usdt / current_price
+
+        notional_usdt = (
+            margin_required * leverage
+        )
+
+        amount_coin = (
+            notional_usdt / current_price
+        )
+
         if exchange_precision_fn:
             try:
-                prec = exchange_precision_fn(amount_coin)
-                if prec.__class__.__name__ != 'MagicMock':
-                    amount_coin = float(prec)
-            except Exception:
-                pass
-        notional_usdt = amount_coin * current_price
-        margin_required = notional_usdt / leverage
+                amount_coin = float(
+                    exchange_precision_fn(amount_coin)
+                )
+            except Exception as e:
+                return {
+                    "valid": False,
+                    "reason": f"amount_precision_failed_after_shrink: {e}"
+                }
 
-    # Recalculate actual risk after potential resizing
-    risk_usdt_actual = amount_coin * sl_distance
+        if amount_coin <= 0:
+            return {
+                "valid": False,
+                "reason": "amount_zero_after_margin_shrink"
+            }
+
+        notional_usdt = (
+            amount_coin * current_price
+        )
+
+        margin_required = (
+            notional_usdt / leverage
+        )
+
+    risk_usdt_actual = (
+        amount_coin * sl_distance
+    )
+
+    # Final hard checks
+    if risk_usdt_actual > requested_risk + 1e-8:
+        print(f"DEBUG: amount_coin={amount_coin}, sl_distance={sl_distance}, risk_usdt_actual={risk_usdt_actual}, requested_risk={requested_risk}")
+        return {
+            "valid": False,
+            "reason": "actual_risk_exceeds_requested_risk",
+            "risk_usdt_actual": risk_usdt_actual,
+            "risk_usdt_requested": requested_risk,
+        }
+
+    if margin_required > max_position_margin + 1e-8:
+        return {
+            "valid": False,
+            "reason": "position_margin_limit_exceeded"
+        }
+
+    if (
+        allocated_margin + margin_required
+        > max_total_margin + 1e-8
+    ):
+        return {
+            "valid": False,
+            "reason": "total_margin_limit_exceeded"
+        }
 
     return {
         "valid": True,
-        "amount_coin": amount_coin,
-        "notional_usdt": notional_usdt,
-        "margin_required": margin_required,
-        "risk_usdt_actual": risk_usdt_actual,
+        "amount_coin": float(amount_coin),
+        "notional_usdt": float(notional_usdt),
+        "margin_required": float(margin_required),
+        "risk_usdt_actual": float(risk_usdt_actual),
+        "risk_usdt_requested": float(requested_risk),
     }
 
 

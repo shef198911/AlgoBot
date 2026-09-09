@@ -36,7 +36,7 @@ class TraderExecutor:
             
         self.positions = {}  # {symbol: {\"side\": side, \"entry\": price, \"max_price\": ..., \"sl_order_id\": id, \"tp_order_id\": id, \"amount\": amount, ...}}
         self.pending_margins = {}
-        self.state_lock = threading.Lock()
+        self.state_lock = threading.RLock()
         self.capital_lock = threading.Lock()
         self.execute_lock = threading.Lock()
         self.last_error = ""
@@ -59,6 +59,8 @@ class TraderExecutor:
             self.exchange.load_markets()
         except Exception:
             pass
+            
+        self.reconcile_startup_positions()
 
     def get_effective_capital(self) -> float:
         """Requirement 1: effective_capital = min(TRADING_CAPITAL, actual_available_balance)."""
@@ -131,16 +133,10 @@ class TraderExecutor:
 
     def execute_trade(self, symbol, side, risk_usdt, current_price, atr_value=0.0, dynamic_tp=None, setup_type=None, engine_context=None, ai_confidence=0.0, probs_str="", ta_setup=""):
         if self.check_position_status(symbol):
-            err = f"Попытка открыть сделку по {symbol}, но мы уже в позиции!"
+            err = f"Уже есть позиция по {symbol}, новая сделка отклонена!"
             self.logger.warning(err)
             self.last_error = err
             return False
-
-        position_opened = False
-        actual_position_amount = None
-        sl_order_id = None
-        tp_order_id = None
-        margin_required = 0.0
 
         try:
             markets = getattr(self.exchange, 'markets', None)
@@ -151,7 +147,6 @@ class TraderExecutor:
                     except Exception:
                         pass
 
-            # Set ISOLATED margin mode (Requirement 8) then leverage
             try:
                 self.exchange.set_margin_mode('isolated', symbol)
             except Exception:
@@ -161,7 +156,6 @@ class TraderExecutor:
             except Exception:
                 pass
 
-            # VERIFY margin mode and leverage (P0-3, P0-4)
             actual_leverage = None
             try:
                 pos_info = None
@@ -205,61 +199,76 @@ class TraderExecutor:
                     actual_leverage = int(lev)
                 else:
                     raise Exception(f"Leverage not confirmed for {symbol}")
+
             except Exception as e:
                 err = f"Failed to verify margin mode/leverage for {symbol}: {e}"
                 self.logger.error(err)
                 self.last_error = err
                 return False
-                
+
             direction_str = 'LONG' if side in ['buy', 'long'] else 'SHORT'
 
-            # --- Compute effective capital (Requirement 1) ---
+            # 1. Effective Capital
             effective_cap = self.get_effective_capital()
             if effective_cap <= 0:
-                err = f"effective_capital <= 0 (maybe real balance fetch failed). FAIL CLOSED. No new entry for {symbol}."
+                err = f"effective_capital <= 0. FAIL CLOSED. No new entry for {symbol}."
                 self.logger.error(err)
                 self.last_error = err
                 return False
 
-            trade_plan = None
-            sl_price = 0.0
-            tp_price = 0.0
-            risk_distance = 0.0
-
+            # 2. FINAL SL/TP Calculation
             if STRUCTURE_RISK_ENABLED and setup_type and engine_context:
                 try:
                     from config import MIN_POSITION_NOTIONAL_USDT
                 except ImportError:
                     MIN_POSITION_NOTIONAL_USDT = 10.0
-                
-                # Calculate max allowed distance based on min notional
-                # risk_usdt = amount * sl_distance
-                # notional = amount * current_price >= MIN_POSITION_NOTIONAL_USDT
-                # amount >= MIN_POSITION_NOTIONAL_USDT / current_price
-                # sl_distance <= risk_usdt / (MIN_POSITION_NOTIONAL_USDT / current_price)
+
                 max_acceptable_distance = (risk_usdt * current_price) / max(MIN_POSITION_NOTIONAL_USDT, 1.0)
-                
+
                 trade_plan = self.risk_engine.build_trade_plan(
                     direction_str, current_price, setup_type, engine_context, atr_value, max_distance=max_acceptable_distance
                 )
+
                 if not trade_plan.get('valid'):
                     record_funnel_event('RISK_FAIL')
-                    self._log_risk_reject(symbol, direction_str, setup_type, current_price, atr_value, trade_plan.get('stop_loss'), trade_plan.get('take_profit'), risk_usdt, current_price, actual_leverage, trade_plan.get('reason'), trade_plan.get('risk_distance'))
-                    err = f"Сделка {symbol} отклонена Risk Engine: {trade_plan.get('reason')}"
-                    self.logger.warning(err)
-                    self.last_error = err
+                    self.last_error = trade_plan.get('reason')
                     return False
-                
-                risk_distance = trade_plan['risk_distance']
-                sl_price = trade_plan['stop_loss']
-                tp_price = trade_plan['take_profit']
+
+                sl_price = float(trade_plan['stop_loss'])
+                tp_price = float(trade_plan['take_profit'])
             else:
                 sl_price, tp_price = self.calculate_sl_tp(side, current_price, atr_value, dynamic_tp=dynamic_tp)
-                risk_distance = abs(current_price - sl_price) if sl_price else current_price * STOP_LOSS_PCT
 
+            # 3. FINAL PRICE PRECISION
+            try:
+                sl_prec = self.exchange.price_to_precision(symbol, sl_price)
+                if sl_prec is None:
+                    raise ValueError("SL precision returned None")
+                sl_price = float(sl_prec)
+
+                tp_prec = self.exchange.price_to_precision(symbol, tp_price)
+                if tp_prec is None:
+                    raise ValueError("TP precision returned None")
+                tp_price = float(tp_prec)
+            except Exception as e:
+                err = f"Не удалось получить final price precision для {symbol}: {e}"
+                self.logger.error(err)
+                self.last_error = err
+                record_funnel_event('RISK_FAIL')
+                return False
+
+            # 4. FINAL RISK DISTANCE
+            risk_distance = abs(float(current_price) - float(sl_price))
+            if risk_distance <= 0:
+                err = f"Final SL distance <= 0 для {symbol}"
+                self.logger.error(err)
+                self.last_error = err
+                record_funnel_event('RISK_FAIL')
+                return False
+
+            # 5. FINAL POSITION SIZE
             current_total_margin_pre = get_allocated_margin(self.positions, self.pending_margins)
-            
-            # USE CAPITAL MANAGER FOR FINAL SIZING
+
             size_plan = calculate_position_size(
                 risk_usdt=risk_usdt,
                 sl_distance=risk_distance,
@@ -269,233 +278,269 @@ class TraderExecutor:
                 allocated_margin=current_total_margin_pre,
                 exchange_precision_fn=lambda amt: self.exchange.amount_to_precision(symbol, amt)
             )
-            
+
             if not size_plan.get('valid'):
                 record_funnel_event('RISK_FAIL')
-                self._log_risk_reject(symbol, direction_str, setup_type, current_price, atr_value, sl_price, tp_price, risk_usdt, current_price, actual_leverage, size_plan.get('reason'), risk_distance)
-                err = f"Сделка {symbol} отклонена: недопустимый размер позиции ({size_plan.get('reason')})"
+                err = f"Сделка {symbol} отклонена: недостаточно маржи ({size_plan.get('reason')})"
                 self.logger.warning(err)
                 self.last_error = err
                 return False
-                
-            amount_coin = size_plan['amount_coin']
-            volume_usdt = size_plan['notional_usdt']
-            margin_required = size_plan['margin_required']
-            risk_usdt_actual = size_plan['risk_usdt_actual']
+
+            amount_coin = float(size_plan['amount_coin'])
             
-            if risk_usdt_actual > risk_usdt * 1.05:
+            # 6. ACTUAL RISK CALCULATION
+            risk_usdt_actual = float(amount_coin) * abs(float(current_price) - float(sl_price))
+            if risk_usdt_actual <= 0:
+                err = f"actual_risk_usdt <= 0 для {symbol}"
+                self.logger.error(err)
+                self.last_error = err
+                with self.capital_lock:
+                    self.pending_margins.pop(symbol, None)
                 record_funnel_event('RISK_FAIL')
-                self._log_risk_reject(symbol, direction_str, setup_type, current_price, atr_value, sl_price, tp_price, risk_usdt, current_price, actual_leverage, 'risk_exceeded_after_precision', risk_distance)
-                err = f"Worst-case risk {risk_usdt_actual:.2f} exceeds limit {risk_usdt:.2f} by >5% after precision rounding."
-                self.logger.warning(err)
+                return False
+
+            # 7. RISK LIMIT
+            from config import MAX_RISK_PER_TRADE_PCT
+            max_allowed_trade_risk = effective_cap * (MAX_RISK_PER_TRADE_PCT / 100.0)
+            allowed_requested_risk = min(float(risk_usdt), max_allowed_trade_risk)
+
+            if risk_usdt_actual > allowed_requested_risk + 1e-8:
+                err = f"risk_usdt_actual {risk_usdt_actual} exceeds requested/max {allowed_requested_risk}"
+                self.logger.error(err)
+                self.last_error = err
+                with self.capital_lock:
+                    self.pending_margins.pop(symbol, None)
+                record_funnel_event('RISK_FAIL')
+                return False
+
+            # 8. ACTUAL NOTIONAL & MARGIN
+            actual_notional = float(amount_coin) * float(current_price)
+            actual_margin = actual_notional / float(actual_leverage)
+
+            # 9. FINAL MARGIN LIMITS
+            max_position_margin = effective_cap * MAX_MARGIN_PER_POSITION_PCT / 100.0
+            max_total_margin = effective_cap * MAX_TOTAL_ALLOCATED_MARGIN_PCT / 100.0
+            current_allocated_margin = get_allocated_margin(self.positions, self.pending_margins)
+
+            if actual_margin > max_position_margin + 1e-8:
+                err = f"actual_margin {actual_margin} > max_position_margin {max_position_margin}"
+                self.logger.error(err)
                 self.last_error = err
                 return False
-            
-            self.logger.info(f"Capital Manager Sizing: SL distance {risk_distance:.4f}. Position size {amount_coin} {symbol} (Vol: {volume_usdt:.2f}$, Margin: {margin_required:.2f}$)")
-            
-            # --- Capital & Portfolio Load Checks (Requirements 2, 4, P0-2) ---
-            with self.capital_lock:
-                # P0-2 Portfolio Risk Cap Check
-                try:
-                    from config import MAX_TOTAL_PORTFOLIO_RISK_PCT
-                    max_portfolio_risk_pct = MAX_TOTAL_PORTFOLIO_RISK_PCT
-                except ImportError:
-                    max_portfolio_risk_pct = 15.0
-                    
-                from capital_manager import get_portfolio_risk_usdt
-                current_portfolio_risk = get_portfolio_risk_usdt(self.positions)
-                max_portfolio_risk_usdt = effective_cap * (max_portfolio_risk_pct / 100.0)
                 
-                if current_portfolio_risk + risk_usdt_actual > max_portfolio_risk_usdt:
-                    if symbol in self.pending_margins:
-                        del self.pending_margins[symbol]
-                    record_funnel_event('RISK_FAIL')
-                    self._log_risk_reject(symbol, direction_str, setup_type, current_price, atr_value, sl_price, tp_price, risk_usdt, current_price, actual_leverage, 'portfolio_risk_exceeded', risk_distance)
-                    err = f"Общий риск портфеля превышен! Добавив {risk_usdt_actual:.2f}, риск станет {current_portfolio_risk + risk_usdt_actual:.2f} > лимит {max_portfolio_risk_usdt:.2f}."
-                    self.logger.warning(err)
-                    self.last_error = err
-                    return False
-
-                current_total_margin = get_allocated_margin(self.positions, self.pending_margins)
-                available_capital = effective_cap - current_total_margin
-                
-                if available_capital < margin_required:
-                    record_funnel_event('RISK_FAIL')
-                    err = f"Недостаточно свободного капитала! Доступно: {available_capital:.2f} USDT, Требуется: {margin_required:.2f} USDT. Пропуск {symbol}."
-                    self.logger.warning(err)
-                    self.last_error = err
-                    return False
-                        
-                self.pending_margins[symbol] = margin_required
-
-            if amount_coin <= 0:
-                record_funnel_event('RISK_FAIL')
-                self.last_error = "Рассчитанный объем позиции (amount_coin) <= 0"
+            if current_allocated_margin + actual_margin > max_total_margin + 1e-8:
+                err = f"total margin limit exceeded"
+                self.logger.error(err)
+                self.last_error = err
                 return False
 
-            # --- Pre-trade logic for fees and PnL ---
-            fees_est = estimate_fees(volume_usdt)
-            tp_distance = abs(tp_price - current_price) if tp_price else 0
-            expected_tp_pnl = amount_coin * tp_distance
-            expected_sl_loss = amount_coin * risk_distance
+            # 10. FINAL PORTFOLIO RISK
+            current_portfolio_risk = get_portfolio_risk_usdt(self.positions)
+            print(f"DEBUG_PORTFOLIO: positions={self.positions}, current={current_portfolio_risk}, risk_usdt={risk_usdt_actual}")
+            from config import MAX_TOTAL_PORTFOLIO_RISK_PCT
+            max_portfolio_risk = effective_cap * MAX_TOTAL_PORTFOLIO_RISK_PCT / 100.0
+            projected_portfolio_risk = current_portfolio_risk + risk_usdt_actual
+
+            if projected_portfolio_risk > max_portfolio_risk + 1e-8:
+                err = f"Portfolio risk {projected_portfolio_risk} > limit {max_portfolio_risk}"
+                self.logger.error(err)
+                self.last_error = err
+                return False
+
+            # 11. FINAL RR
+            tp_distance = abs(float(tp_price) - float(current_price))
+            expected_tp_pnl = float(amount_coin) * tp_distance
+            expected_sl_loss = float(amount_coin) * risk_distance
+            fees_est = estimate_fees(actual_notional)
             expected_net_pnl = expected_tp_pnl - fees_est
             expected_net_loss = expected_sl_loss + fees_est
-            
-            actual_rr = expected_net_pnl / expected_net_loss if expected_net_loss > 0 else 0
+            actual_rr = expected_net_pnl / expected_net_loss if expected_net_loss > 0 else 0.0
+
             from config import MIN_RR
             if actual_rr < MIN_RR:
-                record_funnel_event('RISK_FAIL')
-                err = f"Сделка {symbol} экономически бессмысленна (net RR {actual_rr:.2f} < {MIN_RR} после комиссий)."
-                self.logger.warning(err)
+                err = f"actual_rr {actual_rr} < {MIN_RR}"
+                self.logger.error(err)
                 self.last_error = err
-                with self.capital_lock:
-                    if symbol in self.pending_margins:
-                        del self.pending_margins[symbol]
                 return False
 
-            # --- Minimum position checks (Requirement 5) ---
-            min_ok, min_reason = check_minimum_position(
-                amount_coin, volume_usdt, risk_usdt_actual, expected_net_pnl
-            )
-            if not min_ok:
-                record_funnel_event('RISK_FAIL')
-                err = f"Позиция {symbol} слишком мала: {min_reason}. Пропуск (без раздувания риска)."
-                self.logger.warning(err)
-                self.last_error = err
-                with self.capital_lock:
-                    if symbol in self.pending_margins:
-                        del self.pending_margins[symbol]
-                return False
-
-            # --- Liquidation safety pre-check (Requirement 7) ---
-            try:
-                prec = self.exchange.price_to_precision(symbol, sl_price)
-                if prec is not None:
-                    sl_price_fmt = float(prec)
-                else:
-                    sl_price_fmt = sl_price
-            except Exception:
-                sl_price_fmt = sl_price
+            # 12. PRE-TRADE LIQUIDATION CHECK
             liq_safety = check_liquidation_safety(
-                direction_str, current_price, sl_price_fmt, margin_required, amount_coin
+                direction_str, current_price, sl_price, actual_margin, amount_coin
             )
             if not liq_safety['sl_before_liquidation'] and liq_safety['liquidation_price'] > 0:
-                record_funnel_event('RISK_FAIL')
-                err = f"⚠️ Liquidation price {liq_safety['liquidation_price']:.4f} is BEFORE SL {sl_price_fmt:.4f} for {symbol}. Сделка отклонена из-за риска ликвидации."
+                err = f"LIQUIDATION BEFORE SL"
                 self.logger.error(err)
-                self.last_error = "LIQUIDATION_RISK"
-                with self.capital_lock:
-                    if symbol in self.pending_margins:
-                        del self.pending_margins[symbol]
+                self.last_error = err
                 return False
 
-            # --- Pre-trade logging (Requirement 10) ---
-            log_pre_trade(
-                symbol=symbol,
-                direction=direction_str,
-                real_balance=self.real_balance,
-                effective_capital=effective_cap,
-                allocated_margin=current_total_margin if 'current_total_margin' in dir() else get_allocated_margin(self.positions, self.pending_margins),
-                free_capital=available_capital if 'available_capital' in dir() else get_free_capital(effective_cap, self.positions, self.pending_margins),
-                open_positions=get_open_position_count(self.positions),
-                portfolio_risk_usdt=get_portfolio_risk_usdt(self.positions),
-                ai_confidence=ai_confidence,
-                risk_pct=(risk_usdt / effective_cap * 100) if effective_cap > 0 else 0,
-                risk_usdt=risk_usdt,
-                sl_distance=risk_distance,
-                sl_price=sl_price_fmt,
-                tp_price=tp_price,
-                entry_price=current_price,
-                notional_usdt=volume_usdt,
-                margin_required=margin_required,
-                leverage=actual_leverage,
-                liquidation_price=liq_safety['liquidation_price'],
-                expected_tp_pnl=expected_tp_pnl,
-                expected_sl_loss=expected_sl_loss,
-                fees_estimate=fees_est,
-                confidence_mult=ai_confidence_multiplier(ai_confidence),
-            )
-            
-            self.logger.info(f"ОТКРЫВАЮ СДЕЛКУ: {symbol} {side}")
+            # 13. ОДИН FINAL PLAN
+            final_trade_plan = {
+                'symbol': symbol,
+                'side': side,
+                'direction': direction_str,
+                'entry_reference': float(current_price),
+                'sl_price': float(sl_price),
+                'tp_price': float(tp_price),
+                'risk_distance': float(risk_distance),
+                'amount_coin': float(amount_coin),
+                'notional_usdt': float(actual_notional),
+                'margin_required': float(actual_margin),
+                'risk_usdt_requested': float(risk_usdt),
+                'risk_usdt_actual': float(risk_usdt_actual),
+                'leverage': int(actual_leverage),
+                'expected_tp_pnl': float(expected_tp_pnl),
+                'expected_sl_loss': float(expected_sl_loss),
+                'fees_estimate': float(fees_est),
+                'rr': float(actual_rr),
+                'liquidation_price': float(liq_safety.get('liquidation_price', 0.0)),
+            }
+            self.last_trade_plan = final_trade_plan
 
-            # Risk Engine and Capital checks passed successfully!
-            record_funnel_event('RISK_PASS')
-            record_funnel_event('ORDER_ATTEMPT')
+            with self.capital_lock:
+                self.pending_margins[symbol] = actual_margin
 
-            self.logger.info(f"Подготовка {side.upper()} ордера: {amount_coin} {symbol} (Lev: {actual_leverage}x)")
-
-            self.last_trade_plan = trade_plan
-            self.last_engine_context = engine_context
-
-
-
-            try:
-                prec = self.exchange.price_to_precision(symbol, sl_price)
-                if prec is not None:
-                    sl_price = float(prec)
-            except Exception:
-                pass
-            try:
-                prec = self.exchange.price_to_precision(symbol, tp_price)
-                if prec is not None:
-                    tp_price = float(prec)
-            except Exception:
-                pass
-            close_side = 'sell' if side in ['buy', 'long'] else 'buy'
-
+            # 14. MARKET ORDER
             self.logger.info(f"Выставляем рыночный ордер: {amount_coin} {symbol}...")
             order = self.exchange.create_market_order(symbol, side, amount_coin)
             
-            position_opened = True
-            self.logger.info(f"✅ Базовый ордер исполнен! ID: {order.get('id')}")
+            entry_order_id = str(order.get('id')) if order else None
+            self.logger.info(f"✅ Базовый ордер исполнен! ID: {entry_order_id}")
 
+            # 15. ПОСЛЕ MARKET - FACTUAL DATA
             actual_price = float(order.get('average') or order.get('price') or current_price)
             actual_side = side
 
-            # ALWAYS query exchange positionAmt as Single Source of Truth after MARKET order
-            for attempt in range(3):
-                try:
-                    positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and isinstance(self.exchange.has, dict) and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
-                    for pos in (positions or []):
-                        if isinstance(pos, dict):
-                            pos_sym = pos.get('symbol', '')
-                            if pos_sym.split(':')[0] == symbol.split(':')[0]:
-                                amt = float(pos.get('info', {}).get('positionAmt', pos.get('contracts', 0)))
-                                if abs(amt) > 0:
-                                    actual_position_amount = abs(amt)
-                                    actual_side = 'buy' if amt > 0 else 'sell'
-                                    if pos.get('entryPrice'):
-                                        actual_price = float(pos['entryPrice'])
-                                    break
-                    if actual_position_amount is not None:
-                        break
-                except Exception as pos_e:
-                    self.logger.warning(f"Попытка {attempt+1}/3 получения фактического объема позиции {symbol}: {pos_e}")
-                time.sleep(0.5)
+            actual_position_amount = None
+            try:
+                positions = self.exchange.fetch_positions([symbol]) if hasattr(self.exchange, 'has') and isinstance(self.exchange.has, dict) and self.exchange.has.get('fetchPositions') else self.exchange.fetch_positions()
+                p = next((pos for pos in (positions or []) if pos.get('symbol', '').split(':')[0] == symbol.split(':')[0]), None)
+                if p:
+                    amt = p.get('info', {}).get('positionAmt', p.get('contracts', 0))
+                    if amt:
+                        actual_position_amount = abs(float(amt))
+            except Exception as e:
+                self.logger.error(f"Failed to fetch exact position amount for {symbol}: {e}")
+                
+            if not actual_position_amount and order and order.get('filled'):
+                actual_position_amount = float(order.get('filled'))
 
-            # Fallback to order filled if exchange positionAmt query failed
-            if actual_position_amount is None:
-                order_filled = float(order.get('filled') or 0.0)
-                if order_filled > 0:
-                    actual_position_amount = order_filled
+            # 16. ENTRY FEE
+            entry_fee = 0.0
+            entry_fee_known = False
+            try:
+                if entry_order_id:
+                    trade_info = self.exchange.fetch_order(entry_order_id, symbol)
+                    if trade_info and trade_info.get('fee'):
+                        entry_fee = float(trade_info['fee'].get('cost', 0.0))
+                        entry_fee_known = True
+            except Exception:
+                pass
+            
+            if entry_fee_known:
+                self.capital_tracker.record_fee(entry_fee, event_id=f"entry_fee:{symbol}:{entry_order_id}")
 
-            # UNKNOWN AMOUNT HANDLING (Requirement 3)
-            # If amount is unknown, set amount=None, status='UNKNOWN', DO NOT record requested amount as actual amount
+            # 17. UNKNOWN AMOUNT LOGIC
             if actual_position_amount is None or actual_position_amount <= 0:
-                self.logger.critical(f"КРИТИЧЕСКИ: Не удалось подтвердить объем открытой позиции для {symbol}. Устанавливаем статус UNKNOWN (amount=None) в стейт для recovery.")
                 self.last_error = "UNKNOWN_AMOUNT"
+                with self.state_lock:
+                    self.positions[symbol] = {
+                        'side': actual_side,
+                        'entry': actual_price,
+                        'entry_price': actual_price,
+                        'amount': None,
+                        'risk_usdt_requested': float(risk_usdt),
+                        'risk_usdt_actual': None,
+                        'status': 'UNKNOWN',
+                        'sl_order_id': None,
+                        'tp_order_id': None,
+                        'entry_order_id': entry_order_id,
+                        'sl_price': float(sl_price),
+                        'tp_price': float(tp_price),
+                        'entry_fee': float(entry_fee),
+                        'entry_fee_known': entry_fee_known,
+                        'entry_fee_pending': not entry_fee_known,
+                        'margin_required': actual_margin,
+                        'leverage': int(actual_leverage),
+                        'timestamp': time.time() * 1000,
+                        'empty_checks': 0,
+                        'tp_retries': 0
+                    }
+                self._save_live_state()
+                with self.capital_lock:
+                    self.pending_margins.pop(symbol, None)
+                return False
+
+            # 18. ПОСЛЕ ACTUAL FILL ПЕРЕСЧИТАТЬ RISK
+            actual_notional_post = float(actual_position_amount) * actual_price
+            actual_margin_post = actual_notional_post / float(actual_leverage)
+            actual_risk_usdt_post = float(actual_position_amount) * abs(actual_price - sl_price)
+
+            if actual_risk_usdt_post > max_allowed_trade_risk + 1e-8:
+                self.logger.critical(f"POST-FILL RISK LIMIT EXCEEDED: {symbol} actual={actual_risk_usdt_post:.8f}, limit={max_allowed_trade_risk:.8f}")
+                # SL, verify, emergency close
+                self._place_sl_and_emergency_close(symbol, actual_side, actual_position_amount, sl_price)
+                return False
+                
+            current_portfolio_risk = get_portfolio_risk_usdt(self.positions)
+            if current_portfolio_risk + actual_risk_usdt_post > max_portfolio_risk + 1e-8:
+                self.logger.critical(f"POST-FILL PORTFOLIO RISK LIMIT EXCEEDED: {symbol}")
+                self._place_sl_and_emergency_close(symbol, actual_side, actual_position_amount, sl_price)
+                return False
+                
+            # 19. POST-FILL MARGIN LIMIT
+            current_allocated_margin_without_this = get_allocated_margin(self.positions, {})
+            if actual_margin_post > max_position_margin + 1e-8 or current_allocated_margin_without_this + actual_margin_post > max_total_margin + 1e-8:
+                self.logger.critical(f"POST-FILL MARGIN LIMIT EXCEEDED: {symbol}")
+                self._place_sl_and_emergency_close(symbol, actual_side, actual_position_amount, sl_price)
+                return False
+
+            # 20. POST-FILL PROTECTION ORDER
+            # Put SL
+            sl_order_id = None
+            try:
+                close_side = 'sell' if actual_side in ['buy', 'long'] else 'buy'
+                sl_order = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, actual_position_amount, params={'stopPrice': sl_price, 'reduceOnly': True})
+                sl_order_id = str(sl_order.get('id'))
+                self.logger.info(f"✅ Установлен SL: {sl_price}")
+            except Exception as e:
+                self.logger.critical(f"FATAL: Не удалось выставить SL для {symbol}: {e}. Инициирую экстренное закрытие.")
+                self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
+                self.last_error = "SL_PLACEMENT_FAILED"
+                with self.capital_lock:
+                    self.pending_margins.pop(symbol, None)
+                return False
+
+            # Put TP
+            tp_order_id = None
+            try:
+                tp_order = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, actual_position_amount, params={'stopPrice': tp_price, 'reduceOnly': True})
+                tp_order_id = str(tp_order.get('id'))
+                self.logger.info(f"✅ Установлен TP: {tp_price}")
+            except Exception as e:
+                self.logger.warning(f"❌ Не удалось установить TP для {symbol}: {e}. Позиция защищена SL, продолжаем работу.")
+
+            # 21. POSITION STATE AFTER SUCCESSFUL ENTRY
+            with self.state_lock:
                 self.positions[symbol] = {
-                    'side': side,
+                    'side': actual_side,
                     'entry': float(actual_price),
+                    'entry_price': float(actual_price),
                     'max_price': float(actual_price),
                     'min_price': float(actual_price),
-                    'amount': None,
-                    'margin_required': margin_required,
-                    'sl_order_id': None,
-                    'tp_order_id': None,
-                    'entry_order_id': order.get('id') if 'order' in locals() else None,
+                    'amount': float(actual_position_amount),
+                    'notional_usdt': float(actual_notional_post),
+                    'margin_required': float(actual_margin_post),
+                    'leverage': int(actual_leverage),
+                    'risk_usdt_requested': float(risk_usdt),
+                    'risk_usdt_actual': float(actual_risk_usdt_post),
+                    'sl_order_id': sl_order_id,
+                    'tp_order_id': tp_order_id,
+                    'entry_order_id': entry_order_id,
                     'sl_price': float(sl_price),
                     'tp_price': float(tp_price),
+                    'entry_fee': float(entry_fee),
+                    'entry_fee_known': bool(entry_fee_known),
+                    'entry_fee_pending': not bool(entry_fee_known),
                     'setup_type': setup_type,
                     'engine_context': engine_context,
                     'ta_setup': ta_setup,
@@ -503,187 +548,54 @@ class TraderExecutor:
                     'probs_str': probs_str,
                     'timestamp': time.time() * 1000,
                     'atr_value': atr_value,
-                    'risk_usdt': (actual_position_amount * abs(float(actual_price) - float(sl_price))) if actual_position_amount else risk_usdt_actual,
-                    'position_notional': volume_usdt,
-                    'leverage': actual_leverage,
-                    'status': 'UNKNOWN',
+                    'status': 'OPEN',
                     'empty_checks': 0,
                     'tp_retries': 0
                 }
-                self._save_live_state()
-                return False
-
-            # ACTUAL LIQUIDATION PRICE VERIFICATION (P0-5)
-            actual_liquidation_price = None
-            actual_mark_price = actual_price
-            try:
-                for pos in (positions or []):
-                    if isinstance(pos, dict):
-                        pos_sym = pos.get('symbol', '')
-                        if pos_sym.split(':')[0] == symbol.split(':')[0]:
-                            raw_info = pos.get('info', {})
-                            liq_p = pos.get('liquidationPrice') or raw_info.get('liquidationPrice')
-                            mark_p = pos.get('markPrice') or raw_info.get('markPrice')
-                                
-                            if liq_p:
-                                actual_liquidation_price = float(liq_p)
-                            if mark_p:
-                                actual_mark_price = float(mark_p)
-                            break
-            except Exception as e:
-                self.logger.error(f"Ошибка проверки liquidationPrice: {e}")
-
-            if actual_liquidation_price is None or actual_liquidation_price <= 0:
-                self.logger.critical(f"КРИТИЧЕСКИ: Неизвестная цена ликвидации для {symbol}. Экстренное закрытие.")
-                self.last_error = "UNKNOWN_LIQUIDATION"
-                closure_confirmed = self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
-                if not closure_confirmed:
-                    if symbol not in self.positions:
-                        self.positions[symbol] = {
-                            'side': actual_side,
-                            'amount': actual_position_amount,
-                            'entry': actual_price
-                        }
-                    self.positions[symbol]['status'] = 'UNKNOWN'
-                    self._save_live_state()
-                return False
-            else:
-                if direction_str == 'LONG':
-                    liq_safe_post = sl_price > actual_liquidation_price
-                else:
-                    liq_safe_post = sl_price < actual_liquidation_price
-                    
-                if not liq_safe_post:
-                    self.logger.critical(f"КРИТИЧЕСКИ: Фактический SL {sl_price} НЕ безопасен относительно ликвидации {actual_liquidation_price} (Mark: {actual_mark_price}). Экстренное закрытие.")
-                    self.last_error = "LIQUIDATION_RISK"
-                    closure_confirmed = self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
-                    if not closure_confirmed:
-                        if symbol not in self.positions:
-                            self.positions[symbol] = {
-                                'side': actual_side,
-                                'amount': actual_position_amount,
-                                'entry': actual_price
-                            }
-                        self.positions[symbol]['status'] = 'UNKNOWN'
-                        self._save_live_state()
-                    return False
-            # Partial fill / Actual amount: update margin based on actual filled amount from exchange
-            margin_required = (actual_position_amount * actual_price) / actual_leverage
-            close_side = 'sell' if actual_side in ['buy', 'long'] else 'buy'
-
-            # Protective SL placement on actual exchange amount (Requirement 6)
-            try:
-                sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, actual_position_amount, params={'stopPrice': sl_price, 'reduceOnly': True})
-                sl_order_id = sl_ord['id']
-            except Exception as sl_e:
-                self.logger.error(f"⚠️ Ошибка при выставлении SL для {symbol}: {sl_e}")
-
-            sl_verified = False
-            if sl_order_id:
-                try:
-                    open_orders = self.exchange.fetch_open_orders(symbol)
-                    for o in open_orders:
-                        if str(o.get('id')) == str(sl_order_id):
-                            is_sym = (o.get('symbol') == symbol)
-                            o_type = str(o.get('type', '')).lower()
-                            is_stop = 'stop' in o_type or 'market' in o_type
-                            is_reduce = (o.get('reduceOnly') is True) or (str(o.get('info', {}).get('reduceOnly', '')).lower() == 'true')
-                            o_stop = o.get('stopPrice') or o.get('info', {}).get('stopPrice')
-                            is_stop_match = False
-                            if o_stop:
-                                is_stop_match = abs(float(o_stop) - float(sl_price)) / float(sl_price) < 0.01
-                            is_qty = float(o.get('amount') or 0) >= float(actual_position_amount) * 0.999
-                            is_active = str(o.get('status', '')).lower() in ['open', 'new']
-                            
-                            if is_sym and is_stop and is_reduce and is_stop_match and is_qty and is_active:
-                                sl_verified = True
-                            else:
-                                self.logger.critical(f"SL verification failed: sym={is_sym}, stop={is_stop}, reduce={is_reduce}, match={is_stop_match}, qty={is_qty}, active={is_active}")
-                            break
-                except Exception as e:
-                    self.logger.error(f"SL verification error: {e}")
-
-            if not sl_verified:
-                self.logger.critical(f"КРИТИЧЕСКИ: Позиция {symbol} открыта без проверенного SL. Выполняем экстренное закрытие.")
-                self.last_error = "SL_PLACEMENT_FAILED"
-                closure_confirmed = self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
-                if not closure_confirmed:
-                    if symbol not in self.positions:
-                        self.positions[symbol] = {
-                            'side': actual_side,
-                            'entry': float(actual_price),
-                            'amount': float(actual_position_amount),
-                            'margin_required': margin_required,
-                            'sl_order_id': None,
-                            'tp_order_id': None,
-                            'sl_price': float(sl_price),
-                            'tp_price': float(tp_price),
-                            'status': 'UNKNOWN',
-                            'empty_checks': 0,
-                            'tp_retries': 0
-                        }
-                    else:
-                        self.positions[symbol]['status'] = 'UNKNOWN'
-                    self._save_live_state()
-                return False
-
-            # Protective TP placement on actual exchange amount (Requirement 6)
-            try:
-                tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, actual_position_amount, params={'stopPrice': tp_price, 'reduceOnly': True})
-                tp_order_id = tp_ord['id']
-            except Exception as tp_e:
-                self.logger.warning(f"⚠️ Ошибка при выставлении TP для {symbol} (позиция защищена SL, TP будет восстановлен recovery): {tp_e}")
-
-            entry_p = actual_price if actual_price else current_price
-            self.positions[symbol] = {
-                'side': actual_side,
-                'entry': float(entry_p),
-                'max_price': float(entry_p),
-                'min_price': float(entry_p),
-                'amount': float(actual_position_amount),
-                'margin_required': margin_required,
-                'sl_order_id': sl_order_id,
-                'tp_order_id': tp_order_id,
-                'entry_order_id': order.get('id') if 'order' in locals() else None,
-                'sl_price': float(sl_price),
-                'tp_price': float(tp_price),
-                'setup_type': setup_type,
-                'engine_context': engine_context,
-                'ta_setup': ta_setup,
-                'ai_confidence': ai_confidence,
-                'probs_str': probs_str,
-                'timestamp': time.time() * 1000,
-                'atr_value': atr_value,
-                'risk_usdt': (actual_position_amount * abs(float(entry_p) - float(sl_price))) if actual_position_amount else risk_usdt_actual,
-                'position_notional': actual_position_amount * entry_p,
-                'leverage': actual_leverage,
-                'status': 'OPEN',
-                'empty_checks': 0,
-                'tp_retries': 0
-            }
-            
             self._save_live_state()
-            self.logger.info(f"Сделка {actual_side.upper()} по {symbol} открыта. Вход: {entry_p}, SL: {sl_price}, TP: {tp_price}, Объем: {actual_position_amount}")
+
+            with self.capital_lock:
+                self.pending_margins.pop(symbol, None)
             return True
 
         except Exception as e:
-            self.last_error = str(e)
-            self.logger.error(f"Ошибка при выполнении execute_trade: {e}")
-            if "-1021" in str(e) or "ahead of the server's time" in str(e):
-                try:
-                    self.exchange.load_time_difference()
-                    self.logger.info("Выполнена авто-пересинхронизация времени с сервером Binance.")
-                except Exception:
-                    pass
-            if position_opened and not sl_order_id:
-                self.logger.critical(f"КРИТИЧЕСКИ: Ошибка ПОСЛЕ открытия позиции {symbol}. Экстренное закрытие!")
-                self.emergency_close(symbol, fallback_amount=actual_position_amount, side=side)
-            return False
-        finally:
+            err = f"Ошибка в execute_trade: {e}"
+            self.logger.error(err)
+            self.last_error = err
             with self.capital_lock:
-                if symbol in self.pending_margins:
-                    del self.pending_margins[symbol]
+                self.pending_margins.pop(symbol, None)
+            return False
 
+    def _place_sl_and_emergency_close(self, symbol, actual_side, actual_position_amount, sl_price):
+        close_side = 'sell' if actual_side in ['buy', 'long'] else 'buy'
+        sl_order_id = None
+        try:
+            sl_order = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, actual_position_amount, params={'stopPrice': sl_price, 'reduceOnly': True})
+            sl_order_id = str(sl_order.get('id'))
+        except Exception:
+            pass
+        
+        self.emergency_close(symbol, fallback_amount=actual_position_amount, side=actual_side)
+        with self.capital_lock:
+            self.pending_margins.pop(symbol, None)
+        
+        if sl_order_id:
+            # We must create an UNKNOWN state because we just did an emergency close that might fail, but we have a live SL
+            with self.state_lock:
+                self.positions[symbol] = {
+                    'side': actual_side,
+                    'amount': actual_position_amount,
+                    'status': 'UNKNOWN',
+                    'sl_order_id': sl_order_id,
+                    'tp_order_id': None,
+                    'entry_order_id': None,
+                    'risk_usdt_requested': 0.0,
+                    'risk_usdt_actual': 0.0,
+                    'margin_required': 0.0,
+                    'empty_checks': 0,
+                    'tp_retries': 0
+                }
+            self._save_live_state()
     def _save_live_state(self):
         with self.state_lock:
             try:
@@ -708,11 +620,6 @@ class TraderExecutor:
                 return entry_price * (1 + STOP_LOSS_PCT), entry_price * (1 - tp_pct)
 
     def check_position_status(self, symbol, cached_positions=None, force_fetch=False):
-        """
-        Verifies position status using exchange positionAmt as Single Source of Truth.
-        Performs recovery for missing SL/TP, protects against transient empty snapshots,
-        and handles trailing stop.
-        """
         try:
             if force_fetch or cached_positions is None:
                 positions = self.fetch_all_positions()
@@ -720,7 +627,6 @@ class TraderExecutor:
                 positions = cached_positions
 
             if positions is None:
-                self.logger.warning(f"Не удалось получить позиции с биржи для {symbol} (None snapshot). Статус UNKNOWN.")
                 return "UNKNOWN"
 
             active_pos = None
@@ -732,399 +638,309 @@ class TraderExecutor:
                         if abs(amt) > 0:
                             active_pos = pos
                             break
-            
+
             if active_pos:
-                # Exchange positionAmt is Source of Truth (Requirement 3, 4, 6)
                 exchange_amt = abs(float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0))))
                 raw_amt = float(active_pos.get('info', {}).get('positionAmt', active_pos.get('contracts', 0)))
-                exchange_side = 'long' if raw_amt > 0 else ('short' if raw_amt < 0 else active_pos.get('side', 'long').lower())
-                entry_price = float(active_pos.get('entryPrice') or 0.0)
+                exchange_side = 'buy' if raw_amt > 0 else 'sell'
+                current_price = float(active_pos.get('entryPrice') or active_pos.get('info', {}).get('entryPrice') or 0.0)
 
-                if symbol not in self.positions:
-                    loaded_from_state = False
-                    try:
-                        import os
-                        if os.path.exists("live_state.json"):
-                            with open("live_state.json", "r", encoding="utf-8") as f:
-                                saved_state = json.load(f)
-                                if symbol in saved_state:
-                                    self.positions[symbol] = saved_state[symbol]
-                                    loaded_from_state = True
-                    except Exception:
-                        pass
-                    
-                    if not loaded_from_state:
+                with self.state_lock:
+                    if symbol not in self.positions:
                         self.positions[symbol] = {
-                            "side": exchange_side,
-                            "entry": entry_price,
-                            "max_price": entry_price,
-                            "min_price": entry_price,
-                            "sl_order_id": None,
-                            "sl_price": 0.0,
-                            "tp_order_id": None,
-                            "tp_price": 0.0,
-                            "amount": exchange_amt,
-                            "margin_required": (exchange_amt * entry_price) / LEVERAGE,
-                            "status": 'OPEN',
-                            "empty_checks": 0,
-                            "tp_retries": 0
+                            'side': exchange_side,
+                            'entry': current_price,
+                            'amount': exchange_amt,
+                            'status': 'UNKNOWN',
+                            'empty_checks': 0,
+                            'tp_retries': 0,
+                            'sl_order_id': None,
+                            'tp_order_id': None,
+                            'entry_order_id': None,
+                            'risk_usdt_requested': 0.0,
+                            'risk_usdt_actual': 0.0,
+                            'margin_required': 0.0
                         }
-
-                # Synchronize amount from exchange & reset empty checks
-                self.positions[symbol]['amount'] = exchange_amt
-                self.positions[symbol]['empty_checks'] = 0
-                if entry_price > 0 and (not self.positions[symbol].get('entry') or self.positions[symbol].get('entry') == 0):
-                    self.positions[symbol]['entry'] = entry_price
-                
-                cur_entry = self.positions[symbol].get('entry') or entry_price
-                if 'max_price' not in self.positions[symbol]:
-                    self.positions[symbol]['max_price'] = cur_entry
-                if 'min_price' not in self.positions[symbol]:
-                    self.positions[symbol]['min_price'] = cur_entry
-                    
-                self.positions[symbol]['margin_required'] = (exchange_amt * cur_entry) / LEVERAGE
-
-                # Verify open orders on exchange
-                found_sl = None
-                found_tp = None
-                try:
-                    open_orders = self.exchange.fetch_open_orders(symbol)
-                    for o in (open_orders or []):
-                        o_type = o.get('type', '').lower()
-                        info_type = o.get('info', {}).get('origType', '').lower()
-                        
-                        is_stop = 'stop' in o_type or 'stop' in info_type
-                        is_take_profit = 'take_profit' in o_type or 'take_profit' in info_type
-                        
-                        if is_stop:
-                            found_sl = o['id']
-                            self.positions[symbol]['sl_price'] = float(o.get('stopPrice') or 0)
-                        elif is_take_profit:
-                            found_tp = o['id']
-                            self.positions[symbol]['tp_price'] = float(o.get('stopPrice') or 0)
-                            
-                    if self.positions[symbol].get('sl_order_id') != found_sl:
-                        self.positions[symbol]['sl_order_id'] = found_sl
-                    if self.positions[symbol].get('tp_order_id') != found_tp:
-                        self.positions[symbol]['tp_order_id'] = found_tp
-                        
-                except Exception as e:
-                    self.logger.warning(f"Не удалось верифицировать SL/TP ордера: {e}")
-                    
-                # Check Binance Algo Orders if standard orders check was empty
-                if not self.positions[symbol].get('sl_order_id') or not self.positions[symbol].get('tp_order_id'):
-                    try:
-                        market_id = symbol.replace('/', '').split(':')[0]
-                        if hasattr(self.exchange, 'fapiPrivateGetOpenAlgoOrders'):
-                            algo_orders = self.exchange.fapiPrivateGetOpenAlgoOrders({'symbol': market_id})
-                            for ao in (algo_orders or []):
-                                ao_type = ao.get('orderType', '').lower()
-                                if 'stop' in ao_type and not self.positions[symbol].get('sl_order_id'):
-                                    self.positions[symbol]['sl_order_id'] = str(ao.get('algoId'))
-                                    self.positions[symbol]['sl_price'] = float(ao.get('triggerPrice') or 0)
-                                elif 'take_profit' in ao_type and not self.positions[symbol].get('tp_order_id'):
-                                    self.positions[symbol]['tp_order_id'] = str(ao.get('algoId'))
-                                    self.positions[symbol]['tp_price'] = float(ao.get('triggerPrice') or 0)
-                    except Exception:
-                        pass
-
-                # RECOVERY LOGIC (Requirements 4 & 6)
-                if self.positions[symbol].get('sl_order_id') is None or self.positions[symbol].get('tp_order_id') is None:
-                    pos_data = self.positions[symbol]
-                    cur_entry = pos_data.get('entry') or entry_price
-                    pos_side = pos_data.get('side', exchange_side).lower()
-                    dir_str = 'LONG' if pos_side in ['buy', 'long'] else 'SHORT'
-                    close_side = 'sell' if dir_str == 'LONG' else 'buy'
-                    ctx = pos_data.get('engine_context')
-                    setup_type = pos_data.get('setup_type')
-                    atr_val = pos_data.get('atr_value', 0.0)
-
-                    sl_p, tp_p = 0.0, 0.0
-                    if STRUCTURE_RISK_ENABLED and ctx and setup_type:
-                        plan = self.risk_engine.build_trade_plan(dir_str, cur_entry, setup_type, ctx, atr_val)
-                        if plan.get('valid'):
-                            sl_p = plan['stop_loss']
-                            tp_p = plan['take_profit']
-                        else:
-                            sl_p, tp_p = self.calculate_sl_tp(pos_side, cur_entry, atr_val)
                     else:
-                        sl_p, tp_p = self.calculate_sl_tp(pos_side, cur_entry, atr_val)
-                        
-                    try:
-                        sl_p = float(self.exchange.price_to_precision(symbol, sl_p))
-                    except Exception:
-                        pass
-                    try:
-                        tp_p = float(self.exchange.price_to_precision(symbol, tp_p))
-                    except Exception:
-                        pass
-
-                    # 1. Missing SL Recovery -> Placed on actual exchange_amt
-                    if not pos_data.get('sl_order_id'):
-                        self.logger.critical(f"RECOVERY: Восстановление отсутствующего SL для {symbol} на объем {exchange_amt}...")
-                        try:
-                            sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, exchange_amt, params={'stopPrice': sl_p, 'reduceOnly': True})
-                            pos_data['sl_order_id'] = sl_ord['id']
-                            pos_data['sl_price'] = sl_p
-                            pos_data['status'] = 'OPEN'
-                            self.logger.info(f"✅ RECOVERY: SL успешно выставлен для {symbol} ({sl_p})")
-                        except Exception as e:
-                            self.logger.critical(f"🚨 RECOVERY SL FAILED for {symbol}: {e}. Немедленный emergency_close!")
-                            self.emergency_close(symbol, fallback_amount=exchange_amt, side=pos_side)
-                            return "UNKNOWN"
-
-                    # 2. Missing TP Recovery -> Retry TP on actual exchange_amt
-                    if pos_data.get('sl_order_id') and not pos_data.get('tp_order_id'):
-                        pos_data['tp_retries'] = pos_data.get('tp_retries', 0) + 1
-                        if pos_data['tp_retries'] <= 5:
-                            self.logger.info(f"RECOVERY: Попытка {pos_data['tp_retries']}/5 восстановить TP для {symbol} на объем {exchange_amt}...")
-                            try:
-                                tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, exchange_amt, params={'stopPrice': tp_p, 'reduceOnly': True})
-                                pos_data['tp_order_id'] = tp_ord['id']
-                                pos_data['tp_price'] = tp_p
-                                self.logger.info(f"✅ RECOVERY: TP успешно выставлен для {symbol} ({tp_p})")
-                            except Exception as e:
-                                self.logger.warning(f"RECOVERY: Не удалось выставить TP для {symbol}: {e}")
-                        else:
-                            self.logger.warning(f"RECOVERY: Превышен лимит попыток TP ({pos_data['tp_retries']}). Позиция остается под защитой SL.")
-
-                    if pos_data.get('sl_order_id') and pos_data.get('status') == 'UNKNOWN':
+                        pos_data = self.positions[symbol]
                         pos_data['status'] = 'OPEN'
-
-                    self._save_live_state()
-
-                # Trailing Stop logic
-                if USE_TRAILING:
-                    pos_data = self.positions[symbol]
-                    current_price = float(active_pos.get('markPrice', 0)) or float(active_pos.get('entryPrice', 0))
-                    entry = pos_data.get('entry', entry_price)
-                    is_long = pos_data.get('side', exchange_side).lower() in ['buy', 'long']
-                    close_side = 'sell' if is_long else 'buy'
-                    
-                    needs_trailing_update = False
-                    close_market_now = False
-                    new_sl_price = pos_data.get('sl_price', 0.0)
-                    
-                    atr = pos_data.get('atr_value', entry * 0.01)
-                    # Requirement 15: Trailing stop based on ATR to avoid market noise
-                    activation_dist = atr * 1.5
-                    trailing_dist = atr * 1.5
-                    
-                    if is_long:
-                        if current_price > pos_data.get('max_price', entry):
-                            pos_data['max_price'] = current_price
-                        profit_dist = pos_data['max_price'] - entry
-                        if profit_dist >= activation_dist:
-                            calculated_sl = pos_data['max_price'] - trailing_dist
-                            if current_price <= calculated_sl:
-                                close_market_now = True
-                            elif calculated_sl > pos_data.get('sl_price', 0.0):
-                                formatted_sl = float(self.exchange.price_to_precision(symbol, calculated_sl))
-                                if formatted_sl > pos_data.get('sl_price', 0.0):
-                                    new_sl_price = formatted_sl
-                                    needs_trailing_update = True
-                    else:
-                        if current_price < pos_data.get('min_price', entry):
-                            pos_data['min_price'] = current_price
-                        profit_dist = entry - pos_data['min_price']
-                        if profit_dist >= activation_dist:
-                            calculated_sl = pos_data['min_price'] + trailing_dist
-                            if current_price >= calculated_sl:
-                                close_market_now = True
-                            elif calculated_sl < pos_data.get('sl_price', 0.0) or pos_data.get('sl_price', 0.0) == 0:
-                                formatted_sl = float(self.exchange.price_to_precision(symbol, calculated_sl))
-                                if pos_data.get('sl_price', 0.0) == 0 or formatted_sl < pos_data.get('sl_price', 0.0):
-                                    new_sl_price = formatted_sl
-                                    needs_trailing_update = True
-                                
-                    if close_market_now:
-                        self.logger.info(f"⚡ Трейлинг-стоп сработал для {symbol}! Текущая цена {current_price} пробила стоп. Закрытие по маркету...")
-                        try:
-                            self.exchange.cancel_all_orders(symbol)
-                        except Exception:
-                            pass
-                        try:
-                            self.exchange.create_market_order(symbol, close_side, exchange_amt, params={'reduceOnly': True})
-                            self.logger.info(f"✅ Позиция {symbol} успешно закрыта по трейлингу по рыночной цене.")
-                        except Exception as ce:
-                            self.logger.error(f"Ошибка закрытия по маркету при трейлинге: {ce}")
-                    elif needs_trailing_update:
-                        new_sl_price = float(self.exchange.price_to_precision(symbol, new_sl_price))
-                        is_valid_stop = (new_sl_price < current_price) if is_long else (new_sl_price > current_price)
+                        pos_data['empty_checks'] = 0
+                        if pos_data.get('amount') != exchange_amt:
+                            pos_data['amount'] = exchange_amt
+                        if pos_data.get('side') != exchange_side:
+                            pos_data['side'] = exchange_side
                         
-                        if not is_valid_stop:
-                            self.logger.info(f"⚡ Цена {current_price} уже пересекла новый стоп {new_sl_price} для {symbol}. Закрываем по маркету!")
+                        if not pos_data.get('sl_order_id') or not pos_data.get('tp_order_id'):
+                            close_side = 'sell' if pos_data['side'] in ['buy', 'long'] else 'buy'
+                            cur_entry = pos_data.get('entry', current_price)
+                            atr_val = pos_data.get('atr_value', 0.0)
+                            ctx = pos_data.get('engine_context')
+                            setup_type = pos_data.get('setup_type')
+                            dir_str = 'LONG' if pos_data['side'] in ['buy', 'long'] else 'SHORT'
+
+                            sl_p = pos_data.get('sl_price')
+                            tp_p = pos_data.get('tp_price')
+
+                            if not sl_p or not tp_p:
+                                if STRUCTURE_RISK_ENABLED and ctx and setup_type:
+                                    plan = self.risk_engine.build_trade_plan(dir_str, cur_entry, setup_type, ctx, atr_val)
+                                    if plan.get('valid'):
+                                        sl_p = plan['stop_loss']
+                                        tp_p = plan['take_profit']
+                                    else:
+                                        sl_p, tp_p = self.calculate_sl_tp(pos_data['side'], cur_entry, atr_val)
+                                else:
+                                    sl_p, tp_p = self.calculate_sl_tp(pos_data['side'], cur_entry, atr_val)
+
                             try:
-                                self.exchange.cancel_all_orders(symbol)
+                                p = self.exchange.price_to_precision(symbol, sl_p)
+                                sl_p = float(p) if p else float(sl_p)
+                            except Exception:
+                                sl_p = float(sl_p) if sl_p else 0.0
+                            try:
+                                p = self.exchange.price_to_precision(symbol, tp_p)
+                                tp_p = float(p) if p else float(tp_p)
+                            except Exception:
+                                tp_p = float(tp_p) if tp_p else 0.0
+
+                            if not pos_data.get('sl_order_id'):
+                                try:
+                                    sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, exchange_amt, params={'stopPrice': sl_p, 'reduceOnly': True})
+                                    pos_data['sl_order_id'] = sl_ord.get('id')
+                                    pos_data['sl_price'] = sl_p
+                                except Exception as e:
+                                    self.emergency_close(symbol, fallback_amount=exchange_amt, side=pos_data['side'])
+
+                            if pos_data.get('sl_order_id') and not pos_data.get('tp_order_id'):
+                                pos_data['tp_retries'] = pos_data.get('tp_retries', 0) + 1
+                                if pos_data['tp_retries'] <= 5:
+                                    try:
+                                        tp_ord = self.exchange.create_order(symbol, 'TAKE_PROFIT_MARKET', close_side, exchange_amt, params={'stopPrice': tp_p, 'reduceOnly': True})
+                                        pos_data['tp_order_id'] = tp_ord.get('id')
+                                        pos_data['tp_price'] = tp_p
+                                    except Exception:
+                                        pass
+
+                        if USE_TRAILING and pos_data.get('max_price') and pos_data.get('sl_price') and pos_data.get('sl_order_id'):
+                            try:
+                                ticker = self.exchange.fetch_ticker(symbol)
+                                current_market_price = float(ticker['last'])
+                                
+                                direction = 1 if pos_data['side'] in ['buy', 'long'] else -1
+                                entry = pos_data['entry']
+                                current_max = pos_data['max_price']
+                                
+                                if direction == 1 and current_market_price > current_max:
+                                    pos_data['max_price'] = current_market_price
+                                elif direction == -1 and current_market_price < current_max:
+                                    pos_data['max_price'] = current_market_price
+                                
+                                current_profit_pct = (current_market_price - entry) / entry * direction * 100
+                                
+                                if current_profit_pct >= TRAILING_ACTIVATION_PCT:
+                                    new_sl_price = current_market_price * (1 - (TRAILING_DISTANCE_PCT / 100) * direction)
+                                    prec = self.exchange.price_to_precision(symbol, new_sl_price)
+                                    if prec:
+                                        new_sl_price = float(prec)
+                                        
+                                    if (direction == 1 and new_sl_price > pos_data['sl_price']) or (direction == -1 and new_sl_price < pos_data['sl_price']):
+                                        close_side = 'sell' if direction == 1 else 'buy'
+                                        self.exchange.cancel_order(pos_data['sl_order_id'], symbol)
+                                        sl_order = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, exchange_amt, params={'stopPrice': new_sl_price, 'reduceOnly': True})
+                                        pos_data['sl_order_id'] = sl_order['id']
+                                        pos_data['sl_price'] = new_sl_price
                             except Exception:
                                 pass
-                            try:
-                                self.exchange.create_market_order(symbol, close_side, exchange_amt, params={'reduceOnly': True})
-                            except Exception as ce:
-                                self.logger.error(f"Ошибка закрытия по маркету: {ce}")
-                        else:
-                            try:
-                                sl_ord = self.exchange.create_order(symbol, 'STOP_MARKET', close_side, exchange_amt, params={'stopPrice': new_sl_price, 'reduceOnly': True})
-                                old_sl = pos_data.get('sl_order_id')
-                                if old_sl:
-                                    try:
-                                        self.exchange.cancel_order(old_sl, symbol)
-                                    except Exception:
-                                        pass
-                                        
-                                pos_data['sl_order_id'] = sl_ord['id']
-                                pos_data['sl_price'] = new_sl_price
-                                self._save_live_state()
-                                self.logger.info(f"🔄 Трейлинг-стоп передвинут для {symbol}: {new_sl_price}")
-                                tg_notifier.send_message(f"🔄 <b>Трейлинг-стоп сдвинут!</b>\nМонета: {symbol}\nНовый стоп: {new_sl_price}")
-                            except Exception as e:
-                                err_str = str(e)
-                                if "-2021" in err_str or "Order would immediately trigger" in err_str:
-                                    self.logger.warning(f"Стоп {new_sl_price} мгновенно сработал бы для {symbol}. Закрываем по маркету!")
-                                    try:
-                                        self.exchange.cancel_all_orders(symbol)
-                                    except Exception:
-                                        pass
-                                    try:
-                                        self.exchange.create_market_order(symbol, close_side, exchange_amt, params={'reduceOnly': True})
-                                    except Exception as ce:
-                                        self.logger.error(f"Ошибка закрытия по маркету: {ce}")
-                                else:
-                                    self.logger.error(f"Ошибка сдвига трейлинга: {e}")
 
-                return True
-
-            # Position not found in active positions snapshot
-            if symbol in self.positions:
-                pos_data = self.positions[symbol]
-                st = pos_data.get('status', 'OPEN')
-                empty_checks = pos_data.get('empty_checks', 0)
-
-                # Transient empty snapshot protection (Requirements 4 & 5)
-                # Keep UNKNOWN for first 2 empty checks; 3rd empty check confirms closed
-                if empty_checks < 2:
-                    pos_data['empty_checks'] = empty_checks + 1
-                    pos_data['status'] = 'UNKNOWN'
-                    self._save_live_state()
-                    self.logger.warning(f"⚠️ Позиция {symbol} не обнаружена в snapshot (проверка {pos_data['empty_checks']}/3). Сохраняем состояние UNKNOWN для подтверждения.")
-                    return "UNKNOWN"
-
-                # Confirmed closed on exchange after bounded retry confirmations
-                self.logger.info(f"🔔 Сделка по {symbol} подтверждена закрытой.")
-                
-                pnl = 0.0
-                fees = 0.0
-                exit_price = pos_data.get('sl_price', 0.0)
-                
-                try:
-                    entry_ts = pos_data.get('timestamp', time.time() * 1000 - 120000)
-                    closed_trades = self.exchange.fetch_my_trades(symbol, since=int(entry_ts - 60000), limit=1000)
-                    close_side = 'sell' if pos_data.get('side') in ['buy', 'long'] else 'buy'
-                    
-                    recent_closes = [t for t in (closed_trades or []) if t.get('side') == close_side and t.get('timestamp', 0) >= entry_ts]
-                    
-                    if recent_closes:
-                        last_close = recent_closes[-1]
-                        exit_price = float(last_close.get('price', 0.0))
-                        last_order_id = last_close.get('order')
-                        
-                        if last_order_id:
-                            pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if t.get('order') == last_order_id)
-                            exit_fee = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in recent_closes if t.get('order') == last_order_id)
-                        else:
-                            last_ts = last_close.get('timestamp', 0)
-                            related_closes = [t for t in recent_closes if abs(t.get('timestamp', 0) - last_ts) < 10000]
-                            pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in related_closes)
-                            exit_fee = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in related_closes)
-                            
-                        if pnl == 0:
-                            pnl = float(last_close.get('info', {}).get('realizedPnl', 0))
-                            
-                        entry_order_id = pos_data.get('entry_order_id')
-                        entry_fee = 0.0
-                        if entry_order_id:
-                            entry_fee = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in (closed_trades or []) if t.get('order') == entry_order_id)
-                        elif pos_data.get('entry_fee'):
-                            entry_fee = float(pos_data.get('entry_fee'))
-                            
-                        fees = entry_fee + exit_fee
-                except Exception as e:
-                    self.logger.error(f"Ошибка fetch_my_trades для {symbol}: {e}")
-
-                is_estimated = False
-                if pnl == 0.0:
-                    exit_price = exit_price or pos_data.get('sl_price', 0.0)
-                    entry = pos_data.get('entry', 0.0)
-                    amt = pos_data.get('amount', 0.0)
-                    if exit_price and entry and amt:
-                        direction = 1 if pos_data.get('side') in ['buy', 'long'] else -1
-                        pnl = (exit_price - entry) * amt * direction
-                    self.logger.warning(f"Используем локальный PnL для {symbol}: {pnl:.2f}")
-                    is_estimated = True
-
-                # UPDATE CAPITAL TRACKER (Requirement 2 & 12, P0-7)
-                # Deterministic event ID surviving restart
-                stable_id = pos_data.get('timestamp')
-                if not stable_id:
-                    stable_id = f"{pos_data.get('entry', 0)}_{pos_data.get('amount', 0)}"
-                
-                # If we have a real exchange order for the close, use it as part of the ID,
-                # but only if we always have it. Since we need the same ID during estimation and reconciliation,
-                # we must rely on the position's stable ID.
-                event_id = f"{symbol}_{stable_id}_close"
-                
-                self.capital_tracker.record_close(pnl, fees, event_id=event_id, is_estimated=is_estimated)
-                self.logger.info(f"Capital Update [{event_id}]: PnL {pnl:.2f}, Fees {fees:.2f} (Est: {is_estimated}). Bot Equity: {self.capital_tracker.trading_capital:.2f}")
-
-                try:
-                    import time
-                    with open("trade_history.txt", "a", encoding="utf-8") as f:
-                        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | EXIT | Вход: {pos_data.get('entry', 0):.4f} | Выход: {exit_price:.4f} | PnL: {pnl:.2f} USDT\n")
-                except Exception:
-                    pass
-                try:
-                    import datetime
-                    report = {
-                        "time_opened": datetime.datetime.fromtimestamp(pos_data.get('timestamp', time.time()*1000)/1000).strftime('%Y-%m-%d %H:%M:%S'),
-                        "time_closed": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "symbol": symbol,
-                        "side": str(pos_data.get('side', '')).upper(),
-                        "entry_price": pos_data.get('entry'),
-                        "exit_price": exit_price,
-                        "pnl_usdt": pnl,
-                        "layer1_ta_setup": pos_data.get('ta_setup', 'UNKNOWN'),
-                        "layer1_engine_setup": pos_data.get('setup_type', 'UNKNOWN'),
-                        "layer1_engine_context": pos_data.get('engine_context', {}),
-                        "layer2_ai_confidence": pos_data.get('ai_confidence', 0.0),
-                        "layer2_probs": pos_data.get('probs_str', ""),
-                        "max_price": pos_data.get('max_price', pos_data.get('entry')),
-                        "min_price": pos_data.get('min_price', pos_data.get('entry')),
-                        "sl_price": pos_data.get('sl_price', 0),
-                        "tp_price": pos_data.get('tp_price', 0)
-                    }
-                    with open("detailed_trades.jsonl", "a", encoding="utf-8") as df_file:
-                        df_file.write(json.dumps(report, ensure_ascii=False) + "\n")
-                except Exception as e:
-                    self.logger.error(f"Ошибка сохранения detailed_trades.jsonl: {e}")
-
-                try:
-                    analytics_manager.record_trade(symbol, pos_data.get('side'), pos_data.get('entry'), exit_price, pnl)
-                    emoji = "✅" if pnl > 0 else "❌"
-                    tg_notifier.send_message(f"{emoji} <b>Сделка {symbol} ЗАКРЫТА!</b>\nТип: {str(pos_data.get('side', '')).upper()}\nPnL: {pnl:.2f} USDT")
-                except Exception as e:
-                    self.logger.error(f"Ошибка сохранения аналитики/тг: {e}")
-                
-                del self.positions[symbol]
                 self._save_live_state()
-                try:
-                    self.exchange.cancel_all_orders(symbol)
-                except Exception:
-                    pass
+                return True
+            else:
+                pos_data = None
+                with self.state_lock:
+                    if symbol in self.positions:
+                        pos_data = self.positions[symbol]
+                        empty_checks = pos_data.get('empty_checks', 0)
+                        if empty_checks < 2:
+                            pos_data['empty_checks'] = empty_checks + 1
+                            self.logger.warning(f"Empty snapshot check {empty_checks+1}/3 for {symbol}")
+                            self._save_live_state()
+                            return "UNKNOWN"
+                        else:
+                            pass
+                    else:
+                        return False
 
-            return False
+                if pos_data:
+                    self.logger.info(f"Position {symbol} confirmed closed.")
+                    
+                    try:
+                        self.exchange.cancel_all_orders(symbol)
+                    except Exception:
+                        pass
+                        
+                    pnl = 0.0
+                    fees = 0.0
+                    exit_price = pos_data.get('sl_price', 0.0)
+                    exchange_pnl_available = False
+                    
+                    try:
+                        entry_ts = pos_data.get('timestamp', time.time() * 1000 - 120000)
+                        closed_trades = self.exchange.fetch_my_trades(symbol, since=int(entry_ts - 60000), limit=1000)
+                        self.logger.warning(f"DEBUG_FETCH_TRADES: {closed_trades}")
+                        close_side = 'sell' if pos_data.get('side') in ['buy', 'long'] else 'buy'
+                        
+                        entry_order_id = str(pos_data.get('entry_order_id', ''))
+                        
+                        if pos_data.get('entry_fee_pending'):
+                            try:
+                                trade_info = self.exchange.fetch_order(entry_order_id, symbol)
+                                if trade_info and trade_info.get('fee'):
+                                    entry_fee = float(trade_info['fee'].get('cost', 0.0))
+                                    self.capital_tracker.record_fee(entry_fee, event_id=f"entry_fee:{symbol}:{entry_order_id}")
+                            except Exception:
+                                pass
+                                
+                        recent_closes = [t for t in (closed_trades or []) if t.get('side') == close_side and t.get('timestamp', 0) >= entry_ts]
+                        
+                        if recent_closes:
+                            last_close = recent_closes[-1]
+                            exit_price = float(last_close.get('price', 0.0))
+                            last_order_id = str(last_close.get('order', ''))
+                            
+                            if last_order_id:
+                                pnl_sum = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if str(t.get('order')) == last_order_id)
+                                fees = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in (closed_trades or []) if str(t.get('order')) == last_order_id)
+                                pnl = pnl_sum
+                                exchange_pnl_available = True
+                            else:
+                                last_ts = last_close.get('timestamp', 0)
+                                pnl_sum = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if abs(t.get('timestamp', 0) - last_ts) < 10000)
+                                fees = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in (closed_trades or []) if abs(t.get('timestamp', 0) - last_ts) < 10000)
+                                pnl = pnl_sum
+                                exchange_pnl_available = True
+                                
+                            if not exchange_pnl_available and last_close.get('info', {}).get('realizedPnl') is not None:
+                                pnl = float(last_close.get('info', {}).get('realizedPnl', 0))
+                                exchange_pnl_available = True
+                                
+                    except Exception as e:
+                        self.logger.error(f"fetch_my_trades error {symbol}: {e}")
+
+                    is_estimated = False
+                    if not exchange_pnl_available:
+                        exit_price = exit_price or pos_data.get('sl_price', 0.0)
+                        entry = pos_data.get('entry', 0.0)
+                        amt = pos_data.get('amount')
+                        if amt is None:
+                            amt = 0.0
+                        if exit_price and entry and amt:
+                            direction = 1 if pos_data.get('side') in ['buy', 'long'] else -1
+                            pnl = (exit_price - entry) * amt * direction
+                        is_estimated = True
+                        
+                    event_id = f"close:{symbol}:{pos_data.get('entry_order_id', time.time())}"
+                    
+                    self.capital_tracker.record_close(pnl, fees, event_id=event_id, is_estimated=is_estimated)
+                    
+                    with self.state_lock:
+                        if symbol in self.positions:
+                            del self.positions[symbol]
+                    self._save_live_state()
+                    with self.capital_lock:
+                        if symbol in self.pending_margins:
+                            del self.pending_margins[symbol]
+                            
+                    self.logger.info(f"Position closed. PnL {pnl:.2f}, fees {fees:.2f}")
+                    return False
+
         except Exception as e:
-            self.logger.warning(f"API ERROR: check_position_status failed for {symbol}: {e}")
+            self.logger.error(f"check_position_status {symbol}: {e}")
             return "UNKNOWN"
+
+    def reconcile_startup_positions(self):
+        try:
+            exchange_positions = self.fetch_all_positions()
+
+            if exchange_positions is None:
+                self.logger.warning(
+                    "Startup reconciliation failed: exchange snapshot unavailable."
+                )
+                return
+
+            exchange_map = {}
+
+            for pos in exchange_positions:
+                if not isinstance(pos, dict):
+                    continue
+
+                symbol = pos.get('symbol', '')
+
+                amount = float(
+                    pos.get('info', {}).get(
+                        'positionAmt',
+                        pos.get('contracts', 0)
+                    ) or 0
+                )
+
+                if abs(amount) <= 0:
+                    continue
+
+                normalized_symbol = symbol.split(':')[0]
+
+                exchange_map[normalized_symbol] = {
+                    'amount': abs(amount),
+                    'side': 'buy' if amount > 0 else 'sell',
+                    'entry': float(pos.get('entryPrice') or 0),
+                    'liquidationPrice': (
+                        pos.get('liquidationPrice')
+                        or pos.get('info', {}).get('liquidationPrice')
+                    ),
+                    'leverage': (
+                        pos.get('leverage')
+                        or pos.get('info', {}).get('leverage')
+                    ),
+                }
+
+            for symbol, ex_pos in exchange_map.items():
+
+                if symbol in self.positions:
+
+                    local = self.positions[symbol]
+                    local['amount'] = ex_pos['amount']
+                    local['side'] = ex_pos['side']
+
+                    if ex_pos['entry'] > 0:
+                        local['entry'] = ex_pos['entry']
+
+                    if ex_pos['leverage']:
+                        try:
+                            local['leverage'] = int(ex_pos['leverage'])
+                        except Exception:
+                            pass
+                else:
+                    self.logger.warning(
+                        f"Exchange position {symbol} exists but local state is missing. Creating UNKNOWN recovery state."
+                    )
+
+                    self.positions[symbol] = {
+                        'side': ex_pos['side'],
+                        'entry': ex_pos['entry'],
+                        'amount': ex_pos['amount'],
+                        'sl_order_id': None,
+                        'tp_order_id': None,
+                        'entry_order_id': None,
+                        'risk_usdt_requested': 0.0,
+                        'risk_usdt_actual': 0.0,
+                        'margin_required': 0.0,
+                        'status': 'UNKNOWN',
+                        'empty_checks': 0,
+                        'tp_retries': 0,
+                    }
+
+            self._save_live_state()
+
+        except Exception as e:
+            self.logger.error(f"Startup position reconciliation failed: {e}")
 
     def emergency_close(self, symbol, fallback_amount=None, side=None):
         self.logger.critical(f"EMERGENCY CLOSE INITIATED: {symbol}")
