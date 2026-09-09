@@ -23,6 +23,10 @@ class TestComprehensiveSuite(unittest.TestCase):
     def setUp(self):
         import capital_manager
         capital_manager.MIN_RISK_USDT = 0.0
+        for f in ['live_state.json', 'bot_equity.json', 'trade_history.txt']:
+            if os.path.exists(f):
+                try: os.remove(f)
+                except: pass
     
     # 1. Syntax of all Python files
     def test_01_syntax_compilation_all_files(self):

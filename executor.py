@@ -44,6 +44,18 @@ class TraderExecutor:
         self.last_engine_context = None
         
         try:
+            import os
+            import json
+            if os.path.exists("live_state.json"):
+                with open("live_state.json", "r", encoding="utf-8") as f:
+                    saved_state = json.load(f)
+                    for sym, pos_data in saved_state.items():
+                        self.positions[sym] = pos_data
+                self.logger.info(f"Loaded {len(self.positions)} positions from live_state.json at startup.")
+        except Exception as e:
+            self.logger.warning(f"Ошибка загрузки live_state.json при старте: {e}")
+        
+        try:
             self.exchange.load_markets()
         except Exception:
             pass
@@ -415,16 +427,7 @@ class TraderExecutor:
             self.last_trade_plan = trade_plan
             self.last_engine_context = engine_context
 
-            # Рассчитываем SL/TP до отправки запроса
-            if STRUCTURE_RISK_ENABLED and setup_type and engine_context:
-                recalc_plan = self.risk_engine.build_trade_plan(direction_str, current_price, setup_type, engine_context, atr_value)
-                if recalc_plan.get('valid'):
-                    sl_price = recalc_plan['stop_loss']
-                    tp_price = recalc_plan['take_profit']
-                elif self.last_trade_plan:
-                    sl_price = self.last_trade_plan['stop_loss']
-                    tp_price = self.last_trade_plan['take_profit']
-            # else: sl_price, tp_price already set above from calculate_sl_tp
+
 
             try:
                 prec = self.exchange.price_to_precision(symbol, sl_price)
@@ -499,7 +502,7 @@ class TraderExecutor:
                     'probs_str': probs_str,
                     'timestamp': time.time() * 1000,
                     'atr_value': atr_value,
-                    'risk_usdt': risk_usdt,
+                    'risk_usdt': (actual_position_amount * abs(float(actual_price if 'entry_p' not in locals() else entry_p) - float(sl_price))) if actual_position_amount else risk_usdt_actual,
                     'position_notional': volume_usdt,
                     'leverage': actual_leverage,
                     'status': 'UNKNOWN',
@@ -649,7 +652,7 @@ class TraderExecutor:
                 'probs_str': probs_str,
                 'timestamp': time.time() * 1000,
                 'atr_value': atr_value,
-                'risk_usdt': risk_usdt,
+                'risk_usdt': (actual_position_amount * abs(float(actual_price if 'entry_p' not in locals() else entry_p) - float(sl_price))) if actual_position_amount else risk_usdt_actual,
                 'position_notional': actual_position_amount * entry_p,
                 'leverage': actual_leverage,
                 'status': 'OPEN',
@@ -1018,6 +1021,9 @@ class TraderExecutor:
                     
                     recent_closes = [t for t in (closed_trades or []) if t.get('side') == close_side and t.get('timestamp', 0) >= entry_ts]
                     
+                    # Include entry trades for fee calculation by expanding time window
+                    all_recent_trades = [t for t in (closed_trades or []) if t.get('timestamp', 0) >= entry_ts - 5000]
+                    
                     if recent_closes:
                         last_close = recent_closes[-1]
                         exit_price = float(last_close.get('price', 0.0))
@@ -1025,14 +1031,15 @@ class TraderExecutor:
                         
                         if last_order_id:
                             pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if t.get('order') == last_order_id)
-                            fees = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in recent_closes if t.get('order') == last_order_id)
                         else:
                             last_ts = last_close.get('timestamp', 0)
                             pnl = sum(float(t.get('info', {}).get('realizedPnl', 0)) for t in recent_closes if abs(t.get('timestamp', 0) - last_ts) < 10000)
-                            fees = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in recent_closes if abs(t.get('timestamp', 0) - last_ts) < 10000)
                             
                         if pnl == 0:
                             pnl = float(last_close.get('info', {}).get('realizedPnl', 0))
+                            
+                        # Fees: sum of ALL fees for this symbol since entry
+                        fees = sum(float(t.get('fee', {}).get('cost', 0)) if t.get('fee') else 0.0 for t in all_recent_trades)
                 except Exception as e:
                     self.logger.error(f"Ошибка fetch_my_trades для {symbol}: {e}")
 
