@@ -119,24 +119,36 @@ class StructureRiskEngine:
                     invalidation_level = best[0]
                     reason = best[1]
             
-            elif setup_type == 'RESISTANCE_REJECTION' or setup_type == 'TREND_PULLBACK':
+            elif setup_type in ('RESISTANCE_REJECTION', 'TREND_PULLBACK_DOWN'):
                 res = ctx.get('nearest_resistance')
                 swing_high = ctx.get('swing_high')
                 rej_high = ctx.get('rejection_high')
+                
                 levels = []
+                
                 if res is not None:
                     levels.append((res, "above_resistance"))
+                    
                     rel_swing = self._get_relevant_swing(res, swing_high, atr)
-                    if rel_swing and rel_swing > res:
+                    if rel_swing is not None and rel_swing > res:
                         levels.append((rel_swing, "above_relevant_swing_high"))
-                elif swing_high is not None:
+                        
+                if swing_high is not None and res is None:
                     levels.append((swing_high, "above_swing_high"))
-                
+                    
                 if rej_high is not None:
                     levels.append((rej_high, "above_rejection_high"))
                     
-                if levels:
-                    best = max(levels, key=lambda x: x[0])
+                valid_levels = [
+                    (level, reason)
+                    for level, reason in levels
+                    if level > entry
+                ]
+                
+                if valid_levels:
+                    # Для SHORT берём ближайшую валидную структурную инвалидацию
+                    # выше entry. Это не позволяет случайно растягивать риск.
+                    best = min(valid_levels, key=lambda x: x[0])
                     invalidation_level = best[0]
                     reason = best[1]
                     
@@ -168,6 +180,12 @@ class StructureRiskEngine:
                     reason = "fallback_atr"
 
             sl = invalidation_level + (atr * SL_ATR_BUFFER)
+
+            if sl <= entry:
+                return {
+                    "valid": False,
+                    "reason": "invalid_short_sl_geometry"
+                }
 
             if (sl - entry) < atr * MIN_SL_ATR:
                 swing_high = ctx.get('swing_high')
@@ -238,17 +256,26 @@ class StructureRiskEngine:
             "reason": reason
         }
 
-    def calculate_rr(self, direction: str, entry: float, stop_loss: float, target: float) -> float:
-        if direction == 'LONG':
+    def calculate_directional_rr(
+        self,
+        direction: str,
+        entry: float,
+        stop_loss: float,
+        target: float
+    ):
+        if direction == "LONG":
             risk = entry - stop_loss
             reward = target - entry
-        else:
+        elif direction == "SHORT":
             risk = stop_loss - entry
             reward = entry - target
-            
+        else:
+            return 0.0, 0.0, 0.0
+
         if risk <= 0 or reward <= 0:
-            return 0.0
-        return reward / risk
+            return risk, reward, 0.0
+
+        return risk, reward, reward / risk
 
     def build_trade_plan(self, direction: str, entry: float, setup_type: str, ctx: Dict[str, Any], atr: float, max_distance: Optional[float] = None) -> Dict[str, Any]:
         if not ctx:
@@ -259,7 +286,17 @@ class StructureRiskEngine:
             return {"valid": False, "reason": "sl_calc_failed"}
 
         sl = sl_info["stop_loss"]
-        risk_distance = abs(entry - sl)
+        
+        if direction == "LONG":
+            risk_distance = entry - sl
+        else:
+            risk_distance = sl - entry
+
+        if risk_distance <= 0:
+            return {
+                "valid": False,
+                "reason": "invalid_risk_geometry"
+            }
 
         if risk_distance < atr * MIN_SL_ATR:
             return {"valid": False, "reason": "sl_too_tight", "risk_distance": risk_distance}
@@ -278,16 +315,49 @@ class StructureRiskEngine:
         if not tp1:
             return {"valid": False, "reason": "tp_calc_failed"}
 
-        if direction == 'LONG':
-            if sl >= entry or tp1 <= entry:
-                return {"valid": False, "reason": "invalid_price_geometry"}
-        else:
-            if sl <= entry or tp1 >= entry:
-                return {"valid": False, "reason": "invalid_price_geometry"}
-                
-        rr = self.calculate_rr(direction, entry, sl, tp1)
+        risk_distance, reward_distance, rr = self.calculate_directional_rr(
+            direction=direction,
+            entry=entry,
+            stop_loss=sl,
+            target=tp1
+        )
+        
+        if risk_distance <= 0 or reward_distance <= 0:
+            return {
+                "valid": False,
+                "reason": "invalid_reward_geometry",
+                "risk_distance": risk_distance,
+                "reward_distance": reward_distance
+            }
+
+        _log.warning(
+            "[RISK DEBUG] "
+            f"setup={setup_type} "
+            f"direction={direction} "
+            f"entry={entry:.8f} "
+            f"sl={sl:.8f} "
+            f"tp={tp1:.8f} "
+            f"risk={risk_distance:.8f} "
+            f"reward={reward_distance:.8f} "
+            f"rr={rr:.4f} "
+            f"atr={atr:.8f} "
+            f"sl_reason={sl_info.get('reason')} "
+            f"tp_reason={tp_info.get('reason')} "
+            f"support={ctx.get('nearest_support')} "
+            f"resistance={ctx.get('nearest_resistance')} "
+            f"swing_high={ctx.get('swing_high')} "
+            f"swing_low={ctx.get('swing_low')} "
+            f"rejection_high={ctx.get('rejection_high')}"
+        )
+        
         if rr < MIN_RR:
-            return {"valid": False, "reason": f"rr_too_low_{rr:.2f}", "rr": rr}
+            return {
+                "valid": False,
+                "reason": f"rr_too_low_{rr:.2f}",
+                "rr": rr,
+                "risk_distance": risk_distance,
+                "reward_distance": reward_distance
+            }
 
         return {
             "valid": True,

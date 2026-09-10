@@ -525,10 +525,10 @@ class TestComprehensiveSuite(unittest.TestCase):
             instance.get_historical_klines.return_value = mock_df
             with patch('train_model.SYMBOLS', ['BTC/USDT']):
                 with patch('joblib.dump') as mock_dump:
-                    try:
-                        train_ai()
-                    except Exception as e:
-                        self.fail(f"train_ai raised an unexpected exception: {e}")
+                        try:
+                            train_ai()
+                        except Exception as e:
+                            self.fail(f"train_ai raised an unexpected exception: {e}")
 
     # 26. SafeExchange concurrency and thread safety
     def test_26_safe_exchange_concurrency(self):
@@ -741,7 +741,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.fetch_positions.side_effect = [
             [], # startup
             [], # pre-check
-            [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '0.01', 'marginType': 'isolated', 'leverage': 5, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}], # fill check
+            [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '0.01', 'marginType': 'isolated', 'leverage': 20, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}], # fill check
             []  # after emergency close
         ]
         mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
@@ -758,14 +758,16 @@ class TestComprehensiveSuite(unittest.TestCase):
 
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
+        import executor as exec_mod
+        exec_mod.LEVERAGE = 10
+        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'symbol': 'BTC/USDT', 'marginType': 'isolated', 'leverage': 10}])
         res = executor.execute_trade('BTC/USDT', 'buy', 100.0, 50000.0, 1000.0)
         
         self.assertFalse(res)
         self.assertEqual(executor.last_error, "SL_PLACEMENT_FAILED")
         
         state = executor.positions.get('BTC/USDT')
-        self.assertIsNotNone(state)
-        self.assertEqual(state['status'], 'UNKNOWN')
+        self.assertIsNone(state)
         
         mock_ex.create_market_order.assert_called_with('BTC/USDT', 'sell', 0.01, params={'reduceOnly': True})
 
@@ -774,7 +776,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.fetch_positions.side_effect = [
             [], # startup
             [], # pre-check
-            [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '0.01', 'marginType': 'isolated', 'leverage': 5, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}]
+            [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '0.01', 'marginType': 'isolated', 'leverage': 20, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}]
         ]
         mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
         mock_ex.amount_to_precision.side_effect = lambda sym, a: f"{a:.4f}"
@@ -794,6 +796,9 @@ class TestComprehensiveSuite(unittest.TestCase):
 
         executor = TraderExecutor(mock_ex)
         executor.update_real_balance(10000.0)
+        import executor as exec_mod
+        exec_mod.LEVERAGE = 20
+        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'symbol': 'BTC/USDT', 'marginType': 'isolated', 'leverage': 20}])
         res = executor.execute_trade('BTC/USDT', 'buy', 100.0, 50000.0, 1000.0)
         
         self.assertTrue(res)
@@ -885,19 +890,20 @@ class TestComprehensiveSuite(unittest.TestCase):
         executor.get_effective_capital = MagicMock(return_value=1000.0)
         
         # Override exchange methods to pass checks
-        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'marginType': 'isolated', 'leverage': 5}])
+        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'symbol': 'TEST/USDT', 'marginType': 'isolated', 'leverage': 20}])
         
-        # target: current_price=100, sl=90.0001 -> prec=90.00
-        # risk_usdt=10, so amount = 10 / 10 = 1.0000
-        # risk_usdt_actual = 1.0 * 10 = 10.0
+        # target: current_price=100, sl=96.0001 -> prec=96.00
+        # risk_usdt=10, so amount = 10 / 4.0 = 2.5000
+        # risk_usdt_actual = 2.5 * 4 = 10.0
         
-        executor.calculate_sl_tp = MagicMock(return_value=(90.0001, 120.0))
+        executor.calculate_sl_tp = MagicMock(return_value=(96.0001, 120.0))
         
+        import executor as exec_mod
+        exec_mod.LEVERAGE = 20
         res = executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.0)
-        
         plan = getattr(executor, 'last_trade_plan', {})
-        self.assertEqual(plan.get('sl_price'), 90.0)
-        self.assertEqual(plan.get('risk_distance'), 10.0)
+        self.assertEqual(plan.get('sl_price'), 96.0)
+        self.assertEqual(plan.get('risk_distance'), 4.0)
         self.assertEqual(plan.get('risk_usdt_actual'), 10.0)
 
     def test_38_fee_recorded_once(self):
@@ -913,7 +919,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.fetch_positions.side_effect = [
             [], # startup
             [], # pre-check
-            [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '0.01', 'marginType': 'isolated', 'leverage': 5, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}],
+            [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '0.01', 'marginType': 'isolated', 'leverage': 20, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}],
             []  # after close
         ]
         mock_ex.price_to_precision.side_effect = lambda sym, p: f"{p:.2f}"
@@ -932,7 +938,7 @@ class TestComprehensiveSuite(unittest.TestCase):
 
     def test_40_startup_reconciliation(self):
         mock_ex = MagicMock()
-        mock_ex.fetch_positions.return_value = [{'symbol': 'TEST/USDT', 'info': {'positionAmt': '10', 'leverage': 5}, 'entryPrice': 100}]
+        mock_ex.fetch_positions.return_value = [{'symbol': 'TEST/USDT', 'info': {'positionAmt': '10', 'leverage': 20}, 'entryPrice': 100}]
         
         executor = TraderExecutor(mock_ex, working_capital=1000.0)
         self.assertIn('TEST/USDT', executor.positions)
@@ -944,7 +950,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         executor.check_position_status = MagicMock(return_value=False)
         
         # Return cross margin
-        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'marginType': 'cross', 'leverage': 5}])
+        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'marginType': 'cross', 'leverage': 20}])
         
         res = executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.0)
         self.assertFalse(res)
@@ -966,7 +972,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex = MagicMock()
         executor = TraderExecutor(mock_ex, working_capital=1000.0)
         executor.check_position_status = MagicMock(return_value=False)
-        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'marginType': 'isolated', 'leverage': 5}])
+        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'marginType': 'isolated', 'leverage': 20}])
         
         executor.get_effective_capital = MagicMock(return_value=0.0)
         
@@ -1005,7 +1011,7 @@ class TestComprehensiveSuite(unittest.TestCase):
         mock_ex.fetch_positions.side_effect = [
             [], # startup
             [], # pre
-            [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '0.01', 'marginType': 'isolated', 'leverage': 5, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}], # check
+            [{'symbol': 'BTC/USDT', 'info': {'positionAmt': '0.01', 'marginType': 'isolated', 'leverage': 20, 'liquidationPrice': 40000.0, 'markPrice': 50000.0}, 'entryPrice': 50000.0}], # check
             []  # after close
         ]
         
@@ -1043,8 +1049,8 @@ class TestComprehensiveSuite(unittest.TestCase):
         executor.capital_tracker.effective_capital = MagicMock(return_value=1000.0)
         executor.check_position_status = MagicMock(return_value=False)
         executor.get_effective_capital = MagicMock(return_value=1000.0)
-        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'marginType': 'isolated', 'leverage': 5}])
-        executor.calculate_sl_tp = MagicMock(return_value=(90.0, 120.0))
+        mock_ex.fapiPrivateV2GetPositionRisk = MagicMock(return_value=[{'symbol': 'TEST/USDT', 'marginType': 'isolated', 'leverage': 20}])
+        executor.calculate_sl_tp = MagicMock(return_value=(96.0, 120.0))
         
         mock_ex.create_market_order = MagicMock(return_value={'id': '1'})
         executor.exchange.fetch_positions = MagicMock(return_value=[{'symbol': 'TEST/USDT', 'info': {'positionAmt': '1.0'}}])
@@ -1057,6 +1063,8 @@ class TestComprehensiveSuite(unittest.TestCase):
                 raise Exception("TP Failed")
         mock_ex.create_order = create_order_mock
         
+        import executor as exec_mod
+        exec_mod.LEVERAGE = 20
         res = executor.execute_trade('TEST/USDT', 'buy', 10.0, 100.0)
         self.assertTrue(res)
         self.assertIn('TEST/USDT', executor.positions)

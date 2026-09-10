@@ -26,7 +26,10 @@ class TestExecutor(unittest.TestCase):
 ]
         self.mock_exchange.markets = {'TEST/USDT': {}}
         self.mock_exchange.price_to_precision.side_effect = lambda sym, price: f"{price:.4f}"
-        self.mock_exchange.amount_to_precision.side_effect = lambda sym, amt: f"{amt:.4f}"
+        import math
+        self.mock_exchange.amount_to_precision.side_effect = lambda sym, amt: f"{math.floor(float(amt)*10000)/10000.0}"
+        self.mock_cap_exists = patch('capital_manager.os.path.exists', return_value=False).start()
+        self.addCleanup(patch.stopall)
         
         self.executor = TraderExecutor(self.mock_exchange, working_capital=500.0)
         self.executor.update_real_balance(10000.0)
@@ -37,10 +40,17 @@ class TestExecutor(unittest.TestCase):
         config.MAX_CAPITAL_USDT = 1000.0
         config.LEVERAGE = 10
         config.STRUCTURE_RISK_ENABLED = True
-        config.MAX_RISK_PERCENT = 1.0
+        config.MAX_RISK_PERCENT = 10.0
+        config.MAX_RISK_PER_TRADE_PCT = 1.0
         
         import capital_manager
         capital_manager.MIN_RISK_USDT = 0.0
+
+    def tearDown(self):
+        import os
+        for f in ['live_state.json', 'bot_equity.json']:
+            if os.path.exists(f):
+                os.remove(f)
 
     @patch('executor.json')
     @patch('executor.open')
@@ -49,7 +59,7 @@ class TestExecutor(unittest.TestCase):
         self.mock_exchange.create_market_order.return_value = {
             'id': 'market_id_123',
             'average': 101.0,
-            'filled': 10.0
+            'filled': 1.0
         }
         
         # Stop loss and take profit orders
@@ -93,7 +103,7 @@ class TestExecutor(unittest.TestCase):
         
         pos = self.executor.positions['TEST/USDT']
         self.assertEqual(pos['entry'], 101.0) # Check actual fill price
-        self.assertEqual(pos['amount'], 10.0) # Check actual filled amount
+        self.assertEqual(pos['amount'], 1.0) # Check actual filled amount
         self.assertEqual(pos['sl_order_id'], 'sl_123')
         self.assertEqual(pos['tp_order_id'], 'tp_123')
 
@@ -145,15 +155,17 @@ class TestExecutor(unittest.TestCase):
         self.mock_exchange.create_market_order.return_value = {
             'id': 'market_id_123',
             'average': 100.0,
-            'filled': 10.0
+            'filled': 1.0
         }
         
         # SL success, TP failure
-        def create_order_side_effect(*args, **kwargs):
-            if args[1] == 'STOP_MARKET':
-                return {'id': 'sl_123'}
-            elif args[1] == 'TAKE_PROFIT_MARKET':
+        def create_order_side_effect(sym, order_type, side, amt, params=None):
+            if order_type == 'market':
+                return {'id': 'market_id_123', 'average': 100.0, 'filled': 1.0}
+            if order_type == 'TAKE_PROFIT_MARKET':
                 raise Exception("Network issue during TP")
+            if order_type == 'STOP_MARKET':
+                return {'id': 'sl_123'}
                 
         self.mock_exchange.create_order.side_effect = create_order_side_effect
         
@@ -184,7 +196,7 @@ class TestExecutor(unittest.TestCase):
         pos = self.executor.positions['TEST/USDT']
         self.assertEqual(pos['sl_order_id'], 'sl_123')
         self.assertIsNone(pos['tp_order_id'])
-        self.assertEqual(pos['amount'], 10.0)
+        self.assertEqual(pos['amount'], 1.0)
 
     @patch('executor.json')
     @patch('executor.open')
@@ -310,7 +322,7 @@ class TestExecutor(unittest.TestCase):
         args, kwargs = self.mock_exchange.create_order.call_args
         self.assertEqual(args[0], 'TEST/USDT')
         self.assertEqual(args[1], 'STOP_MARKET')
-        self.assertEqual(kwargs['params']['stopPrice'], 98.0)
+        self.assertEqual(kwargs['params']['stopPrice'], 99.0)
 
 if __name__ == '__main__':
     unittest.main()

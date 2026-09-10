@@ -2,6 +2,7 @@ LOG_ENTRY_GATE = True
 import pandas as pd
 import threading
 from config import MIN_SR_DISTANCE_PCT, MIN_SETUP_SCORE, logger
+from diagnostic_tracker import diagnostic_tracker
 
 # Global entry statistics & Real-time Signal Funnel
 last_logged_reject = {}
@@ -42,12 +43,58 @@ entry_funnel = {
     'ORDER_FAIL': 0
 }
 
+entry_funnel_by_setup = {}
+entry_reject_by_reason = {}
+
+def record_entry_result(setup, direction, passed, reason=None):
+    key = f"{setup}:{direction}"
+
+    with stats_lock:
+        item = entry_funnel_by_setup.setdefault(
+            key,
+            {
+                "candidates": 0,
+                "passed": 0,
+                "rejected": {}
+            }
+        )
+
+        item["candidates"] += 1
+
+        if passed:
+            item["passed"] += 1
+        else:
+            item["rejected"][reason or "UNKNOWN"] = (
+                item["rejected"].get(reason or "UNKNOWN", 0) + 1
+            )
+            entry_reject_by_reason[reason or "UNKNOWN"] = (
+                entry_reject_by_reason.get(reason or "UNKNOWN", 0) + 1
+            )
+
+def get_detailed_funnel():
+    with stats_lock:
+        return {
+            "global": dict(entry_funnel),
+            "by_setup": {
+                k: {
+                    "candidates": v["candidates"],
+                    "passed": v["passed"],
+                    "rejected": dict(v["rejected"])
+                }
+                for k, v in entry_funnel_by_setup.items()
+            },
+            "reject_reasons": dict(entry_reject_by_reason)
+        }
+
 def record_funnel_event(event_name: str, count: int = 1):
     with stats_lock:
         if event_name in entry_funnel:
             entry_funnel[event_name] += count
 
 def get_funnel_summary() -> dict:
+    from diagnostic_tracker import get_signal_funnel_report
+    # Return both the old dict and we can print the new report
+    print(get_signal_funnel_report())
     with stats_lock:
         return dict(entry_funnel)
 
@@ -62,7 +109,10 @@ class EntryGate:
         if eng_sig == 0 or eng_setup == "None":
             return False, "NO_SIGNAL"
             
+        direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
+            
         if is_live:
+            diagnostic_tracker.record_ta_signal(symbol, direction_str)
             with stats_lock:
                 entry_stats['TA_CANDIDATES'] += 1
                 entry_funnel['SIGNAL_FOUND'] += 1
@@ -84,47 +134,25 @@ class EntryGate:
         
         if eng_sig == 1.0: # LONG
             if eng_setup == "BREAKOUT_RETEST":
-                if ctx.get('broken_level') is None:
-                    reject_reason = "NO_BROKEN_LEVEL"
-                elif not ctx.get('rejection_low'):
-                    reject_reason = "NO_BULLISH_CONFIRMATION"
-                elif is_bearish_struct:
-                    reject_reason = "BEARISH_STRUCTURE"
-                elif global_trend not in ['BULL', 'STRONG_BULL']:
+                if global_trend not in ['BULL', 'STRONG_BULL']:
                     reject_reason = "BAD_GLOBAL_TREND"
-                elif row.get('close', 0) <= row.get('open', 0):
-                    reject_reason = "RED_CANDLE_CLOSE"
                 else:
                     mandatory_pass = True
                     
             elif eng_setup == "LIQUIDITY_SWEEP_LONG":
-                if not ctx.get('sweep_low'):
-                    reject_reason = "NO_REAL_SWEEP"
-                elif not ctx.get('rejection_low'):
-                    reject_reason = "NO_BULLISH_CONFIRMATION"
-                elif is_bearish_struct:
-                    reject_reason = "BEARISH_STRUCTURE"
-                elif global_trend not in ['BULL', 'STRONG_BULL']:
+                if global_trend not in ['BULL', 'STRONG_BULL']:
                     reject_reason = "BAD_GLOBAL_TREND"
                 else:
                     mandatory_pass = True
                     
             elif eng_setup == "TREND_PULLBACK":
-                if not is_bullish_struct:
-                    reject_reason = "NO_BULLISH_STRUCTURE"
-                elif not ctx.get('rejection_low'):
-                    reject_reason = "NO_BULLISH_CONFIRMATION"
-                elif global_trend not in ['BULL', 'STRONG_BULL']:
+                if global_trend not in ['BULL', 'STRONG_BULL']:
                     reject_reason = "BAD_GLOBAL_TREND"
                 else:
                     mandatory_pass = True
                     
             elif eng_setup in ["RANGE_BOUNCE", "SUPPORT_BOUNCE"]:
-                if not ctx.get('rejection_low'):
-                    reject_reason = "NO_BULLISH_CONFIRMATION"
-                elif is_bullish_struct or is_bearish_struct:
-                    reject_reason = "NOT_IN_RANGE_STRUCTURE"
-                elif global_trend != "RANGE":
+                if global_trend == "STRONG_BEAR":
                     reject_reason = "BAD_GLOBAL_TREND"
                 else:
                     mandatory_pass = True
@@ -144,47 +172,25 @@ class EntryGate:
 
         elif eng_sig == -1.0: # SHORT
             if eng_setup == "BREAKDOWN_RETEST":
-                if ctx.get('broken_level') is None:
-                    reject_reason = "NO_BROKEN_LEVEL"
-                elif not ctx.get('rejection_high'):
-                    reject_reason = "NO_BEARISH_CONFIRMATION"
-                elif is_bullish_struct:
-                    reject_reason = "BULLISH_STRUCTURE"
-                elif global_trend not in ['BEAR', 'STRONG_BEAR']:
+                if global_trend not in ['BEAR', 'STRONG_BEAR']:
                     reject_reason = "BAD_GLOBAL_TREND"
-                elif row.get('close', 0) >= row.get('open', 0):
-                    reject_reason = "GREEN_CANDLE_CLOSE"
                 else:
                     mandatory_pass = True
                     
             elif eng_setup == "LIQUIDITY_SWEEP_SHORT":
-                if not ctx.get('sweep_high'):
-                    reject_reason = "NO_REAL_SWEEP"
-                elif not ctx.get('rejection_high'):
-                    reject_reason = "NO_BEARISH_CONFIRMATION"
-                elif is_bullish_struct:
-                    reject_reason = "BULLISH_STRUCTURE"
-                elif global_trend not in ['BEAR', 'STRONG_BEAR']:
+                if global_trend not in ['BEAR', 'STRONG_BEAR']:
                     reject_reason = "BAD_GLOBAL_TREND"
                 else:
                     mandatory_pass = True
                     
             elif eng_setup == "TREND_PULLBACK_DOWN":
-                if not is_bearish_struct:
-                    reject_reason = "NO_BEARISH_STRUCTURE"
-                elif not ctx.get('rejection_high'):
-                    reject_reason = "NO_BEARISH_CONFIRMATION"
-                elif global_trend not in ['BEAR', 'STRONG_BEAR']:
+                if global_trend not in ['BEAR', 'STRONG_BEAR']:
                     reject_reason = "BAD_GLOBAL_TREND"
                 else:
                     mandatory_pass = True
                     
             elif eng_setup in ["RANGE_REJECTION", "RESISTANCE_REJECTION"]:
-                if not ctx.get('rejection_high'):
-                    reject_reason = "NO_BEARISH_CONFIRMATION"
-                elif is_bullish_struct or is_bearish_struct:
-                    reject_reason = "NOT_IN_RANGE_STRUCTURE"
-                elif global_trend != "RANGE":
+                if global_trend == "STRONG_BULL":
                     reject_reason = "BAD_GLOBAL_TREND"
                 else:
                     mandatory_pass = True
@@ -204,6 +210,16 @@ class EntryGate:
 
         if not mandatory_pass:
             if is_live:
+                if "GLOBAL_TREND" in reject_reason:
+                    diagnostic_tracker.record_reject(symbol, 'GLOBAL_TREND', reject_reason)
+                elif "STRUCTURE" in reject_reason:
+                    diagnostic_tracker.record_pass(symbol, 'GLOBAL_TREND')
+                    diagnostic_tracker.record_reject(symbol, 'MARKET_STRUCTURE', reject_reason)
+                else:
+                    diagnostic_tracker.record_pass(symbol, 'GLOBAL_TREND')
+                    diagnostic_tracker.record_pass(symbol, 'MARKET_STRUCTURE')
+                    diagnostic_tracker.record_reject(symbol, 'ENTRY_GATE', reject_reason)
+
                 with stats_lock:
                     entry_funnel['ENTRY_GATE_FAIL'] += 1
                     if "GLOBAL_TREND" in reject_reason:
@@ -231,20 +247,23 @@ class EntryGate:
                         entry_stats['REJECT_NOT_IN_RANGE'] += 1
                     else:
                         entry_stats['REJECT_UNKNOWN_SETUP'] += 1
-            
-            direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
+                
+                record_entry_result(eng_setup, direction_str, False, reject_reason)
             
             if LOG_ENTRY_GATE and do_log:
                 logger.info(f"[X] {symbol} - 1-й слой: НЕТ ({reject_reason})")
             return False, reject_reason
             
         if is_live:
+            diagnostic_tracker.record_pass(symbol, 'GLOBAL_TREND')
+            diagnostic_tracker.record_pass(symbol, 'MARKET_STRUCTURE')
+            diagnostic_tracker.record_pass(symbol, 'ENTRY_GATE')
             with stats_lock:
                 entry_stats['ENTRY_GATE_PASS'] += 1
-                entry_funnel['GLOBAL_TREND_PASS'] += 1
-                entry_funnel['STRUCTURE_PASS'] += 1
-                entry_funnel['CONFIRMATION_PASS'] += 1
                 entry_funnel['ENTRY_GATE_PASS'] += 1
-        direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
+                
+            record_entry_result(eng_setup, direction_str, True)
+                
         # Успешный проход 1-го слоя будет залогирован в main.py
         return True, "PASS"
+

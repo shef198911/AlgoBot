@@ -398,9 +398,18 @@ class MarketStructureEngine:
                         protected_high = sh1
                         protected_low = sl1
                     else:
-                        current_structure = "RANGE"
-                        protected_high = max(sh1, sh2)
-                        protected_low = min(sl1, sl2)
+                        if current_structure not in ("BULLISH", "BEARISH"):
+                            current_structure = "RANGE"
+                        
+                        if current_structure == "BULLISH":
+                            protected_high = max(sh1, sh2)
+                            protected_low = min(sl1, sl2)
+                        elif current_structure == "BEARISH":
+                            protected_high = max(sh1, sh2)
+                            protected_low = min(sl1, sl2)
+                        else:
+                            protected_high = max(sh1, sh2)
+                            protected_low = min(sl1, sl2)
 
             # Обновление реакций зон (bounce magnitude)
             for z in active_support_zones:

@@ -108,7 +108,8 @@ class CapitalTracker:
         try:
             with open(self.state_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            self._trading_capital = float(data.get('trading_capital', self._trading_capital))
+            stored_capital = float(data.get('trading_capital', self._trading_capital))
+            self._trading_capital = min(stored_capital, float(MAX_CAPITAL_USDT))
             self._realized_pnl = float(data.get('realized_pnl', 0.0))
             self._total_fees = float(data.get('total_fees', 0.0))
             self.processed_events = set(data.get('processed_events', []))

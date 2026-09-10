@@ -19,6 +19,7 @@ from analytics import analytics_manager
 from telegram_notifier import TelegramNotifier
 from entry_gate import record_funnel_event
 from data_fetcher import SafeExchange
+from diagnostic_tracker import diagnostic_tracker
 
 tg_notifier = TelegramNotifier()
 
@@ -197,6 +198,19 @@ class TraderExecutor:
                     
                 if lev:
                     actual_leverage = int(lev)
+                    if actual_leverage != LEVERAGE:
+                        err = f"Leverage mismatch for {symbol}: config={LEVERAGE}, actual={actual_leverage}"
+                        self.logger.error(err)
+                        self.last_error = err
+                        with self.capital_lock:
+                            self.pending_margins.pop(symbol, None)
+                        diagnostic_tracker.record_reject(symbol, 'LEVERAGE', err)
+                        record_funnel_event('RISK_FAIL')
+                        try:
+                            self.exchange.cancel_all_orders(symbol)
+                        except:
+                            pass
+                        return False
                 else:
                     raise Exception(f"Leverage not confirmed for {symbol}")
 
@@ -204,9 +218,18 @@ class TraderExecutor:
                 err = f"Failed to verify margin mode/leverage for {symbol}: {e}"
                 self.logger.error(err)
                 self.last_error = err
+                with self.capital_lock:
+                    self.pending_margins.pop(symbol, None)
+                diagnostic_tracker.record_reject(symbol, 'LEVERAGE', err)
+                record_funnel_event('RISK_FAIL')
+                try:
+                    self.exchange.cancel_all_orders(symbol)
+                except:
+                    pass
                 return False
 
             direction_str = 'LONG' if side in ['buy', 'long'] else 'SHORT'
+            diagnostic_tracker.record_pass(symbol, 'LEVERAGE')
 
             # 1. Effective Capital
             effective_cap = self.get_effective_capital()
@@ -214,7 +237,9 @@ class TraderExecutor:
                 err = f"effective_capital <= 0. FAIL CLOSED. No new entry for {symbol}."
                 self.logger.error(err)
                 self.last_error = err
+                diagnostic_tracker.record_reject(symbol, 'CAPITAL', err)
                 return False
+            diagnostic_tracker.record_pass(symbol, 'CAPITAL')
 
             # 2. FINAL SL/TP Calculation
             if STRUCTURE_RISK_ENABLED and setup_type and engine_context:
@@ -232,6 +257,7 @@ class TraderExecutor:
                 if not trade_plan.get('valid'):
                     record_funnel_event('RISK_FAIL')
                     self.last_error = trade_plan.get('reason')
+                    diagnostic_tracker.record_reject(symbol, 'RISK', self.last_error)
                     return False
 
                 sl_price = float(trade_plan['stop_loss'])
@@ -255,6 +281,7 @@ class TraderExecutor:
                 self.logger.error(err)
                 self.last_error = err
                 record_funnel_event('RISK_FAIL')
+                diagnostic_tracker.record_reject(symbol, 'RISK', err)
                 return False
 
             # 4. FINAL RISK DISTANCE
@@ -264,6 +291,7 @@ class TraderExecutor:
                 self.logger.error(err)
                 self.last_error = err
                 record_funnel_event('RISK_FAIL')
+                diagnostic_tracker.record_reject(symbol, 'RISK', err)
                 return False
 
             # 5. FINAL POSITION SIZE
@@ -284,6 +312,7 @@ class TraderExecutor:
                 err = f"Сделка {symbol} отклонена: недостаточно маржи ({size_plan.get('reason')})"
                 self.logger.warning(err)
                 self.last_error = err
+                diagnostic_tracker.record_reject(symbol, 'MARGIN', err)
                 return False
 
             amount_coin = float(size_plan['amount_coin'])
@@ -297,6 +326,7 @@ class TraderExecutor:
                 with self.capital_lock:
                     self.pending_margins.pop(symbol, None)
                 record_funnel_event('RISK_FAIL')
+                diagnostic_tracker.record_reject(symbol, 'RISK', err)
                 return False
 
             # 7. RISK LIMIT
@@ -311,6 +341,7 @@ class TraderExecutor:
                 with self.capital_lock:
                     self.pending_margins.pop(symbol, None)
                 record_funnel_event('RISK_FAIL')
+                diagnostic_tracker.record_reject(symbol, 'RISK', err)
                 return False
 
             # 8. ACTUAL NOTIONAL & MARGIN
@@ -326,13 +357,17 @@ class TraderExecutor:
                 err = f"actual_margin {actual_margin} > max_position_margin {max_position_margin}"
                 self.logger.error(err)
                 self.last_error = err
+                diagnostic_tracker.record_reject(symbol, 'MARGIN', err)
                 return False
                 
             if current_allocated_margin + actual_margin > max_total_margin + 1e-8:
                 err = f"total margin limit exceeded"
                 self.logger.error(err)
                 self.last_error = err
+                diagnostic_tracker.record_reject(symbol, 'MARGIN', err)
                 return False
+
+            diagnostic_tracker.record_pass(symbol, 'MARGIN')
 
             # 10. FINAL PORTFOLIO RISK
             current_portfolio_risk = get_portfolio_risk_usdt(self.positions)
@@ -344,6 +379,7 @@ class TraderExecutor:
                 err = f"Portfolio risk {projected_portfolio_risk} > limit {max_portfolio_risk}"
                 self.logger.error(err)
                 self.last_error = err
+                diagnostic_tracker.record_reject(symbol, 'RISK', err)
                 return False
 
             # 11. FINAL RR
@@ -360,7 +396,10 @@ class TraderExecutor:
                 err = f"actual_rr {actual_rr} < {MIN_RR}"
                 self.logger.error(err)
                 self.last_error = err
+                diagnostic_tracker.record_reject(symbol, 'RISK', err)
                 return False
+            
+            diagnostic_tracker.record_pass(symbol, 'RISK')
 
             # 12. PRE-TRADE LIQUIDATION CHECK
             liq_safety = check_liquidation_safety(
@@ -370,7 +409,10 @@ class TraderExecutor:
                 err = f"LIQUIDATION BEFORE SL"
                 self.logger.error(err)
                 self.last_error = err
+                diagnostic_tracker.record_reject(symbol, 'LIQUIDATION', err)
                 return False
+            
+            diagnostic_tracker.record_pass(symbol, 'LIQUIDATION')
 
             # 13. ОДИН FINAL PLAN
             final_trade_plan = {
@@ -675,24 +717,24 @@ class TraderExecutor:
 
         # If emergency close cannot be confirmed, preserve
         # an UNKNOWN state instead of pretending the position
-        # is closed.
-        with self.state_lock:
-            self.positions[symbol] = {
-                'side': actual_side,
-                'amount': float(actual_position_amount),
-                'status': 'UNKNOWN',
-                'sl_order_id': sl_order_id if sl_verified else None,
-                'tp_order_id': None,
-                'entry_order_id': None,
-                'risk_usdt_requested': 0.0,
-                'risk_usdt_actual': None,
-                'margin_required': 0.0,
-                'empty_checks': 0,
-                'tp_retries': 0,
-                'protection_verified': bool(sl_verified)
-            }
-
-        self._save_live_state()
+        # is fully closed.
+        if not close_result:
+            with self.state_lock:
+                self.positions[symbol] = {
+                    'side': actual_side,
+                    'amount': float(actual_position_amount),
+                    'status': 'UNKNOWN',
+                    'sl_order_id': sl_order_id if sl_verified else None,
+                    'tp_order_id': None,
+                    'entry_order_id': None,
+                    'risk_usdt_requested': 0.0,
+                    'risk_usdt_actual': None,
+                    'margin_required': 0.0,
+                    'empty_checks': 0,
+                    'tp_retries': 0,
+                    'protection_verified': bool(sl_verified)
+                }
+            self._save_live_state()
 
     def _save_live_state(self):
         with self.state_lock:

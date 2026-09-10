@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV, TimeSe
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, average_precision_score
 import os
 import joblib
-from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON, TRADING_MODE, DATASET_TARGET_BARS
+from config import logger, SYMBOLS, TIMEFRAME, MODEL_FILE, STOP_LOSS_PCT, TAKE_PROFIT_PCT, FEATURE_COLUMNS, ML_HORIZON, TRADING_MODE, DATASET_TARGET_BARS, ML_PROBABILITY_THRESHOLD
 from data_fetcher import DataFetcher
 from strategy_ta import TAStrategy
 import entry_gate
@@ -169,6 +169,11 @@ def train_ai():
     
     pos_count = sum(y_train == 1)
     neg_count = sum(y_train == 0)
+    
+    if pos_count == 0 or neg_count == 0:
+        logger.warning("Обучение невозможно: присутствует только 1 класс в y_train (все победы или все поражения).")
+        return
+        
     scale_pos = neg_count / pos_count if pos_count > 0 else 1.0
     
     # AutoML: RandomizedSearchCV для XGBoost
@@ -333,7 +338,7 @@ def train_ai():
     model_data = {
         'ensemble': ensemble,
         'regressor': regressor,
-        'threshold': best_thresh
+        'threshold': ML_PROBABILITY_THRESHOLD
     }
     
     joblib.dump(model_data, MODEL_FILE)

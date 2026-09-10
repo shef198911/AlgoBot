@@ -49,30 +49,21 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         setup_name = current_state.get('ta_setup', 'Сигнал')
         
         # Signal State Machine (Requirement 6)
-        sig_key = f"{symbol}_{current_time}_{side_str}_{setup_name}"
+        sig_key = (
+            current_state.get("timestamp"),
+            symbol,
+            side_str,
+            setup_name
+        )
         with signal_tracker_lock:
-            state_info = signal_states.get(sig_key)
-            if state_info:
-                st = state_info.get('status')
-                if st == 'EXECUTED':
-                    return
-                elif st == 'ML_REJECTED':
-                    return
-                elif st == 'UNKNOWN':
-                    return
-                elif st == 'EXECUTION_REJECTED':
-                    return
-                elif st == 'EXECUTION_FAILED':
-                    # Retry allowed only if attempts < 3 and candle is still active
-                    if state_info.get('attempts', 0) >= 3:
-                        return
-                    state_info['attempts'] += 1
-            else:
-                signal_states[sig_key] = {'status': 'CANDIDATE', 'candle_time': current_time, 'attempts': 1}
-                if len(signal_states) > 1000:
-                    first_key = next(iter(signal_states))
-                    del signal_states[first_key]
-                last_processed_candle[symbol] = current_time
+            if sig_key in signal_states:
+                return
+                
+            signal_states[sig_key] = {'status': 'CANDIDATE', 'candle_time': current_time, 'attempts': 1}
+            if len(signal_states) > 1000:
+                first_key = next(iter(signal_states))
+                del signal_states[first_key]
+            last_processed_candle[symbol] = current_time
 
         current_price = float(current_state.get('close', 0.0))
         atr_value = float(current_state.get('ATRr', 0.0))
@@ -86,6 +77,8 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
 
         # Шаг 4: Бот №2 (ИИ) фильтрует сигнал
         is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
+        from diagnostic_tracker import diagnostic_tracker
+        diagnostic_tracker.record_ml_prediction(symbol, side_str, is_approved, ai_confidence)
         
         if not is_approved:
             with signal_tracker_lock:
@@ -184,6 +177,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
                     signal_states[sig_key]['status'] = 'EXECUTION_FAILED'
 
         if success:
+            diagnostic_tracker.record_pass(symbol, 'FINAL')
             record_funnel_event('ORDER_SUCCESS')
             pos = executor.positions.get(symbol, {})
             sl = pos.get('sl_price', 0)
