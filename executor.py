@@ -908,6 +908,19 @@ class TraderExecutor:
                 with self.state_lock:
                     if symbol in self.positions:
                         pos_data = self.positions[symbol]
+                        
+                        # 1. Ghost State Check:
+                        # If there is no entry_order_id, and no actual exchange position, 
+                        # we assume this is a stale local artifact.
+                        if not pos_data.get('entry_order_id'):
+                            self.logger.warning(f"Ghost local state detected for {symbol} (no entry_order_id and no exchange position). Removing safely.")
+                            del self.positions[symbol]
+                            self._save_live_state()
+                            with self.capital_lock:
+                                if symbol in self.pending_margins:
+                                    del self.pending_margins[symbol]
+                            return False
+
                         empty_checks = pos_data.get('empty_checks', 0)
                         if empty_checks < 2:
                             pos_data['empty_checks'] = empty_checks + 1
@@ -1037,16 +1050,30 @@ class TraderExecutor:
                         else:
                             # We do not know the PnL.
                             # Do NOT invent zero.
-                            self.logger.critical(
-                                f"Cannot determine PnL for closed position "
-                                f"{symbol}. Keeping state for reconciliation."
-                            )
-                            return "UNKNOWN"
-                        
-                    event_id = f"close:{symbol}:{pos_data.get('entry_order_id', time.time())}"
-                    
-                    self.capital_tracker.record_close(pnl, fees, event_id=event_id, is_estimated=is_estimated)
-                    
+                            reconciliation_retries = pos_data.get('reconciliation_retries', 0)
+                            if reconciliation_retries < 3:
+                                with self.state_lock:
+                                    if symbol in self.positions:
+                                        self.positions[symbol]['reconciliation_retries'] = reconciliation_retries + 1
+                                self.logger.critical(
+                                    f"Cannot determine PnL for closed position "
+                                    f"{symbol}. Keeping state for reconciliation ({reconciliation_retries + 1}/3)."
+                                )
+                                self._save_live_state()
+                                return "UNKNOWN"
+                            else:
+                                self.logger.critical(
+                                    f"Cannot determine PnL for closed position {symbol}. "
+                                    f"Max retries reached. Removing local state to prevent infinite loops."
+                                )
+                                pnl = None
+
+                    if pnl is not None:
+                        event_id = f"close:{symbol}:{pos_data.get('entry_order_id', time.time())}"
+                        self.capital_tracker.record_close(pnl, fees, event_id=event_id, is_estimated=is_estimated)
+                        self.logger.info(f"Position closed. PnL {pnl:.2f}, fees {fees:.2f}")
+
+                    # Always remove local state after successful or exhausted reconciliation
                     with self.state_lock:
                         if symbol in self.positions:
                             del self.positions[symbol]
@@ -1055,7 +1082,6 @@ class TraderExecutor:
                         if symbol in self.pending_margins:
                             del self.pending_margins[symbol]
                             
-                    self.logger.info(f"Position closed. PnL {pnl:.2f}, fees {fees:.2f}")
                     return False
 
         except Exception as e:

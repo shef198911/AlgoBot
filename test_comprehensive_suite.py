@@ -665,7 +665,8 @@ class TestComprehensiveSuite(unittest.TestCase):
             'amount': None,
             'risk_usdt_actual': 100.0,
             'status': 'UNKNOWN',
-            'empty_checks': 0
+            'empty_checks': 0,
+            'entry_order_id': 'test_entry_id'
         }
         
         # Check 1: empty snapshot -> stays UNKNOWN
