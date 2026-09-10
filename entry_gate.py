@@ -1,6 +1,7 @@
 LOG_ENTRY_GATE = True
 import pandas as pd
 import threading
+import time
 from config import MIN_SR_DISTANCE_PCT, MIN_SETUP_SCORE, logger
 from diagnostic_tracker import diagnostic_tracker
 
@@ -112,7 +113,8 @@ class EntryGate:
         direction_str = "LONG" if eng_sig == 1.0 else "SHORT"
             
         if is_live:
-            diagnostic_tracker.record_ta_signal(symbol, direction_str)
+            current_time = row.get('timestamp') or time.time()
+            diagnostic_tracker.record_ta_signal(symbol, direction_str, timestamp=current_time, setup=eng_setup)
             with stats_lock:
                 entry_stats['TA_CANDIDATES'] += 1
                 entry_funnel['SIGNAL_FOUND'] += 1

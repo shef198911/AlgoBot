@@ -72,7 +72,8 @@ def run_72h_audit():
             executor.positions.pop(symbol, None)
             
     print("\n" + "="*50)
-    print("FINAL DIAGNOSTIC REPORT (LAST 72H SIMULATION)")
+    print("FINAL DIAGNOSTIC REPORT (LAST 72H SIMULATION - FULL PIPELINE W/ MOCK EXCHANGE)")
+    print("Stages simulated: TA -> Entry Gate -> ML -> Risk -> Capital -> Margin -> Execution (Mocked)")
     print("="*50)
     print(get_signal_funnel_report())
 

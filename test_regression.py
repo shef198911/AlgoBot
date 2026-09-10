@@ -1,5 +1,6 @@
 import unittest
 import pandas as pd
+import numpy as np
 from unittest.mock import patch
 import config
 
@@ -163,13 +164,69 @@ class TestRegression(unittest.TestCase):
 
     # 14. модель threshold сохраняет актуальный config threshold
     @patch('train_model.joblib.dump')
-    def test_train_model_saves_threshold(self, mock_dump):
-        # We'll just verify that the dict dumped contains the ML_PROBABILITY_THRESHOLD
+    @patch('train_model.VotingClassifier')
+    @patch('train_model.RandomForestRegressor')
+    @patch('train_model.DataFetcher')
+    @patch('train_model.TAStrategy')
+    @patch('train_model.entry_gate.EntryGate')
+    def test_train_model_saves_threshold(self, mock_entry, mock_ta, mock_df, mock_rf, mock_vc, mock_dump):
+        # Create a tiny mock dataframe
+        df = pd.DataFrame({
+            'timestamp': range(20),
+            'open': [10]*20,
+            'high': [12]*20,
+            'low': [8]*20,
+            'close': [11]*20,
+            'volume': [100]*20,
+            'engine_signal': [1.0 if i%2==0 else -1.0 for i in range(20)],
+            'ta_signal': [1.0 if i%2==0 else -1.0 for i in range(20)],
+            'engine_setup': ['TREND_PULLBACK']*20,
+            'ta_setup': ['TREND_PULLBACK']*20,
+            'engine_context': [{} for _ in range(20)],
+            'trade_rr': [2.0 for _ in range(20)],
+            'risk_dist': [0.02 for _ in range(20)],
+            'SETUP_SCORE': [60]*20,
+            'ATRr': [0.5]*20,
+            'trend_1h': ['BULL']*20,
+        })
+        for c in config.FEATURE_COLUMNS:
+            if c not in df.columns:
+                df[c] = 0.0
+                
+        # Mock fetcher
+        mock_fetcher = mock_df.return_value
+        mock_fetcher.get_historical_klines.return_value = df
+        
+        # Mock TA strategy to return exactly what we want in combined_trades
+        mock_ta_inst = mock_ta.return_value
+        df_analyzed = df.copy()
+        df_analyzed['is_success'] = [1 if i%2==0 else 0 for i in range(20)]
+        df_analyzed['max_excursion'] = [0.05]*20
+        mock_ta_inst.generate_features_and_signals.return_value = df_analyzed
+        
+        # Mock the structural labeling loop inside train_model to NOT overwrite our is_success
+        # Actually, it's easier to mock the ensemble to return specific probabilities
+        mock_ensemble = mock_vc.return_value
+        mock_ensemble.predict_proba.side_effect = lambda X: np.array([[0.1, 0.9] if i%2==0 else [0.9, 0.1] for i in range(len(X))])
+        
+        # Mock the dataset size checks by patching len() or just returning a large combined df
+        # Wait, if we patch DataFetcher, train_ai will iterate SYMBOLS and concat. 25 * 20 = 500 rows.
+        # Still less than 1000. Let's mock the SYMBOLS list just for this test, or we can mock pd.concat!
+        
         import train_model
-        # We can't easily run train_ai() because it takes too long/requires data,
-        # but we can check if ML_PROBABILITY_THRESHOLD is in its namespace
-        self.assertTrue(hasattr(train_model, 'ML_PROBABILITY_THRESHOLD'))
-        self.assertEqual(train_model.ML_PROBABILITY_THRESHOLD, config.ML_PROBABILITY_THRESHOLD)
+        
+        large_df = pd.concat([df_analyzed]*100, ignore_index=True)
+        large_df['is_success'] = [1 if i%2==0 else 0 for i in range(len(large_df))]
+        
+        with patch('train_model.pd.concat', return_value=large_df):
+            train_model.train_ai()
+        
+        self.assertTrue(mock_dump.called)
+        args, kwargs = mock_dump.call_args
+        saved_model = args[0]
+        self.assertIn('threshold', saved_model)
+        # We expect 0.3 because best_thresh loop found 0.3 as the optimal threshold in our mock 
+        self.assertEqual(saved_model['threshold'], 0.3)
 
 if __name__ == '__main__':
     unittest.main()

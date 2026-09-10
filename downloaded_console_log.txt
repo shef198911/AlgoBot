@@ -1,600 +1,600 @@
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AAVE/USDT - 1-й слой: НЕТ (BULLISH_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] BNB/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] UNI/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] APT/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] BCH/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] ETH/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[V] SUI/USDT - 1-й слой: ДА (BREAKDOWN_RETEST, SELL) -> Передаю на 2-й слой
-Оценка моделей: XGB=0.04, RF=0.11, GB=0.08
-Оценка ИИ (Ансамбль): уверенность 0.08 (порог 0.50)
-[X] SUI/USDT - 1-й слой: ДА - 2-й слой: НЕТ (уверенность 7.9%)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] BTC/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] SOL/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=6.20900000 sl=6.29366782 tp=6.08346796 risk=0.08466782 reward=0.12553204 rr=1.4826 atr=0.05067128 sl_reason=above_rejection_high tp_reason=nearest_support support=6.078400835306981 resistance=6.319788531936388 swing_high=6.36 swing_low=6.243 rejection_high=6.281
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=6.14700000 sl=6.22035644 tp=6.08389341 risk=0.07335644 reward=0.06310659 rr=0.8603 atr=0.05492574 sl_reason=above_retest_resistance tp_reason=nearest_support support=6.078400835306981 resistance=6.201840740972983 swing_high=6.36 swing_low=6.243 rejection_high=None
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=6.03800000 sl=6.26414522 tp=5.98455176 risk=0.22614522 reward=0.05344824 rr=0.2363 atr=0.04858089 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=5.979693667986754 resistance=6.215538848043837 swing_high=6.252 swing_low=5.961 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=5.96300000 sl=5.99178927 tp=5.86223450 risk=0.02878927 reward=0.10076550 rr=3.5001 atr=0.04335978 sl_reason=above_resistance tp_reason=nearest_support support=5.857898521037505 resistance=5.9809493194455525 swing_high=6.064 swing_low=6.004 rejection_high=6.026
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=5.96600000 sl=6.01187564 tp=5.96040453 risk=0.04587564 reward=0.00559547 rr=0.1220 atr=0.05404530 sl_reason=above_resistance tp_reason=swing_low support=5.857898521037505 resistance=5.998364318644609 swing_high=6.094 swing_low=5.955 rejection_high=6.028
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=5.94700000 sl=5.99104533 tp=5.88221813 risk=0.04404533 reward=0.06478187 rr=1.4708 atr=0.05218131 sl_reason=above_rejection_high tp_reason=swing_low support=5.860350985496876 resistance=5.998364318644609 swing_high=6.064 swing_low=5.877 rejection_high=5.978
+Сбор данных для SUI/USDT... (лимит 10000)
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.73840000 sl=0.74285434 tp=0.72962345 risk=0.00445434 reward=0.00877655 rr=1.9703 atr=0.00501734 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.729121714092563 resistance=0.7396486194507743 swing_high=0.7416 swing_low=0.7272 rejection_high=0.7398
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.80720000 sl=0.78223969 tp=0.81945180 risk=0.02496031 reward=0.01225180 rr=0.4909 atr=0.00944126 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.7848739737296355 resistance=0.8203959252578185 swing_high=0.8241 swing_low=0.7846 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.81140000 sl=0.78220292 tp=0.81943709 risk=0.02919708 reward=0.00803709 rr=0.2753 atr=0.00958831 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.7848739737296355 resistance=0.8203959252578185 swing_high=0.8241 swing_low=0.7846 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.81420000 sl=0.79790239 tp=0.81947688 risk=0.01629761 reward=0.00527688 rr=0.3238 atr=0.00919043 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.8037404707776462 resistance=0.8203959252578185 swing_high=0.8241 swing_low=0.8002 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.84450000 sl=0.83659658 tp=0.85833569 risk=0.00790342 reward=0.01383569 rr=1.7506 atr=0.01001366 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.8429746784375877 resistance=0.8593370593268214 swing_high=0.863 swing_low=0.8391 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.84250000 sl=0.80115516 tp=0.85830293 risk=0.04134484 reward=0.01580293 rr=0.3822 atr=0.01034126 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.8037404707776462 resistance=0.8593370593268214 swing_high=0.863 swing_low=0.8391 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.85020000 sl=0.83188300 tp=0.85833026 risk=0.01831700 reward=0.00813026 rr=0.4439 atr=0.01006802 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.8406279709406601 resistance=0.8593370593268214 swing_high=0.863 swing_low=0.8344 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.84950000 sl=0.82615969 tp=0.85604093 risk=0.02334031 reward=0.00654093 rr=0.2802 atr=0.03296124 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.8406279709406601 resistance=0.8593370593268214 swing_high=0.863 swing_low=0.8344 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.83990000 sl=0.79558875 tp=0.85607637 risk=0.04431125 reward=0.01617637 rr=0.3651 atr=0.03260687 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.8037404707776462 resistance=0.8593370593268214 swing_high=0.9555 swing_low=0.8344 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.81760000 sl=0.84138478 tp=0.81299783 risk=0.02378478 reward=0.00460217 rr=0.1935 atr=0.01193910 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.811803921156105 resistance=0.8202560112093829 swing_high=0.8384 swing_low=0.8232 rejection_high=0.8236
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.80700000 sl=0.83531724 tp=0.78775871 risk=0.02831724 reward=0.01924129 rr=0.6795 atr=0.00846895 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.786911818831263 resistance=0.819501479587326 swing_high=0.8332 swing_low=0.808 rejection_high=0.8124
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.82660000 sl=0.79356800 tp=0.83543320 risk=0.03303200 reward=0.00883320 rr=0.2674 atr=0.00892801 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.8257539398817867 resistance=0.8363259989637286 swing_high=0.8393 swing_low=0.7958 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.82420000 sl=0.80675670 tp=0.83546573 risk=0.01744330 reward=0.01126573 rr=0.6458 atr=0.00860273 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.8089073793459843 resistance=0.8363259989637286 swing_high=0.8393 swing_low=0.7958 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.83830000 sl=0.83364403 tp=0.83840171 risk=0.00465597 reward=0.00010171 rr=0.0218 atr=0.00898288 sl_reason=below_support_zone tp_reason=swing_high support=0.8358897466961952 resistance=0.8599203972153311 swing_high=0.8393 swing_low=0.7958 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.84120000 sl=0.79346510 tp=0.85898644 risk=0.04773490 reward=0.01778644 rr=0.3726 atr=0.00933961 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.8358897466961952 resistance=0.8599203972153311 swing_high=0.8393 swing_low=0.7958 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.83650000 sl=0.82546390 tp=0.83844556 risk=0.01103610 reward=0.00194556 rr=0.1763 atr=0.00854441 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.8348590460419716 resistance=0.8599203972153311 swing_high=0.8393 swing_low=0.8276 rejection_high=0.8392
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.84530000 sl=0.82543255 tp=0.85905342 risk=0.01986745 reward=0.01375342 rr=0.6923 atr=0.00866981 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.8348590460419716 resistance=0.8599203972153311 swing_high=0.8393 swing_low=0.8276 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.84510000 sl=0.83216771 tp=0.85227920 risk=0.01293229 reward=0.00717920 rr=0.5551 atr=0.01092915 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.8352925348413481 resistance=0.8533721128308729 swing_high=0.8577 swing_low=0.8349 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.82850000 sl=0.81522850 tp=0.83516002 risk=0.01327150 reward=0.00666002 rr=0.5018 atr=0.00948601 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.8236987070906461 resistance=0.8361086249405446 swing_high=0.8364 swing_low=0.8176 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.81940000 sl=0.82396758 tp=0.81081173 risk=0.00456758 reward=0.00858827 rr=1.8803 atr=0.00787032 sl_reason=above_rejection_high tp_reason=nearest_support support=0.810024699205719 resistance=0.8361086249405446 swing_high=0.8298 swing_low=0.8039 rejection_high=0.822
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.81980000 sl=0.83167704 tp=0.81077551 risk=0.01187704 reward=0.00902449 rr=0.7598 atr=0.00750815 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.810024699205719 resistance=0.8361086249405446 swing_high=0.8298 swing_low=0.8039 rejection_high=0.8213
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.81960000 sl=0.82997976 tp=0.81077660 risk=0.01037976 reward=0.00882340 rr=0.8501 atr=0.00751903 sl_reason=above_rejection_high tp_reason=nearest_support support=0.810024699205719 resistance=0.8361086249405446 swing_high=0.8298 swing_low=0.8039 rejection_high=0.8281
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.79560000 sl=0.80430187 tp=0.79420075 risk=0.00870187 reward=0.00139925 rr=0.1608 atr=0.00600750 sl_reason=above_rejection_high tp_reason=swing_low support=0.786089042475635 resistance=0.8036197951098404 swing_high=0.8056 swing_low=0.7936 rejection_high=0.8028
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.79360000 sl=0.80738726 tp=0.78494897 risk=0.01378726 reward=0.00865103 rr=0.6275 atr=0.00714906 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.7842340608498709 resistance=0.8036197951098404 swing_high=0.8056 swing_low=0.7774 rejection_high=0.7982
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.79310000 sl=0.79722210 tp=0.78492290 risk=0.00412210 reward=0.00817710 rr=1.9837 atr=0.00688841 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7842340608498709 resistance=0.8036197951098404 swing_high=0.8056 swing_low=0.7774 rejection_high=0.7955
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.78460000 sl=0.78784732 tp=0.77750240 risk=0.00324732 reward=0.00709760 rr=2.1857 atr=0.00578927 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7769234702417593 resistance=0.7939296039534707 swing_high=0.7946 swing_low=0.7745 rejection_high=0.7864
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.77310000 sl=0.78780069 tp=0.76812074 risk=0.01470069 reward=0.00497926 rr=0.3387 atr=0.00560276 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.7675604668631354 resistance=0.7763909220008796 swing_high=0.7864 swing_low=0.7745 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.76480000 sl=0.76915812 tp=0.74635433 risk=0.00435812 reward=0.01844567 rr=4.2325 atr=0.00623246 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7457310813712169 resistance=0.7763909220008796 swing_high=0.7864 swing_low=0.743 rejection_high=0.7676
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.75370000 sl=0.75672773 tp=0.74619551 risk=0.00302773 reward=0.00750449 rr=2.4786 atr=0.00464427 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.7457310813712169 resistance=0.7657115777516318 swing_high=0.7685 swing_low=0.7621 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.73560000 sl=0.74043466 tp=0.72900169 risk=0.00483466 reward=0.00659831 rr=1.3648 atr=0.00693864 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7283078264168269 resistance=0.7396486194507743 swing_high=0.762 swing_low=0.7241 rejection_high=0.7387
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.73610000 sl=0.74079468 tp=0.72898570 risk=0.00469468 reward=0.00711430 rr=1.5154 atr=0.00677873 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7283078264168269 resistance=0.7396486194507743 swing_high=0.762 swing_low=0.7241 rejection_high=0.7391
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.73750000 sl=0.74186439 tp=0.72948916 risk=0.00436439 reward=0.00801084 rr=1.8355 atr=0.00625757 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7288634044424088 resistance=0.7408401292617753 swing_high=0.745 swing_low=0.7276 rejection_high=0.7403
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.74590000 sl=0.74943472 tp=0.73593352 risk=0.00353472 reward=0.00996648 rr=2.8196 atr=0.00453889 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7354796306629008 resistance=0.7534833908349798 swing_high=0.7534 swing_low=0.7463 rejection_high=0.7483
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.74570000 sl=0.74853046 tp=0.73593181 risk=0.00283046 reward=0.00976819 rr=3.4511 atr=0.00452183 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7354796306629008 resistance=0.7534833908349798 swing_high=0.7534 swing_low=0.7463 rejection_high=0.7474
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.76520000 sl=0.75019678 tp=0.76529871 risk=0.01500322 reward=0.00009871 rr=0.0066 atr=0.00601288 sl_reason=expanded_to_swing_low tp_reason=swing_high support=0.7638799897081667 resistance=0.7785929149274753 swing_high=0.7659 swing_low=0.7517 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.76460000 sl=0.75675058 tp=0.76532023 risk=0.00784942 reward=0.00072023 rr=0.0918 atr=0.00579768 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.7638799897081667 resistance=0.7785929149274753 swing_high=0.7659 swing_low=0.7582 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.76650000 sl=0.75665637 tp=0.77797546 risk=0.00984363 reward=0.01147546 rr=1.1658 atr=0.00617453 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.7638799897081667 resistance=0.7785929149274753 swing_high=0.7659 swing_low=0.7582 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.77750000 sl=0.75647561 tp=0.78353927 risk=0.02102439 reward=0.00603927 rr=0.2873 atr=0.00689756 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.7769234702417593 resistance=0.7842290241416365 swing_high=0.775 swing_low=0.7582 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.78660000 sl=0.76099523 tp=0.79316770 risk=0.02560477 reward=0.00656770 rr=0.2565 atr=0.00761909 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.784752885737807 resistance=0.7939296039534707 swing_high=0.775 swing_low=0.7629 rejection_high=0.7899
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.78660000 sl=0.76103307 tp=0.79318283 risk=0.02556693 reward=0.00658283 rr=0.2575 atr=0.00746772 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.784752885737807 resistance=0.7939296039534707 swing_high=0.775 swing_low=0.7629 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.78430000 sl=0.77501668 tp=0.79182316 risk=0.00928332 reward=0.00752316 rr=0.8104 atr=0.00762717 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.7769234702417593 resistance=0.792585880966364 swing_high=0.7936 swing_low=0.7629 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.76820000 sl=0.76341951 tp=0.77825134 risk=0.00478049 reward=0.01005134 rr=2.1026 atr=0.00654877 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.7650567044503344 resistance=0.7789062135296236 swing_high=0.8013 swing_low=0.7752 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.76990000 sl=0.76345551 tp=0.77826573 risk=0.00644449 reward=0.00836573 rr=1.2981 atr=0.00640479 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.7650567044503344 resistance=0.7789062135296236 swing_high=0.7656 swing_low=0.7483 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.74080000 sl=0.75757103 tp=0.73626804 risk=0.01677103 reward=0.00453196 rr=0.2702 atr=0.00788412 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.7354796306629008 resistance=0.7409952917437418 swing_high=0.7556 swing_low=0.7339 rejection_high=0.7498
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.74430000 sl=0.74731172 tp=0.73588432 risk=0.00301172 reward=0.00841568 rr=2.7943 atr=0.00404688 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7354796306629008 resistance=0.7525615182855943 swing_high=0.7401 swing_low=0.7321 rejection_high=0.7463
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.74480000 sl=0.74778767 tp=0.73587470 risk=0.00298767 reward=0.00892530 rr=2.9874 atr=0.00395067 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7354796306629008 resistance=0.7525615182855943 swing_high=0.7401 swing_low=0.7321 rejection_high=0.7468
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.74270000 sl=0.74606533 tp=0.73586576 risk=0.00336533 reward=0.00683424 rr=2.0308 atr=0.00386134 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7354796306629008 resistance=0.7525615182855943 swing_high=0.7401 swing_low=0.7321 rejection_high=0.7451
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.75560000 sl=0.74791086 tp=0.76352435 risk=0.00768914 reward=0.00792435 rr=1.0306 atr=0.00475655 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.7507416842268111 resistance=0.7642435369558307 swing_high=0.764 swing_low=0.7491 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.71710000 sl=0.72125262 tp=0.70942539 risk=0.00415262 reward=0.00767461 rr=1.8481 atr=0.00581048 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7088443430772751 resistance=0.7372822637150093 swing_high=0.7178 swing_low=0.7068 rejection_high=0.7198
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.71980000 sl=0.72349101 tp=0.71843640 risk=0.00369101 reward=0.00136360 rr=0.3694 atr=0.00436404 sl_reason=above_rejection_high tp_reason=swing_low support=0.709841929340818 resistance=0.7243072791496841 swing_high=0.7309 swing_low=0.718 rejection_high=0.7224
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.70980000 sl=0.71493884 tp=0.69905435 risk=0.00513884 reward=0.01074565 rr=2.0911 atr=0.00455536 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.6985988117737979 resistance=0.7197752242704014 swing_high=0.7296 swing_low=0.7197 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.75460000 sl=0.74910370 tp=0.76358834 risk=0.00549630 reward=0.00898834 rr=1.6353 atr=0.00655195 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.7507416842268111 resistance=0.7642435369558307 swing_high=0.7534 swing_low=0.733 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.76450000 sl=0.75256459 tp=0.77821776 risk=0.01193541 reward=0.01371776 rr=1.1493 atr=0.00688449 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.7576520290958889 resistance=0.7789062135296236 swing_high=0.7534 swing_low=0.7379 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.76760000 sl=0.76318162 tp=0.77746697 risk=0.00441838 reward=0.00986697 rr=2.2332 atr=0.00750034 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.7650567044503344 resistance=0.7782170066905512 swing_high=0.7811 swing_low=0.7379 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.79190000 sl=0.78198190 tp=0.79643276 risk=0.00991810 reward=0.00453276 rr=0.4570 atr=0.00567240 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.7835235218304327 resistance=0.8031709464195459 swing_high=0.797 swing_low=0.7834 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.78120000 sl=0.78476574 tp=0.77372643 risk=0.00356574 reward=0.00747357 rr=2.0959 atr=0.00466296 sl_reason=above_rejection_high tp_reason=nearest_support support=0.7732601353305399 resistance=0.7846578484788178 swing_high=0.7685 swing_low=0.7603 rejection_high=0.7836
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.81040000 sl=0.80666892 tp=0.81179864 risk=0.00373108 reward=0.00139864 rr=0.3749 atr=0.00601362 sl_reason=below_support_zone tp_reason=swing_high support=0.8081723223638868 resistance=0.8189711643240393 swing_high=0.8124 swing_low=0.7915 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.81160000 sl=0.80556805 tp=0.81225743 risk=0.00603195 reward=0.00065743 rr=0.1090 atr=0.00542575 sl_reason=below_support_zone tp_reason=swing_high support=0.806924489982455 resistance=0.8200612949496524 swing_high=0.8128 swing_low=0.7985 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.79590000 sl=0.79981780 tp=0.79538712 risk=0.00391780 reward=0.00051288 rr=0.1309 atr=0.00687122 sl_reason=above_rejection_high tp_reason=swing_low support=0.7837331276470508 resistance=0.803355697063777 swing_high=0.8125 swing_low=0.7947 rejection_high=0.7981
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.81790000 sl=0.83287984 tp=0.81717194 risk=0.01497984 reward=0.00072806 rr=0.0486 atr=0.00671936 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.8066286690429683 resistance=0.8180666468103922 swing_high=0.8312 swing_low=0.8165 rejection_high=0.8222
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.81580000 sl=0.82070926 tp=0.80928286 risk=0.00490926 reward=0.00651714 rr=1.3275 atr=0.00582861 sl_reason=above_resistance tp_reason=swing_low support=0.8068600912816655 resistance=0.8192521124434221 swing_high=0.824 swing_low=0.8087 rejection_high=0.8197
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.82140000 sl=0.81842703 tp=0.82769874 risk=0.00297297 reward=0.00629874 rr=2.1187 atr=0.00511863 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.8197066905777417 resistance=0.8282106035598877 swing_high=0.8203 swing_low=0.8105 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.80680000 sl=0.81087942 tp=0.80651177 risk=0.00407942 reward=0.00028823 rr=0.0707 atr=0.00511768 sl_reason=above_rejection_high tp_reason=swing_low support=0.796351106159778 resistance=0.8101729715261122 swing_high=0.8285 swing_low=0.806 rejection_high=0.8096
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.81790000 sl=0.82972371 tp=0.80751945 risk=0.01182371 reward=0.01038055 rr=0.8779 atr=0.00489483 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.8070299686099288 resistance=0.8191034304713181 swing_high=0.8285 swing_low=0.8018 rejection_high=0.8203
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.79630000 sl=0.80105307 tp=0.79588123 risk=0.00475307 reward=0.00041877 rr=0.0881 atr=0.00581230 sl_reason=above_rejection_high tp_reason=swing_low support=0.7850690631958153 resistance=0.8025439740438925 swing_high=0.8025 swing_low=0.7953 rejection_high=0.7996
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.78480000 sl=0.80530130 tp=0.77386065 risk=0.02050130 reward=0.01093935 rr=0.5336 atr=0.00600518 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.7732601353305399 resistance=0.7854152694766369 swing_high=0.8038 swing_low=0.7953 rejection_high=0.7868
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.78320000 sl=0.78700144 tp=0.77633447 risk=0.00380144 reward=0.00686553 rr=1.8060 atr=0.00634468 sl_reason=above_resistance tp_reason=swing_low support=0.7745937682698967 resistance=0.7854152694766369 swing_high=0.8038 swing_low=0.7757 rejection_high=0.7856
+Сбор данных для APT/USDT... (лимит 10000)
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.63410000 sl=0.62353593 tp=0.64381828 risk=0.01056407 reward=0.00971828 rr=0.9199 atr=0.00769091 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.62545865398006 resistance=0.6445873664960271 swing_high=0.6452 swing_low=0.6332 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.63460000 sl=0.62362505 tp=0.64385393 risk=0.01097495 reward=0.00925393 rr=0.8432 atr=0.00733441 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.62545865398006 resistance=0.6445873664960271 swing_high=0.6452 swing_low=0.6332 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.65510000 sl=0.64604729 tp=0.68721392 risk=0.00905271 reward=0.03211392 rr=3.5474 atr=0.00641083 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.6363653915194005 resistance=0.687855 swing_high=0.6383 swing_low=0.6114 rejection_high=0.6568
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.65470000 sl=0.63708092 tp=0.65511237 risk=0.01761908 reward=0.00041237 rr=0.0234 atr=0.01687631 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.6437670106537383 resistance=0.687435 swing_high=0.6568 swing_low=0.6413 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.64940000 sl=0.63140527 tp=0.65319804 risk=0.01799473 reward=0.00379804 rr=0.2111 atr=0.01197894 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.6437670106537383 resistance=0.6543959388533149 swing_high=0.6597 swing_low=0.6344 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.64860000 sl=0.63149060 tp=0.65323218 risk=0.01710940 reward=0.00463218 rr=0.2707 atr=0.01163759 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.6437670106537383 resistance=0.6543959388533149 swing_high=0.6597 swing_low=0.6344 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.62730000 sl=0.63586374 tp=0.61252943 risk=0.00856374 reward=0.01477057 rr=1.7248 atr=0.00781305 sl_reason=above_resistance tp_reason=nearest_support support=0.6117481255390018 resistance=0.6339104717958236 swing_high=0.6405 swing_low=0.632 rejection_high=0.6344
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.63850000 sl=0.64807450 tp=0.63047417 risk=0.00957450 reward=0.00802583 rr=0.8383 atr=0.00709800 sl_reason=above_rejection_high tp_reason=nearest_support support=0.6297643671690623 resistance=0.647544670984731 swing_high=0.6405 swing_low=0.6241 rejection_high=0.6463
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.63580000 sl=0.64145514 tp=0.63001810 risk=0.00565514 reward=0.00578190 rr=1.0224 atr=0.00582056 sl_reason=above_rejection_high tp_reason=nearest_support support=0.6294360427201127 resistance=0.6487302313984774 swing_high=0.6384 swing_low=0.6286 rejection_high=0.64
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.59940000 sl=0.61152312 tp=0.57945333 risk=0.01212312 reward=0.01994667 rr=1.6453 atr=0.00649247 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.5788040857602611 resistance=0.6074887272379702 swing_high=0.6099 swing_low=0.6085 rejection_high=0.6042
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.60730000 sl=0.61159850 tp=0.59833982 risk=0.00429850 reward=0.00896018 rr=2.0845 atr=0.00679402 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.5976604214121582 resistance=0.6074887272379702 swing_high=0.6099 swing_low=0.5952 rejection_high=0.6101
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.60260000 sl=0.60915520 tp=0.59832701 risk=0.00655520 reward=0.00427299 rr=0.6518 atr=0.00666588 sl_reason=above_resistance tp_reason=nearest_support support=0.5976604214121582 resistance=0.6074887272379702 swing_high=0.6099 swing_low=0.5952 rejection_high=0.6076
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.60570000 sl=0.61168282 tp=0.59829355 risk=0.00598282 reward=0.00740645 rr=1.2380 atr=0.00633129 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.5976604214121582 resistance=0.6074522427687639 swing_high=0.6101 swing_low=0.5952 rejection_high=0.6071
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.60430000 sl=0.60899165 tp=0.59827618 risk=0.00469165 reward=0.00602382 rr=1.2839 atr=0.00615763 sl_reason=above_resistance tp_reason=nearest_support support=0.5976604214121582 resistance=0.6074522427687639 swing_high=0.6101 swing_low=0.5952 rejection_high=0.6079
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.60910000 sl=0.61219003 tp=0.59821643 risk=0.00309003 reward=0.01088357 rr=3.5222 atr=0.00556012 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5976604214121582 resistance=0.6357877801929401 swing_high=0.6101 swing_low=0.5952 rejection_high=0.6108
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.62320000 sl=0.62077769 tp=0.63531582 risk=0.00242231 reward=0.01211582 rr=5.0018 atr=0.00471961 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.6219575873203447 resistance=0.6357877801929401 swing_high=0.618 swing_low=0.6122 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.64810000 sl=0.64239310 tp=0.65025044 risk=0.00570690 reward=0.00215044 rr=0.3768 atr=0.00549563 sl_reason=below_support_zone tp_reason=swing_high support=0.6437670106537383 resistance=0.6574934769190706 swing_high=0.6508 swing_low=0.6352 rejection_high=None
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.60830000 sl=0.61348099 tp=0.59817282 risk=0.00518099 reward=0.01012718 rr=1.9547 atr=0.00512397 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.5976604214121582 resistance=0.616018753176617 swing_high=0.625 swing_low=0.6155 rejection_high=0.6098
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.61050000 sl=0.60665592 tp=0.61894112 risk=0.00384408 reward=0.00844112 rr=2.1959 atr=0.00625173 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.608218847630712 resistance=0.619566291607775 swing_high=0.6252 swing_low=0.612 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.60210000 sl=0.60778708 tp=0.59833525 risk=0.00568708 reward=0.00376475 rr=0.6620 atr=0.00674833 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5976604214121582 resistance=0.6074522427687639 swing_high=0.6255 swing_low=0.6083 rejection_high=0.6061
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.60640000 sl=0.60955071 tp=0.60145942 risk=0.00315071 reward=0.00494058 rr=1.5681 atr=0.00559419 sl_reason=above_resistance tp_reason=swing_low support=0.5976604214121582 resistance=0.6081521628772683 swing_high=0.6113 swing_low=0.6009 rejection_high=0.6083
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.60570000 sl=0.60911679 tp=0.59938585 risk=0.00341679 reward=0.00631415 rr=1.8480 atr=0.00385850 sl_reason=above_resistance tp_reason=swing_low support=0.5986427345371457 resistance=0.6081521628772683 swing_high=0.6113 swing_low=0.599 rejection_high=0.6086
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.60830000 sl=0.59925157 tp=0.61084063 risk=0.00904843 reward=0.00254063 rr=0.2808 atr=0.00459371 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.6072569038331196 resistance=0.6198586978585122 swing_high=0.6113 swing_low=0.6004 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.60720000 sl=0.61089130 tp=0.60026121 risk=0.00369130 reward=0.00693879 rr=1.8798 atr=0.00473414 sl_reason=above_resistance tp_reason=nearest_support support=0.5997877917043634 resistance=0.6097077648459481 swing_high=0.6214 swing_low=0.6109 rejection_high=0.6113
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.60530000 sl=0.61066896 tp=0.60064758 risk=0.00536896 reward=0.00465242 rr=0.8665 atr=0.00547583 sl_reason=above_rejection_high tp_reason=swing_low support=0.5997877917043634 resistance=0.6097077648459481 swing_high=0.6172 swing_low=0.6001 rejection_high=0.6093
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.60580000 sl=0.61844630 tp=0.60059852 risk=0.01264630 reward=0.00520148 rr=0.4113 atr=0.00498521 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.5997877917043634 resistance=0.6097077648459481 swing_high=0.6172 swing_low=0.6001 rejection_high=0.6069
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.59310000 sl=0.59941246 tp=0.59182499 risk=0.00631246 reward=0.00127501 rr=0.2020 atr=0.00524986 sl_reason=above_rejection_high tp_reason=swing_low support=0.5788040857602611 resistance=0.5984739512943761 swing_high=0.6003 swing_low=0.5913 rejection_high=0.5981
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.59210000 sl=0.59570839 tp=0.58712335 risk=0.00360839 reward=0.00497665 rr=1.3792 atr=0.00523354 sl_reason=above_rejection_high tp_reason=swing_low support=0.5788040857602611 resistance=0.5985460443130449 swing_high=0.6009 swing_low=0.5866 rejection_high=0.5944
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.58940000 sl=0.59298249 tp=0.58247300 risk=0.00358249 reward=0.00692700 rr=1.9336 atr=0.00472997 sl_reason=above_rejection_high tp_reason=swing_low support=0.5808737606430368 resistance=0.597608943091527 swing_high=0.5973 swing_low=0.582 rejection_high=0.5918
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.58980000 sl=0.59294687 tp=0.58241875 risk=0.00314687 reward=0.00738125 rr=2.3456 atr=0.00418747 sl_reason=above_rejection_high tp_reason=swing_low support=0.5808737606430368 resistance=0.597608943091527 swing_high=0.5973 swing_low=0.582 rejection_high=0.5919
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.56990000 sl=0.57295676 tp=0.56192492 risk=0.00305676 reward=0.00797508 rr=2.6090 atr=0.00392496 sl_reason=above_resistance tp_reason=nearest_support support=0.5615324196939984 resistance=0.5719755225188352 swing_high=0.574 swing_low=0.5598 rejection_high=0.5724
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.57040000 sl=0.57285937 tp=0.56191617 risk=0.00245937 reward=0.00848383 rr=3.4496 atr=0.00383747 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5615324196939984 resistance=0.5720432112131087 swing_high=0.5732 swing_low=0.5598 rejection_high=0.5719
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.56920000 sl=0.57184084 tp=0.56190876 risk=0.00264084 reward=0.00729124 rr=2.7610 atr=0.00376336 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5615324196939984 resistance=0.5720432112131087 swing_high=0.5732 swing_low=0.5598 rejection_high=0.5709
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.56920000 sl=0.57171292 tp=0.56189759 risk=0.00251292 reward=0.00730241 rr=2.9059 atr=0.00365169 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5615324196939984 resistance=0.5720432112131087 swing_high=0.5732 swing_low=0.5598 rejection_high=0.5708
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.56890000 sl=0.57181379 tp=0.56189793 risk=0.00291379 reward=0.00700207 rr=2.4031 atr=0.00365514 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5615324196939984 resistance=0.5720432112131087 swing_high=0.5732 swing_low=0.5598 rejection_high=0.5709
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.56860000 sl=0.57157770 tp=0.56188350 risk=0.00297770 reward=0.00671650 rr=2.2556 atr=0.00351081 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5615324196939984 resistance=0.5720432112131087 swing_high=0.5732 swing_low=0.5598 rejection_high=0.5707
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.56830000 sl=0.57187573 tp=0.56275379 risk=0.00357573 reward=0.00554621 rr=1.5511 atr=0.00350292 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5624034960276687 resistance=0.5720432112131087 swing_high=0.5732 swing_low=0.5623 rejection_high=0.571
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.56800000 sl=0.56985625 tp=0.56270599 risk=0.00185625 reward=0.00529401 rr=2.8520 atr=0.00302498 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5624034960276687 resistance=0.5714197393868984 swing_high=0.571 swing_low=0.5623 rejection_high=0.5691
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.57090000 sl=0.55745715 tp=0.57808315 risk=0.01344285 reward=0.00718315 rr=0.5343 atr=0.00497140 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.562959527570269 resistance=0.5785802942503568 swing_high=0.5874 swing_low=0.5587 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.57100000 sl=0.55749771 tp=0.57809938 risk=0.01350229 reward=0.00709938 rr=0.5258 atr=0.00480916 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.562959527570269 resistance=0.5785802942503568 swing_high=0.5874 swing_low=0.5587 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.55810000 sl=0.56135592 tp=0.55266237 risk=0.00325592 reward=0.00543763 rr=1.6701 atr=0.00262368 sl_reason=above_rejection_high tp_reason=swing_low support=0.5515982200458 resistance=0.5611554902194895 swing_high=0.562 swing_low=0.5524 rejection_high=0.5607
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.54930000 sl=0.56123710 tp=0.52220984 risk=0.01193710 reward=0.02709016 rr=2.2694 atr=0.00374840 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5218349999999999 resistance=0.5611554902194895 swing_high=0.562 swing_low=0.5524 rejection_high=0.5603
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.53630000 sl=0.55191589 tp=0.51005136 risk=0.01561589 reward=0.02624864 rr=1.6809 atr=0.00566357 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.509485 resistance=0.5611554902194895 swing_high=0.5632 swing_low=0.5435 rejection_high=None
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.53930000 sl=0.54498539 tp=0.51292915 risk=0.00568539 reward=0.02637085 rr=4.6384 atr=0.00594155 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.512335 resistance=0.5611554902194895 swing_high=0.5632 swing_low=0.5435 rejection_high=0.5416
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.53890000 sl=0.54169621 tp=0.53156025 risk=0.00279621 reward=0.00733975 rr=2.6249 atr=0.00493473 sl_reason=above_resistance tp_reason=nearest_support support=0.5310667796026446 resistance=0.5404625249315095 swing_high=0.5425 swing_low=0.5288 rejection_high=0.5411
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.53890000 sl=0.54360394 tp=0.53304157 risk=0.00470394 reward=0.00585843 rr=1.2454 atr=0.00441575 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.5325051058164102 resistance=0.5404625249315095 swing_high=0.5425 swing_low=0.5326 rejection_high=0.5399
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.53800000 sl=0.54014651 tp=0.53301861 risk=0.00214651 reward=0.00498139 rr=2.3207 atr=0.00418605 sl_reason=above_rejection_high tp_reason=swing_low support=0.5325051058164102 resistance=0.5404625249315095 swing_high=0.5425 swing_low=0.5326 rejection_high=0.5391
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.54570000 sl=0.54435971 tp=0.56093711 risk=0.00134029 reward=0.01523711 rr=11.3685 atr=0.00218376 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5456 swing_low=0.5401 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.54580000 sl=0.54434030 tp=0.56092935 risk=0.00145970 reward=0.01512935 rr=10.3647 atr=0.00226139 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5423 swing_low=0.538 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.54530000 sl=0.53744613 tp=0.54597845 risk=0.00785387 reward=0.00067845 rr=0.0864 atr=0.00221548 sl_reason=expanded_to_swing_low tp_reason=swing_high support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5462 swing_low=0.538 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.54570000 sl=0.54433777 tp=0.54597285 risk=0.00136223 reward=0.00027285 rr=0.2003 atr=0.00227152 sl_reason=below_support_zone tp_reason=swing_high support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5462 swing_low=0.538 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.54530000 sl=0.53743697 tp=0.54597479 risk=0.00786303 reward=0.00067479 rr=0.0858 atr=0.00225212 sl_reason=expanded_to_swing_low tp_reason=swing_high support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5462 swing_low=0.538 rejection_high=0.5464
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.54540000 sl=0.53743611 tp=0.54597445 risk=0.00796389 reward=0.00057445 rr=0.0721 atr=0.00225554 sl_reason=expanded_to_swing_low tp_reason=swing_high support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5462 swing_low=0.538 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.54620000 sl=0.54434633 tp=0.54657627 risk=0.00185367 reward=0.00037627 rr=0.2030 atr=0.00223729 sl_reason=below_support_zone tp_reason=swing_high support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5468 swing_low=0.538 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.54650000 sl=0.54437974 tp=0.54658963 risk=0.00212026 reward=0.00008963 rr=0.0423 atr=0.00210365 sl_reason=below_support_zone tp_reason=swing_high support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5468 swing_low=0.538 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.54700000 sl=0.54424602 tp=0.54753615 risk=0.00275398 reward=0.00053615 rr=0.1947 atr=0.00263852 sl_reason=below_support_zone tp_reason=swing_high support=0.5449056485629141 resistance=0.5611554902194895 swing_high=0.5478 swing_low=0.5403 rejection_high=0.548
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.54680000 sl=0.54110070 tp=0.54772028 risk=0.00569930 reward=0.00092028 rr=0.1615 atr=0.00279719 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.5437160927839301 resistance=0.5611554902194895 swing_high=0.548 swing_low=0.5418 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.54890000 sl=0.54585239 tp=0.56088145 risk=0.00304761 reward=0.01198145 rr=3.9314 atr=0.00274043 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.5437160927839301 resistance=0.5611554902194895 swing_high=0.548 swing_low=0.5418 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.51810000 sl=0.52253646 tp=0.50809866 risk=0.00443646 reward=0.01000134 rr=2.2543 atr=0.00488445 sl_reason=above_resistance tp_reason=nearest_support support=0.5076102175163435 resistance=0.5213153524477382 swing_high=0.5232 swing_low=0.5056 rejection_high=0.5214
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.52040000 sl=0.52414545 tp=0.51676378 risk=0.00374545 reward=0.00363622 rr=0.9708 atr=0.00378181 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.5163855959730729 resistance=0.5213153524477382 swing_high=0.5232 swing_low=0.5146 rejection_high=0.5211
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.51930000 sl=0.52224684 tp=0.51675819 risk=0.00294684 reward=0.00254181 rr=0.8626 atr=0.00372597 sl_reason=above_resistance tp_reason=nearest_support support=0.5163855959730729 resistance=0.5213153524477382 swing_high=0.5232 swing_low=0.5146 rejection_high=0.5216
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.52140000 sl=0.52312577 tp=0.51793031 risk=0.00172577 reward=0.00346969 rr=2.0105 atr=0.00330306 sl_reason=above_rejection_high tp_reason=swing_low support=0.5174483274751684 resistance=0.5347968351587785 swing_high=0.5232 swing_low=0.5176 rejection_high=0.5223
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.52280000 sl=0.52519873 tp=0.51791949 risk=0.00239873 reward=0.00488051 rr=2.0346 atr=0.00319491 sl_reason=above_rejection_high tp_reason=swing_low support=0.5174483274751684 resistance=0.5347968351587785 swing_high=0.5232 swing_low=0.5176 rejection_high=0.5244
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.52140000 sl=0.52302842 tp=0.51769969 risk=0.00162842 reward=0.00370031 rr=2.2723 atr=0.00251366 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5174483274751684 resistance=0.5233623396079683 swing_high=0.5255 swing_low=0.5219 rejection_high=0.5224
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.54980000 sl=0.52624118 tp=0.55335541 risk=0.02355882 reward=0.00355541 rr=0.1509 atr=0.00503526 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.5437160927839301 resistance=0.5538589396510727 swing_high=0.5554 swing_low=0.5275 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.56220000 sl=0.54927228 tp=0.56336891 risk=0.01292772 reward=0.00116891 rr=0.0904 atr=0.00531088 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.5583680576507144 resistance=0.5686125014963218 swing_high=0.5639 swing_low=0.5506 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.55860000 sl=0.56243648 tp=0.55511239 risk=0.00383648 reward=0.00348761 rr=0.9091 atr=0.00512395 sl_reason=above_resistance tp_reason=swing_low support=0.5514872787687431 resistance=0.5611554902194895 swing_high=0.5645 swing_low=0.5546 rejection_high=0.5629
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.59750000 sl=0.57884593 tp=0.60916614 risk=0.01865407 reward=0.01166614 rr=0.6254 atr=0.00541629 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.5921625785875511 resistance=0.6097077648459481 swing_high=0.5968 swing_low=0.5802 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.59760000 sl=0.58602162 tp=0.60911641 risk=0.01157838 reward=0.01151641 rr=0.9946 atr=0.00591353 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.5916133106032196 resistance=0.6097077648459481 swing_high=0.5968 swing_low=0.5875 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.60340000 sl=0.58597722 tp=0.60909865 risk=0.01742278 reward=0.00569865 rr=0.3271 atr=0.00609114 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.5997877917043634 resistance=0.6097077648459481 swing_high=0.5968 swing_low=0.5875 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.60210000 sl=0.59727349 tp=0.60908716 risk=0.00482651 reward=0.00698716 rr=1.4477 atr=0.00620606 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.5997877917043634 resistance=0.6097077648459481 swing_high=0.5968 swing_low=0.5875 rejection_high=None
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.59040000 sl=0.59452790 tp=0.58111185 risk=0.00412790 reward=0.00928815 rr=2.2501 atr=0.00331160 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.580780686745725 resistance=0.597901075604737 swing_high=0.6007 swing_low=0.5937 rejection_high=0.592
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.58920000 sl=0.59113418 tp=0.58110248 risk=0.00193418 reward=0.00809752 rr=4.1865 atr=0.00321791 sl_reason=above_resistance tp_reason=nearest_support support=0.580780686745725 resistance=0.5903297003157107 swing_high=0.6007 swing_low=0.5937 rejection_high=0.5911
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.57950000 sl=0.58263983 tp=0.57434393 risk=0.00313983 reward=0.00515607 rr=1.6422 atr=0.00375931 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5739679976927325 resistance=0.5849770153222882 swing_high=0.5856 swing_low=0.5686 rejection_high=0.5817
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.57940000 sl=0.58150127 tp=0.57432850 risk=0.00210127 reward=0.00507150 rr=2.4135 atr=0.00360507 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5739679976927325 resistance=0.5849770153222882 swing_high=0.5856 swing_low=0.5686 rejection_high=0.5806
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.57970000 sl=0.58349829 tp=0.57432731 risk=0.00379829 reward=0.00537269 rr=1.4145 atr=0.00359315 sl_reason=above_rejection_high tp_reason=nearest_support support=0.5739679976927325 resistance=0.5849770153222882 swing_high=0.5856 swing_low=0.5686 rejection_high=0.5826
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.61300000 sl=0.61621012 tp=0.61008405 risk=0.00321012 reward=0.00291595 rr=0.9084 atr=0.00484050 sl_reason=above_rejection_high tp_reason=swing_low support=0.6053441742463357 resistance=0.6153086035544759 swing_high=0.6218 swing_low=0.6096 rejection_high=0.615
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.62830000 sl=0.61434082 tp=0.63536770 risk=0.01395918 reward=0.00706770 rr=0.5063 atr=0.00372717 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.6152726146791797 resistance=0.6357404213144178 swing_high=0.6283 swing_low=0.616 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.61300000 sl=0.61640560 tp=0.61153880 risk=0.00340560 reward=0.00146120 rr=0.4291 atr=0.00438800 sl_reason=above_resistance tp_reason=swing_low support=0.6060991978393038 resistance=0.6153086035544759 swing_high=0.6264 swing_low=0.6111 rejection_high=0.616
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.62650000 sl=0.63231141 tp=0.61783581 risk=0.00581141 reward=0.00866419 rr=1.4909 atr=0.00635806 sl_reason=above_resistance tp_reason=swing_low support=0.6159920632880935 resistance=0.6307218896229174 swing_high=0.639 swing_low=0.6172 rejection_high=0.6332
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.65080000 sl=0.64223527 tp=0.65688078 risk=0.00856473 reward=0.00608078 rr=0.7100 atr=0.00612697 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.6437670106537383 resistance=0.6574934769190706 swing_high=0.6728 swing_low=0.6234 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.65570000 sl=0.65920636 tp=0.64445216 risk=0.00350636 reward=0.01124784 rr=3.2078 atr=0.00685152 sl_reason=above_resistance tp_reason=nearest_support support=0.6437670106537383 resistance=0.6574934769190706 swing_high=0.6515 swing_low=0.6312 rejection_high=0.6639
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.66110000 sl=0.64985792 tp=0.66514317 risk=0.01124208 reward=0.00404317 rr=0.3596 atr=0.00656831 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.6540170463470788 resistance=0.670457573647751 swing_high=0.6658 swing_low=0.6515 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.65310000 sl=0.64956345 tp=0.65924917 risk=0.00353655 reward=0.00614917 rr=1.7387 atr=0.00414619 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.6526959794936457 resistance=0.6596637892826117 swing_high=0.6602 swing_low=0.6506 rejection_high=0.6548
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.65090000 sl=0.64664160 tp=0.65918050 risk=0.00425840 reward=0.00828050 rr=1.9445 atr=0.00483288 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.6478498186982788 resistance=0.6596637892826117 swing_high=0.6602 swing_low=0.6392 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.62910000 sl=0.65561957 tp=0.61691989 risk=0.02651957 reward=0.01218011 rr=0.4593 atr=0.00927827 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.6159920632880935 resistance=0.6307218896229174 swing_high=0.6533 swing_low=0.6347 rejection_high=0.6338
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.62720000 sl=0.63133991 tp=0.61846145 risk=0.00413991 reward=0.00873855 rr=2.1108 atr=0.00775964 sl_reason=above_rejection_high tp_reason=nearest_support support=0.6176854854891003 resistance=0.6307218896229174 swing_high=0.6533 swing_low=0.6174 rejection_high=0.6294
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.62700000 sl=0.63071798 tp=0.61750129 risk=0.00371798 reward=0.00949871 rr=2.5548 atr=0.00607190 sl_reason=above_rejection_high tp_reason=nearest_support support=0.6168941011778885 resistance=0.6307218896229174 swing_high=0.6261 swing_low=0.6157 rejection_high=0.6292
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.62490000 sl=0.63128323 tp=0.61748739 risk=0.00638323 reward=0.00741261 rr=1.1613 atr=0.00593292 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.6168941011778885 resistance=0.6256089963016389 swing_high=0.6298 swing_low=0.6157 rejection_high=0.6292
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.62520000 sl=0.63123443 tp=0.61746787 risk=0.00603443 reward=0.00773213 rr=1.2813 atr=0.00573771 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.6168941011778885 resistance=0.6256089963016389 swing_high=0.6298 swing_low=0.6157 rejection_high=0.6277
+[RISK DEBUG] setup=LIQUIDITY_SWEEP_SHORT direction=SHORT entry=0.62700000 sl=0.63288873 tp=0.62375549 risk=0.00588873 reward=0.00324451 rr=0.5510 atr=0.00555493 sl_reason=above_sweep_high tp_reason=swing_low support=0.6168941011778885 resistance=0.6307218896229174 swing_high=0.6298 swing_low=0.6232 rejection_high=0.6315
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.61350000 sl=0.61687901 tp=0.60672736 risk=0.00337901 reward=0.00677264 rr=2.0043 atr=0.00628163 sl_reason=above_resistance tp_reason=nearest_support support=0.6060991978393038 resistance=0.6153086035544759 swing_high=0.6283 swing_low=0.6143 rejection_high=0.6226
+Сбор данных для S/USDT... (лимит 10000)
+[RISK DEBUG] setup=RANGE_REJECTION direction=SHORT entry=0.02531000 sl=0.02661729 tp=0.02505425 risk=0.00130729 reward=0.00025575 rr=0.1956 atr=0.00016717 sl_reason=above_nearest_resistance tp_reason=nearest_support support=0.025037529003196664 resistance=0.026575500000000002 swing_high=0.02538 swing_low=0.02495 rejection_high=0.02555
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02804000 sl=0.02726626 tp=0.02849852 risk=0.00077374 reward=0.00045852 rr=0.5926 atr=0.00037497 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.027489891107596667 resistance=0.028536019844095633 swing_high=0.02868 swing_low=0.02736 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02816000 sl=0.02770290 tp=0.02850118 risk=0.00045710 reward=0.00034118 rr=0.7464 atr=0.00034840 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.02793061372823861 resistance=0.028536019844095633 swing_high=0.02868 swing_low=0.02779 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02793000 sl=0.02711134 tp=0.02856786 risk=0.00081866 reward=0.00063786 rr=0.7792 atr=0.00035464 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.027437447539091515 resistance=0.02860332508089799 swing_high=0.02881 swing_low=0.0272 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02797000 sl=0.02711517 tp=0.02856939 risk=0.00085483 reward=0.00059939 rr=0.7012 atr=0.00033931 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.02793061372823861 resistance=0.02860332508089799 swing_high=0.02881 swing_low=0.0272 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02807000 sl=0.02784683 tp=0.02856981 risk=0.00022317 reward=0.00049981 rr=2.2396 atr=0.00033512 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.02793061372823861 resistance=0.02860332508089799 swing_high=0.02881 swing_low=0.0272 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02869000 sl=0.02789016 tp=0.02877632 risk=0.00079984 reward=0.00008632 rr=0.1079 atr=0.00033681 sl_reason=below_support_zone tp_reason=swing_high support=0.02797435974411118 resistance=0.030124500000000002 swing_high=0.02881 swing_low=0.02798 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.02923000 sl=0.02864629 tp=0.03065201 risk=0.00058371 reward=0.00142201 rr=2.4362 atr=0.00039485 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.02797435974411118 resistance=0.0306915 swing_high=0.02881 swing_low=0.02798 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02935000 sl=0.02826114 tp=0.02975806 risk=0.00108886 reward=0.00040806 rr=0.3748 atr=0.00067545 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.02855630322810687 resistance=0.029825600069034768 swing_high=0.03129 swing_low=0.02843 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02781000 sl=0.02997933 tp=0.02756283 risk=0.00216933 reward=0.00024717 rr=0.1139 atr=0.00047733 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.027515098511025453 resistance=0.027838931520598426 swing_high=0.02986 swing_low=0.02729 rejection_high=0.02796
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02769000 sl=0.02793581 tp=0.02741919 risk=0.00024581 reward=0.00027081 rr=1.1017 atr=0.00026323 sl_reason=above_rejection_high tp_reason=nearest_support support=0.027392866711884012 resistance=0.02795796170426109 swing_high=0.02803 swing_low=0.02715 rejection_high=0.02787
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02770000 sl=0.02784271 tp=0.02741795 risk=0.00014271 reward=0.00028205 rr=1.9763 atr=0.00025086 sl_reason=above_rejection_high tp_reason=nearest_support support=0.027392866711884012 resistance=0.02795796170426109 swing_high=0.02803 swing_low=0.02715 rejection_high=0.02778
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02769000 sl=0.02782015 tp=0.02742540 risk=0.00013015 reward=0.00026460 rr=2.0330 atr=0.00024061 sl_reason=above_rejection_high tp_reason=nearest_support support=0.027401340043190493 resistance=0.027936676151487767 swing_high=0.02792 swing_low=0.02735 rejection_high=0.02776
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.02712000 sl=0.02767243 tp=0.02576214 risk=0.00055243 reward=0.00135786 rr=2.4580 atr=0.00020971 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.025741168965432416 resistance=0.027540119304853276 swing_high=0.02762 swing_low=0.02736 rejection_high=0.02721
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02707000 sl=0.02724935 tp=0.02683455 risk=0.00017935 reward=0.00023545 rr=1.3127 atr=0.00019742 sl_reason=above_rejection_high tp_reason=nearest_support support=0.026814811077334893 resistance=0.027540119304853276 swing_high=0.02762 swing_low=0.02673 rejection_high=0.0272
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02738000 sl=0.02759294 tp=0.02704416 risk=0.00021294 reward=0.00033584 rr=1.5772 atr=0.00021129 sl_reason=above_resistance tp_reason=nearest_support support=0.027023029781414108 resistance=0.027540119304853276 swing_high=0.02762 swing_low=0.02695 rejection_high=0.02773
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.02677000 sl=0.02700286 tp=0.02576231 risk=0.00023286 reward=0.00100769 rr=4.3275 atr=0.00021143 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.025741168965432416 resistance=0.027595766607227845 swing_high=0.02773 swing_low=0.02695 rejection_high=0.02691
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02637000 sl=0.02655432 tp=0.02589173 risk=0.00018432 reward=0.00047827 rr=2.5948 atr=0.00021728 sl_reason=above_rejection_high tp_reason=swing_low support=0.025843407874155545 resistance=0.026712171143926128 swing_high=0.02639 swing_low=0.02587 rejection_high=0.0265
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02659000 sl=0.02675022 tp=0.02589009 risk=0.00016022 reward=0.00069991 rr=4.3686 atr=0.00020086 sl_reason=above_rejection_high tp_reason=swing_low support=0.025843407874155545 resistance=0.026712171143926128 swing_high=0.02639 swing_low=0.02587 rejection_high=0.0267
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.02831000 sl=0.02800147 tp=0.02859465 risk=0.00030853 reward=0.00028465 rr=0.9226 atr=0.00029528 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.028075295151925177 resistance=0.028624178377293003 swing_high=0.0287 swing_low=0.02587 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02802000 sl=0.02719486 tp=0.02859412 risk=0.00082514 reward=0.00057412 rr=0.6958 atr=0.00030058 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.02797996807275196 resistance=0.028624178377293003 swing_high=0.0287 swing_low=0.02727 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02799000 sl=0.02760968 tp=0.02800987 risk=0.00038032 reward=0.00001987 rr=0.0523 atr=0.00020127 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.027923601968039544 resistance=0.028624178377293003 swing_high=0.02803 swing_low=0.02766 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02818000 sl=0.02762150 tp=0.02860478 risk=0.00055850 reward=0.00042478 rr=0.7606 atr=0.00019401 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.027882727214009053 resistance=0.028624178377293003 swing_high=0.02805 swing_low=0.02767 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02799000 sl=0.02772841 tp=0.02812936 risk=0.00026159 reward=0.00013936 rr=0.5328 atr=0.00020636 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.027872318329176204 resistance=0.02832527445197407 swing_high=0.02815 swing_low=0.02778 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02778000 sl=0.02805590 tp=0.02765068 risk=0.00027590 reward=0.00012932 rr=0.4687 atr=0.00030680 sl_reason=above_resistance tp_reason=swing_low support=0.027367813338968764 resistance=0.027979203678943 swing_high=0.02883 swing_low=0.02762 rejection_high=0.0282
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02785000 sl=0.02804390 tp=0.02764588 risk=0.00019390 reward=0.00020412 rr=1.0527 atr=0.00025880 sl_reason=above_resistance tp_reason=swing_low support=0.027367813338968764 resistance=0.027979203678943 swing_high=0.02883 swing_low=0.02762 rejection_high=0.02807
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.02879000 sl=0.02833226 tp=0.02880290 risk=0.00045774 reward=0.00001290 rr=0.0282 atr=0.00027096 sl_reason=below_retest_support tp_reason=swing_high support=0.02787604885849395 resistance=0.029760741256502774 swing_high=0.02883 swing_low=0.02774 rejection_high=0.02899
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.02910000 sl=0.02886015 tp=0.02973208 risk=0.00023985 reward=0.00063208 rr=2.6353 atr=0.00028664 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.028931809687219954 resistance=0.029760741256502774 swing_high=0.02883 swing_low=0.02774 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02863000 sl=0.02780699 tp=0.02916383 risk=0.00082301 reward=0.00053383 rr=0.6486 atr=0.00027625 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.02787604885849395 resistance=0.029191451089312787 swing_high=0.0293 swing_low=0.02844 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02842000 sl=0.02872209 tp=0.02790524 risk=0.00030209 reward=0.00051476 rr=1.7040 atr=0.00029194 sl_reason=above_resistance tp_reason=nearest_support support=0.02787604885849395 resistance=0.02864910239081583 swing_high=0.02886 swing_low=0.02844 rejection_high=0.0288
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02926000 sl=0.02875596 tp=0.02972531 risk=0.00050404 reward=0.00046531 rr=0.9232 atr=0.00035430 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.028844534417995775 resistance=0.029760741256502774 swing_high=0.03033 swing_low=0.02892 rejection_high=0.02964
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02853000 sl=0.02872781 tp=0.02794018 risk=0.00019781 reward=0.00058982 rr=2.9818 atr=0.00030915 sl_reason=above_resistance tp_reason=nearest_support support=0.027909263252384065 resistance=0.028650521040731923 swing_high=0.02964 swing_low=0.02892 rejection_high=0.02872
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02830000 sl=0.02971345 tp=0.02793864 risk=0.00141345 reward=0.00036136 rr=0.2557 atr=0.00029381 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.027909263252384065 resistance=0.02832527445197407 swing_high=0.02964 swing_low=0.02892 rejection_high=0.02851
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02784000 sl=0.02805922 tp=0.02757200 risk=0.00021922 reward=0.00026800 rr=1.2225 atr=0.00032005 sl_reason=above_resistance tp_reason=swing_low support=0.027436010832559594 resistance=0.027979203678943 swing_high=0.02857 swing_low=0.02754 rejection_high=0.02804
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02788000 sl=0.02805310 tp=0.02756956 risk=0.00017310 reward=0.00031044 rr=1.7934 atr=0.00029560 sl_reason=above_resistance tp_reason=swing_low support=0.027436010832559594 resistance=0.027979203678943 swing_high=0.02857 swing_low=0.02754 rejection_high=0.02801
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.02715000 sl=0.02695519 tp=0.02756691 risk=0.00019481 reward=0.00041691 rr=2.1401 atr=0.00027134 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.027023029781414108 resistance=0.02759404059510671 swing_high=0.02866 swing_low=0.0277 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02823000 sl=0.02836614 tp=0.02791020 risk=0.00013614 reward=0.00031980 rr=2.3491 atr=0.00022455 sl_reason=above_rejection_high tp_reason=nearest_support support=0.02788774330041524 resistance=0.02832527445197407 swing_high=0.02772 swing_low=0.02724 rejection_high=0.02831
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02926000 sl=0.02874741 tp=0.02973504 risk=0.00051259 reward=0.00047504 rr=0.9267 atr=0.00038850 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.028844534417995775 resistance=0.029773893500989336 swing_high=0.03002 swing_low=0.02752 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02880000 sl=0.02742358 tp=0.02915288 risk=0.00137642 reward=0.00035288 rr=0.2564 atr=0.00038567 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.027887372723506696 resistance=0.029191451089312787 swing_high=0.03002 swing_low=0.02752 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02883000 sl=0.02779649 tp=0.02915510 risk=0.00103351 reward=0.00032510 rr=0.3146 atr=0.00036353 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.027887372723506696 resistance=0.029191451089312787 swing_high=0.03002 swing_low=0.02857 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.03209000 sl=0.03045050 tp=0.03323591 risk=0.00163950 reward=0.00114591 rr=0.6989 atr=0.00055802 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.030790604245224652 resistance=0.03329171388572283 swing_high=0.03352 swing_low=0.03059 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.03216000 sl=0.03045332 tp=0.03323704 risk=0.00170668 reward=0.00107704 rr=0.6311 atr=0.00054673 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.030790604245224652 resistance=0.03329171388572283 swing_high=0.03352 swing_low=0.03059 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.03088000 sl=0.03119660 tp=0.03082464 risk=0.00031660 reward=0.00005536 rr=0.1749 atr=0.00034639 sl_reason=above_rejection_high tp_reason=swing_low support=0.02883033868035049 resistance=0.031150015151152698 swing_high=0.032 swing_low=0.03079 rejection_high=0.03111
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.02969000 sl=0.03013436 tp=0.02962374 risk=0.00044436 reward=0.00006626 rr=0.1491 atr=0.00023742 sl_reason=above_retest_resistance tp_reason=swing_low support=0.02883033868035049 resistance=0.029773893500989336 swing_high=0.03099 swing_low=0.0296 rejection_high=None
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.02941000 sl=0.02971986 tp=0.02885028 risk=0.00030986 reward=0.00055972 rr=1.8063 atr=0.00019946 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.02883033868035049 resistance=0.029591128813818035 swing_high=0.02967 swing_low=0.02946 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.03012000 sl=0.03045058 tp=0.02978778 risk=0.00033058 reward=0.00033222 rr=1.0049 atr=0.00032232 sl_reason=above_rejection_high tp_reason=nearest_support support=0.02975555240144144 resistance=0.03045696519895009 swing_high=0.03024 swing_low=0.02969 rejection_high=0.03037
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.03012000 sl=0.03043732 tp=0.02978648 risk=0.00031732 reward=0.00033352 rr=1.0510 atr=0.00030930 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.02975555240144144 resistance=0.03045696519895009 swing_high=0.03024 swing_low=0.02969 rejection_high=0.03021
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.03048000 sl=0.02997763 tp=0.03058505 risk=0.00050237 reward=0.00010505 rr=0.2091 atr=0.00024947 sl_reason=expanded_to_swing_low tp_reason=swing_high support=0.030423979505949147 resistance=0.030838779618627927 swing_high=0.03061 swing_low=0.03004 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02730000 sl=0.02767885 tp=0.02704931 risk=0.00037885 reward=0.00025069 rr=0.6617 atr=0.00026276 sl_reason=above_resistance tp_reason=nearest_support support=0.027023029781414108 resistance=0.02761315865773151 swing_high=0.02791 swing_low=0.02735 rejection_high=0.02784
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02782000 sl=0.02798327 tp=0.02766731 risk=0.00016327 reward=0.00015269 rr=0.9352 atr=0.00017308 sl_reason=above_rejection_high tp_reason=swing_low support=0.027569534660180504 resistance=0.028050588969125746 swing_high=0.02807 swing_low=0.02765 rejection_high=0.02794
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02784000 sl=0.02795061 tp=0.02766625 risk=0.00011061 reward=0.00017375 rr=1.5708 atr=0.00016245 sl_reason=above_rejection_high tp_reason=swing_low support=0.027569534660180504 resistance=0.028050588969125746 swing_high=0.02807 swing_low=0.02765 rejection_high=0.02791
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02775000 sl=0.02791779 tp=0.02759326 risk=0.00016779 reward=0.00015674 rr=0.9341 atr=0.00023728 sl_reason=above_resistance tp_reason=nearest_support support=0.027569534660180504 resistance=0.02785846947934822 swing_high=0.02817 swing_low=0.02786 rejection_high=0.02834
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.02707000 sl=0.02697695 tp=0.02760971 risk=0.00009305 reward=0.00053971 rr=5.8002 atr=0.00018432 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.027023029781414108 resistance=0.02762814220022836 swing_high=0.02772 swing_low=0.02747 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.02711000 sl=0.02697703 tp=0.02760974 risk=0.00013297 reward=0.00049974 rr=3.7582 atr=0.00018401 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.027023029781414108 resistance=0.02762814220022836 swing_high=0.02772 swing_low=0.02747 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02737000 sl=0.02748794 tp=0.02703820 risk=0.00011794 reward=0.00033180 rr=2.8134 atr=0.00015174 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.027023029781414108 resistance=0.02738721697766548 swing_high=0.02745 swing_low=0.02677 rejection_high=0.0274
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.02665000 sl=0.02688970 tp=0.02619184 risk=0.00023970 reward=0.00045816 rr=1.9114 atr=0.00021479 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.026170358945936518 resistance=0.026712171143926128 swing_high=0.02744 swing_low=0.02609 rejection_high=0.02672
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02662000 sl=0.02676147 tp=0.02619095 risk=0.00014147 reward=0.00042905 rr=3.0328 atr=0.00020588 sl_reason=above_rejection_high tp_reason=nearest_support support=0.026170358945936518 resistance=0.026712171143926128 swing_high=0.02744 swing_low=0.02609 rejection_high=0.02671
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02653000 sl=0.02675717 tp=0.02619078 risk=0.00022717 reward=0.00033922 rr=1.4932 atr=0.00020420 sl_reason=above_resistance tp_reason=nearest_support support=0.026170358945936518 resistance=0.026706118984499996 swing_high=0.02672 swing_low=0.02609 rejection_high=0.02671
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02651000 sl=0.02665452 tp=0.02618417 risk=0.00014452 reward=0.00032583 rr=2.2546 atr=0.00013808 sl_reason=above_rejection_high tp_reason=nearest_support support=0.026170358945936518 resistance=0.026731926039088694 swing_high=0.02679 swing_low=0.02653 rejection_high=0.02662
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.02710000 sl=0.02698150 tp=0.02737041 risk=0.00011850 reward=0.00027041 rr=2.2820 atr=0.00016612 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.027023029781414108 resistance=0.027387025617936874 swing_high=0.02689 swing_low=0.0267 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02716000 sl=0.02693072 tp=0.02724429 risk=0.00022928 reward=0.00008429 rr=0.3676 atr=0.00015712 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.0270134482052835 resistance=0.027387025617936874 swing_high=0.02726 swing_low=0.02697 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02784000 sl=0.02810695 tp=0.02783478 risk=0.00026695 reward=0.00000522 rr=0.0196 atr=0.00014781 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.027569534660180504 resistance=0.02785846947934822 swing_high=0.02807 swing_low=0.02782 rejection_high=0.02789
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02891000 sl=0.02876940 tp=0.02916707 risk=0.00014060 reward=0.00025707 rr=1.8284 atr=0.00024376 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.02883033868035049 resistance=0.029191451089312787 swing_high=0.02888 swing_low=0.02839 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.02959000 sl=0.02933503 tp=0.02988385 risk=0.00025497 reward=0.00029385 rr=1.1525 atr=0.00024355 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.029395915225603 resistance=0.029908200363864983 swing_high=0.03016 swing_low=0.02953 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02938000 sl=0.03002913 tp=0.02913959 risk=0.00064913 reward=0.00024041 rr=0.3704 atr=0.00015652 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.029123934724981614 resistance=0.029417633904357563 swing_high=0.02999 swing_low=0.02941 rejection_high=0.02944
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.03054000 sl=0.03037063 tp=0.03070866 risk=0.00016937 reward=0.00016866 rr=0.9958 atr=0.00021340 sl_reason=below_support_zone tp_reason=swing_high support=0.030423979505949147 resistance=0.030838779618627927 swing_high=0.03073 swing_low=0.02954 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.03052000 sl=0.03022830 tp=0.03073532 risk=0.00029170 reward=0.00021532 rr=0.7382 atr=0.00024680 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.030423979505949147 resistance=0.030868657217907373 swing_high=0.03076 swing_low=0.03029 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.03056000 sl=0.03005754 tp=0.03084367 risk=0.00050246 reward=0.00028367 rr=0.5646 atr=0.00024984 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.030423979505949147 resistance=0.030868657217907373 swing_high=0.03108 swing_low=0.03012 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.03076000 sl=0.03093562 tp=0.03045076 risk=0.00017562 reward=0.00030924 rr=1.7608 atr=0.00026784 sl_reason=above_resistance tp_reason=nearest_support support=0.030423979505949147 resistance=0.030868657217907373 swing_high=0.02979 swing_low=0.02957 rejection_high=0.03097
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.03056000 sl=0.03032495 tp=0.03084664 risk=0.00023505 reward=0.00028664 rr=1.2195 atr=0.00022019 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.030465250725540686 resistance=0.030868657217907373 swing_high=0.03121 swing_low=0.03038 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.03051000 sl=0.03032424 tp=0.03084635 risk=0.00018576 reward=0.00033635 rr=1.8107 atr=0.00022304 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.030465250725540686 resistance=0.030868657217907373 swing_high=0.03121 swing_low=0.03038 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.03056000 sl=0.03032554 tp=0.03084688 risk=0.00023446 reward=0.00028688 rr=1.2236 atr=0.00021782 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.030465250725540686 resistance=0.030868657217907373 swing_high=0.03121 swing_low=0.03038 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.03023000 sl=0.02988053 tp=0.03050748 risk=0.00034947 reward=0.00027748 rr=0.7940 atr=0.00015789 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.03019712689376602 resistance=0.03052327295475659 swing_high=0.0302 swing_low=0.02992 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.03022000 sl=0.02932496 tp=0.03050526 risk=0.00089504 reward=0.00028526 rr=0.3187 atr=0.00018015 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.03019712689376602 resistance=0.03052327295475659 swing_high=0.0297 swing_low=0.02937 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02781000 sl=0.02840205 tp=0.02759835 risk=0.00059205 reward=0.00021165 rr=0.3575 atr=0.00028819 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.027569534660180504 resistance=0.02785846947934822 swing_high=0.02833 swing_low=0.0274 rejection_high=0.02819
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02772000 sl=0.02792532 tp=0.02759628 risk=0.00020532 reward=0.00012372 rr=0.6026 atr=0.00026741 sl_reason=above_resistance tp_reason=nearest_support support=0.027569534660180504 resistance=0.02785846947934822 swing_high=0.02833 swing_low=0.02727 rejection_high=0.02787
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.02725000 sl=0.02740806 tp=0.02703285 risk=0.00015806 reward=0.00021715 rr=1.3739 atr=0.00019399 sl_reason=above_resistance tp_reason=nearest_support support=0.0270134482052835 resistance=0.027359560816192622 swing_high=0.02777 swing_low=0.0274 rejection_high=0.02739
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02683000 sl=0.02696667 tp=0.02655698 risk=0.00013667 reward=0.00027302 rr=1.9977 atr=0.00022666 sl_reason=above_rejection_high tp_reason=nearest_support support=0.026534318805787084 resistance=0.027118822401301316 swing_high=0.02723 swing_low=0.02634 rejection_high=0.02691
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.02685000 sl=0.02700454 tp=0.02655613 risk=0.00015454 reward=0.00029387 rr=1.9015 atr=0.00021816 sl_reason=above_rejection_high tp_reason=nearest_support support=0.026534318805787084 resistance=0.027118822401301316 swing_high=0.02723 swing_low=0.02634 rejection_high=0.02695
+Сбор данных для WLD/USDT... (лимит 10000)
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.36840000 sl=0.37173840 tp=0.36622073 risk=0.00333840 reward=0.00217927 rr=0.6528 atr=0.00335358 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.36588537072043775 resistance=0.3695609469164517 swing_high=0.3709 swing_low=0.3645 rejection_high=0.3692
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.37070000 sl=0.36689351 tp=0.37598723 risk=0.00380649 reward=0.00528723 rr=1.3890 atr=0.00374915 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.36783079254516965 resistance=0.37636214296536535 swing_high=0.3773 swing_low=0.368 rejection_high=None
+[RISK DEBUG] setup=RANGE_REJECTION direction=SHORT entry=0.37330000 sl=0.37645668 tp=0.36964079 risk=0.00315668 reward=0.00365921 rr=1.1592 atr=0.00340788 sl_reason=above_nearest_resistance_and_relevant_swing_high tp_reason=swing_low support=0.36864717417449994 resistance=0.3756047090267814 swing_high=0.3754 swing_low=0.3693 rejection_high=0.376
+[RISK DEBUG] setup=RANGE_REJECTION direction=SHORT entry=0.37220000 sl=0.37645654 tp=0.36964073 risk=0.00425654 reward=0.00255927 rr=0.6013 atr=0.00340732 sl_reason=above_nearest_resistance_and_relevant_swing_high tp_reason=swing_low support=0.36864717417449994 resistance=0.3756047090267814 swing_high=0.3754 swing_low=0.3693 rejection_high=0.375
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.41410000 sl=0.40336100 tp=0.43426940 risk=0.01073900 reward=0.02016940 rr=1.8781 atr=0.00535602 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.39436326587178344 resistance=0.43480500000000005 swing_high=0.4102 swing_low=0.3963 rejection_high=0.4169
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.41160000 sl=0.39010122 tp=0.41772504 risk=0.02149878 reward=0.00612504 rr=0.2849 atr=0.01704817 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.39436326587178344 resistance=0.41942985312822517 swing_high=0.4214 swing_low=0.411 rejection_high=0.4639
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.41690000 sl=0.30613240 tp=0.41748281 risk=0.11076760 reward=0.00058281 rr=0.0053 atr=0.01947042 sl_reason=expanded_to_swing_low tp_reason=nearest_resistance support=0.41300850674147926 resistance=0.41942985312822517 swing_high=0.4639 swing_low=0.311 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.39340000 sl=0.42695685 tp=0.38738274 risk=0.03355685 reward=0.00601726 rr=0.1793 atr=0.00982738 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.382750100075078 resistance=0.39581186919621336 swing_high=0.4245 swing_low=0.3864 rejection_high=0.397
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39090000 sl=0.39739311 tp=0.38707725 risk=0.00649311 reward=0.00382275 rr=0.5887 atr=0.00677246 sl_reason=above_rejection_high tp_reason=swing_low support=0.382750100075078 resistance=0.3963176417000331 swing_high=0.398 swing_low=0.3864 rejection_high=0.3957
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39200000 sl=0.39511316 tp=0.38500783 risk=0.00311316 reward=0.00699217 rr=2.2460 atr=0.00565266 sl_reason=above_rejection_high tp_reason=nearest_support support=0.38444256116828107 resistance=0.3963176417000331 swing_high=0.398 swing_low=0.3829 rejection_high=0.3937
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.39400000 sl=0.39764956 tp=0.39154821 risk=0.00364956 reward=0.00245179 rr=0.6718 atr=0.00448211 sl_reason=above_resistance tp_reason=swing_low support=0.38444256116828107 resistance=0.3965290305784828 swing_high=0.3987 swing_low=0.3911 rejection_high=0.3971
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.38750000 sl=0.38983996 tp=0.38489078 risk=0.00233996 reward=0.00260922 rr=1.1151 atr=0.00448223 sl_reason=above_resistance tp_reason=nearest_support support=0.38444256116828107 resistance=0.38871940017503726 swing_high=0.3906 swing_low=0.3781 rejection_high=0.3896
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39070000 sl=0.39436540 tp=0.38492616 risk=0.00366540 reward=0.00577384 rr=1.5752 atr=0.00426161 sl_reason=above_rejection_high tp_reason=swing_low support=0.3844540431786115 resistance=0.3965290305784828 swing_high=0.3906 swing_low=0.3845 rejection_high=0.3933
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.38420000 sl=0.38830228 tp=0.37841804 risk=0.00410228 reward=0.00578196 rr=1.4095 atr=0.00440911 sl_reason=above_rejection_high tp_reason=nearest_support support=0.3779771306158768 resistance=0.38871940017503726 swing_high=0.3949 swing_low=0.3845 rejection_high=0.3872
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.36910000 sl=0.38225986 tp=0.31789701 risk=0.01315986 reward=0.05120299 rr=3.8908 atr=0.00503942 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.3173930632847543 resistance=0.3695609469164517 swing_high=0.381 swing_low=0.372 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.37630000 sl=0.38211978 tp=0.37061997 risk=0.00581978 reward=0.00568003 rr=0.9760 atr=0.00447912 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.3701720606463995 resistance=0.38871940017503726 swing_high=0.381 swing_low=0.3664 rejection_high=0.3774
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.37570000 sl=0.38207254 tp=0.37060108 risk=0.00637254 reward=0.00509892 rr=0.8001 atr=0.00429016 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.3701720606463995 resistance=0.37574829869546755 swing_high=0.381 swing_low=0.3664 rejection_high=0.3775
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40350000 sl=0.38677418 tp=0.41308967 risk=0.01672582 reward=0.00958967 rr=0.5733 atr=0.00610328 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.39453519711355145 resistance=0.4144153005443804 swing_high=0.4137 swing_low=0.3883 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40500000 sl=0.38684726 tp=0.41311891 risk=0.01815274 reward=0.00811891 rr=0.4473 atr=0.00581094 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.39453519711355145 resistance=0.4144153005443804 swing_high=0.4137 swing_low=0.3883 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40630000 sl=0.39338272 tp=0.41313247 risk=0.01291728 reward=0.00683247 rr=0.5289 atr=0.00567525 sl_reason=below_support_zone tp_reason=swing_high support=0.3948015347405368 resistance=0.4144153005443804 swing_high=0.4137 swing_low=0.397 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40640000 sl=0.39355801 tp=0.40960259 risk=0.01284199 reward=0.00320259 rr=0.2494 atr=0.00497408 sl_reason=below_support_zone tp_reason=swing_high support=0.3948015347405368 resistance=0.4144153005443804 swing_high=0.4101 swing_low=0.397 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40760000 sl=0.39359148 tp=0.40961598 risk=0.01400852 reward=0.00201598 rr=0.1439 atr=0.00484022 sl_reason=below_support_zone tp_reason=swing_high support=0.3948015347405368 resistance=0.4144153005443804 swing_high=0.4101 swing_low=0.397 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40700000 sl=0.39364514 tp=0.40963744 risk=0.01335486 reward=0.00263744 rr=0.1975 atr=0.00462557 sl_reason=below_support_zone tp_reason=swing_high support=0.3948015347405368 resistance=0.4144153005443804 swing_high=0.4101 swing_low=0.397 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40440000 sl=0.39361439 tp=0.40962514 risk=0.01078561 reward=0.00522514 rr=0.4845 atr=0.00474858 sl_reason=below_support_zone tp_reason=swing_high support=0.3948015347405368 resistance=0.4144153005443804 swing_high=0.4101 swing_low=0.397 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40710000 sl=0.39833957 tp=0.40967583 risk=0.00876043 reward=0.00257583 rr=0.2940 atr=0.00424170 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.4011807167308903 resistance=0.4144153005443804 swing_high=0.4101 swing_low=0.3994 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40630000 sl=0.39824396 tp=0.41451218 risk=0.00805604 reward=0.00821218 rr=1.0194 atr=0.00462415 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.4011807167308903 resistance=0.4149745905125795 swing_high=0.4183 swing_low=0.3994 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40800000 sl=0.40133459 tp=0.41454843 risk=0.00666541 reward=0.00654843 rr=0.9824 atr=0.00426164 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.40263073057322246 resistance=0.4149745905125795 swing_high=0.4183 swing_low=0.4024 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40560000 sl=0.40128212 tp=0.41452744 risk=0.00431788 reward=0.00892744 rr=2.0676 atr=0.00447152 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.40263073057322246 resistance=0.4149745905125795 swing_high=0.4183 swing_low=0.4024 rejection_high=0.4088
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.39230000 sl=0.39578336 tp=0.38717334 risk=0.00348336 reward=0.00512666 rr=1.4718 atr=0.00473343 sl_reason=above_rejection_high tp_reason=swing_low support=0.3857029748299772 resistance=0.39607808264376687 swing_high=0.3978 swing_low=0.3867 rejection_high=0.3946
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.39910000 sl=0.38890017 tp=0.40456537 risk=0.01019983 reward=0.00546537 rr=0.5358 atr=0.00519931 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.39424467561487087 resistance=0.40508529926588377 swing_high=0.3978 swing_low=0.3902 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.39930000 sl=0.38891444 tp=0.40457108 risk=0.01038556 reward=0.00527108 rr=0.5075 atr=0.00514222 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.39424467561487087 resistance=0.40508529926588377 swing_high=0.3978 swing_low=0.3902 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.39990000 sl=0.38891698 tp=0.40268679 risk=0.01098302 reward=0.00278679 rr=0.2537 atr=0.00513206 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.39424467561487087 resistance=0.4042521999172502 swing_high=0.4032 swing_low=0.3902 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.39860000 sl=0.39315327 tp=0.40270131 risk=0.00544673 reward=0.00410131 rr=0.7530 atr=0.00498691 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.39455640960064864 resistance=0.4042521999172502 swing_high=0.4032 swing_low=0.3944 rejection_high=0.4
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39180000 sl=0.39600678 tp=0.38614569 risk=0.00420678 reward=0.00565431 rr=1.3441 atr=0.00442714 sl_reason=above_rejection_high tp_reason=nearest_support support=0.3857029748299772 resistance=0.3963971266952664 swing_high=0.4001 swing_low=0.3946 rejection_high=0.3949
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.40090000 sl=0.40357557 tp=0.39469629 risk=0.00267557 reward=0.00620371 rr=2.3187 atr=0.00430228 sl_reason=above_rejection_high tp_reason=nearest_support support=0.39426605797811676 resistance=0.4042521999172502 swing_high=0.4001 swing_low=0.3906 rejection_high=0.4025
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40490000 sl=0.40150850 tp=0.41452570 risk=0.00339150 reward=0.00962570 rr=2.8382 atr=0.00448891 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.40263073057322246 resistance=0.4149745905125795 swing_high=0.403 swing_low=0.394 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40590000 sl=0.40139169 tp=0.41200438 risk=0.00450831 reward=0.00610438 rr=1.3540 atr=0.00495615 sl_reason=below_support_zone tp_reason=swing_high support=0.40263073057322246 resistance=0.41407366303934295 swing_high=0.4125 swing_low=0.3945 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.40600000 sl=0.39981555 tp=0.41198622 risk=0.00618445 reward=0.00598622 rr=0.9679 atr=0.00513781 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.4028827295587054 resistance=0.41407366303934295 swing_high=0.4125 swing_low=0.4011 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.41420000 sl=0.40790449 tp=0.41913320 risk=0.00629551 reward=0.00493320 rr=0.7836 atr=0.00438203 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.4109204939167539 resistance=0.41957140518544717 swing_high=0.4211 swing_low=0.409 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.39420000 sl=0.39742709 tp=0.38611496 risk=0.00322709 reward=0.00808504 rr=2.5054 atr=0.00411986 sl_reason=above_resistance tp_reason=nearest_support support=0.3857029748299772 resistance=0.3963971266952664 swing_high=0.4042 swing_low=0.3988 rejection_high=0.3981
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.39390000 sl=0.39622975 tp=0.38771190 risk=0.00232975 reward=0.00618810 rr=2.6561 atr=0.00411901 sl_reason=above_rejection_high tp_reason=swing_low support=0.38607280807146493 resistance=0.3966522946637972 swing_high=0.3995 swing_low=0.3873 rejection_high=0.3952
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39380000 sl=0.39683448 tp=0.39107379 risk=0.00303448 reward=0.00272621 rr=0.8984 atr=0.00373792 sl_reason=above_rejection_high tp_reason=swing_low support=0.38607280807146493 resistance=0.3966554402815489 swing_high=0.3965 swing_low=0.3907 rejection_high=0.3959
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39390000 sl=0.39742127 tp=0.38826851 risk=0.00352127 reward=0.00563149 rr=1.5993 atr=0.00368509 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.3864816562791203 resistance=0.3966554402815489 swing_high=0.3965 swing_low=0.3879 rejection_high=0.3947
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39400000 sl=0.39714207 tp=0.38823683 risk=0.00314207 reward=0.00576317 rr=1.8342 atr=0.00336829 sl_reason=above_rejection_high tp_reason=swing_low support=0.3864816562791203 resistance=0.3966554402815489 swing_high=0.3965 swing_low=0.3879 rejection_high=0.3963
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39130000 sl=0.39563526 tp=0.38823410 risk=0.00433526 reward=0.00306590 rr=0.7072 atr=0.00334103 sl_reason=above_rejection_high tp_reason=swing_low support=0.3864816562791203 resistance=0.3966554402815489 swing_high=0.3965 swing_low=0.3879 rejection_high=0.3948
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.38350000 sl=0.38594424 tp=0.37828580 risk=0.00244424 reward=0.00521420 rr=2.1333 atr=0.00371031 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.37791476916480593 resistance=0.38871940017503726 swing_high=0.3963 swing_low=0.375 rejection_high=0.3845
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.38590000 sl=0.38860565 tp=0.37827703 risk=0.00270565 reward=0.00762297 rr=2.8174 atr=0.00362261 sl_reason=above_rejection_high tp_reason=nearest_support support=0.37791476916480593 resistance=0.38871940017503726 swing_high=0.3963 swing_low=0.375 rejection_high=0.3877
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.38640000 sl=0.39716418 tp=0.37826044 risk=0.01076418 reward=0.00813956 rr=0.7562 atr=0.00345671 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.37791476916480593 resistance=0.38871940017503726 swing_high=0.3963 swing_low=0.375 rejection_high=0.3871
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.38620000 sl=0.38894709 tp=0.37825361 risk=0.00274709 reward=0.00794639 rr=2.8927 atr=0.00338837 sl_reason=above_rejection_high tp_reason=nearest_support support=0.37791476916480593 resistance=0.38871940017503726 swing_high=0.3963 swing_low=0.375 rejection_high=0.3881
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.38370000 sl=0.38735323 tp=0.37825606 risk=0.00365323 reward=0.00544394 rr=1.4902 atr=0.00341293 sl_reason=above_rejection_high tp_reason=nearest_support support=0.37791476916480593 resistance=0.38871940017503726 swing_high=0.3963 swing_low=0.375 rejection_high=0.3865
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.38240000 sl=0.38624794 tp=0.37825395 risk=0.00384794 reward=0.00414605 rr=1.0775 atr=0.00339176 sl_reason=above_rejection_high tp_reason=nearest_support support=0.37791476916480593 resistance=0.3880793599863209 swing_high=0.3881 swing_low=0.375 rejection_high=0.3854
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.38620000 sl=0.38875537 tp=0.38281094 risk=0.00255537 reward=0.00338906 rr=1.3263 atr=0.00342147 sl_reason=above_rejection_high tp_reason=nearest_support support=0.382468789580923 resistance=0.3880793599863209 swing_high=0.3881 swing_low=0.3812 rejection_high=0.3879
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.41430000 sl=0.40821469 tp=0.41978676 risk=0.00608531 reward=0.00548676 rr=0.9016 atr=0.00394123 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.4110408169913645 resistance=0.4201808860531066 swing_high=0.4241 swing_low=0.4092 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.41390000 sl=0.40836584 tp=0.41512634 risk=0.00553416 reward=0.00122634 rr=0.2216 atr=0.00373662 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.4107859563944628 resistance=0.4201808860531066 swing_high=0.4155 swing_low=0.4093 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.40080000 sl=0.40465898 tp=0.39724359 risk=0.00385898 reward=0.00355641 rr=0.9216 atr=0.00343591 sl_reason=above_rejection_high tp_reason=swing_low support=0.3950055822897544 resistance=0.4050574817891433 swing_high=0.4075 swing_low=0.3969 rejection_high=0.4038
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.40050000 sl=0.40334941 tp=0.39723976 risk=0.00284941 reward=0.00326024 rr=1.1442 atr=0.00339763 sl_reason=above_rejection_high tp_reason=swing_low support=0.3950055822897544 resistance=0.4050574817891433 swing_high=0.4075 swing_low=0.3969 rejection_high=0.4025
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.39990000 sl=0.40538584 tp=0.39721434 risk=0.00548584 reward=0.00268566 rr=0.4896 atr=0.00314336 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.3950055822897544 resistance=0.40021485561191217 swing_high=0.4046 swing_low=0.3969 rejection_high=0.4011
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.40040000 sl=0.40347971 tp=0.39721188 risk=0.00307971 reward=0.00318812 rr=1.0352 atr=0.00311884 sl_reason=above_rejection_high tp_reason=swing_low support=0.3950055822897544 resistance=0.4053423437544182 swing_high=0.4046 swing_low=0.3969 rejection_high=0.4027
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.39870000 sl=0.40107545 tp=0.39486519 risk=0.00237545 reward=0.00383481 rr=1.6144 atr=0.00310180 sl_reason=above_rejection_high tp_reason=nearest_support support=0.39455501298088086 resistance=0.4008804366774979 swing_high=0.4027 swing_low=0.3913 rejection_high=0.4003
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.40080000 sl=0.40341763 tp=0.39482182 risk=0.00261763 reward=0.00597818 rr=2.2838 atr=0.00287053 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.39453476614693234 resistance=0.4008804366774979 swing_high=0.4027 swing_low=0.3938 rejection_high=0.4016
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.37860000 sl=0.38043961 tp=0.37395609 risk=0.00183961 reward=0.00464391 rr=2.5244 atr=0.00295844 sl_reason=above_rejection_high tp_reason=nearest_support support=0.37366024660518365 resistance=0.38171373744369225 swing_high=0.3832 swing_low=0.3724 rejection_high=0.3797
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.37740000 sl=0.38009458 tp=0.37723783 risk=0.00269458 reward=0.00016217 rr=0.0602 atr=0.00237832 sl_reason=above_rejection_high tp_reason=swing_low support=0.37366024660518365 resistance=0.38167205709430374 swing_high=0.3822 swing_low=0.377 rejection_high=0.3795
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.37660000 sl=0.37866754 tp=0.37388726 risk=0.00206754 reward=0.00271274 rr=1.3121 atr=0.00227018 sl_reason=above_rejection_high tp_reason=nearest_support support=0.37366024660518365 resistance=0.3792087564814693 swing_high=0.3801 swing_low=0.377 rejection_high=0.3781
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.37670000 sl=0.37815022 tp=0.37592009 risk=0.00145022 reward=0.00077991 rr=0.5378 atr=0.00220088 sl_reason=above_rejection_high tp_reason=swing_low support=0.37366024660518365 resistance=0.3792087564814693 swing_high=0.3801 swing_low=0.3757 rejection_high=0.3776
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.37610000 sl=0.37895210 tp=0.37592084 risk=0.00285210 reward=0.00017916 rr=0.0628 atr=0.00220841 sl_reason=above_rejection_high tp_reason=swing_low support=0.37366024660518365 resistance=0.3792087564814693 swing_high=0.3801 swing_low=0.3757 rejection_high=0.3784
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.38580000 sl=0.38234762 tp=0.38900031 risk=0.00345238 reward=0.00320031 rr=0.9270 atr=0.00300950 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.3827943620092166 resistance=0.38930126011549837 swing_high=0.3828 swing_low=0.3747 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.38380000 sl=0.38203874 tp=0.38889775 risk=0.00176126 reward=0.00509775 rr=2.8944 atr=0.00302249 sl_reason=below_support_zone tp_reason=swing_high support=0.3827943620092166 resistance=0.38930590718349534 swing_high=0.3892 swing_low=0.3747 rejection_high=None
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.35700000 sl=0.36019651 tp=0.31763167 risk=0.00319651 reward=0.03936833 rr=12.3160 atr=0.00238606 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.3173930632847543 resistance=0.360487090778034 swing_high=0.3643 swing_low=0.3585 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.35640000 sl=0.35831554 tp=0.35327582 risk=0.00191554 reward=0.00312418 rr=1.6310 atr=0.00286215 sl_reason=above_rejection_high tp_reason=nearest_support support=0.3529896045634507 resistance=0.3601929258547453 swing_high=0.3596 swing_low=0.352 rejection_high=0.3576
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.37050000 sl=0.36847904 tp=0.37086448 risk=0.00202096 reward=0.00036448 rr=0.1803 atr=0.00235524 sl_reason=below_support_zone tp_reason=swing_high support=0.3690678518976443 resistance=0.37672863561806086 swing_high=0.3711 swing_low=0.3632 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.37280000 sl=0.37152931 tp=0.37648657 risk=0.00127069 reward=0.00368657 rr=2.9012 atr=0.00242069 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.37213448259492343 resistance=0.37672863561806086 swing_high=0.3711 swing_low=0.3632 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.36900000 sl=0.37068295 tp=0.36446145 risk=0.00168295 reward=0.00453855 rr=2.6968 atr=0.00236710 sl_reason=above_resistance tp_reason=nearest_support support=0.36422474449998 resistance=0.37009117963998867 swing_high=0.3748 swing_low=0.3632 rejection_high=0.3714
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.36060000 sl=0.36345036 tp=0.35701718 risk=0.00285036 reward=0.00358282 rr=1.2570 atr=0.00340142 sl_reason=above_rejection_high tp_reason=nearest_support support=0.3566770334658597 resistance=0.36319385541589666 swing_high=0.3654 swing_low=0.3545 rejection_high=0.3626
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.36140000 sl=0.36323094 tp=0.35700722 risk=0.00183094 reward=0.00439278 rr=2.3992 atr=0.00252378 sl_reason=above_rejection_high tp_reason=nearest_support support=0.3567548427723241 resistance=0.36319385541589666 swing_high=0.369 swing_low=0.3634 rejection_high=0.3626
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.39260000 sl=0.39027647 tp=0.39624801 risk=0.00232353 reward=0.00364801 rr=1.5700 atr=0.00251991 sl_reason=below_support_zone tp_reason=swing_high support=0.3909064493009997 resistance=0.3966951559917898 swing_high=0.3965 swing_low=0.3832 rejection_high=0.3934
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.39260000 sl=0.39028576 tp=0.39625172 risk=0.00231424 reward=0.00365172 rr=1.5779 atr=0.00248277 sl_reason=below_support_zone tp_reason=swing_high support=0.3909064493009997 resistance=0.3966951559917898 swing_high=0.3965 swing_low=0.3832 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.41470000 sl=0.41052809 tp=0.41553123 risk=0.00417191 reward=0.00083123 rr=0.1992 atr=0.00268765 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.41468013316769187 resistance=0.4209694293628615 swing_high=0.4158 swing_low=0.4112 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.41470000 sl=0.40972460 tp=0.41544984 risk=0.00497540 reward=0.00074984 rr=0.1507 atr=0.00350160 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.41468013316769187 resistance=0.4209694293628615 swing_high=0.4158 swing_low=0.4106 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.41740000 sl=0.40972106 tp=0.42130142 risk=0.00767894 reward=0.00390142 rr=0.5081 atr=0.00351577 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.41468013316769187 resistance=0.4216530017047038 swing_high=0.4247 swing_low=0.4106 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.41630000 sl=0.40973384 tp=0.42130654 risk=0.00656616 reward=0.00500654 rr=0.7625 atr=0.00346465 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.41468013316769187 resistance=0.4216530017047038 swing_high=0.4247 swing_low=0.4106 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.41900000 sl=0.42301338 tp=0.41509100 risk=0.00401338 reward=0.00390900 rr=0.9740 atr=0.00410862 sl_reason=above_resistance tp_reason=nearest_support support=0.41468013316769187 resistance=0.4219862248726967 swing_high=0.4262 swing_low=0.4073 rejection_high=0.424
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.45260000 sl=0.44722478 tp=0.46125329 risk=0.00537522 reward=0.00865329 rr=1.6098 atr=0.00750087 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.4520813975458412 resistance=0.4620033791776043 swing_high=0.4658 swing_low=0.4491 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.45090000 sl=0.41290966 tp=0.46129519 risk=0.03799034 reward=0.01039519 rr=0.2736 atr=0.00708187 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.41468013316769187 resistance=0.4620033791776043 swing_high=0.4658 swing_low=0.4491 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.45240000 sl=0.44438099 tp=0.46131578 risk=0.00801901 reward=0.00891578 rr=1.1118 atr=0.00687603 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.4504128264785299 resistance=0.4620033791776043 swing_high=0.4658 swing_low=0.4461 rejection_high=0.4544
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.45810000 sl=0.44041597 tp=0.46132977 risk=0.01768403 reward=0.00322977 rr=0.1826 atr=0.00673611 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.44833015180621566 resistance=0.4620033791776043 swing_high=0.4658 swing_low=0.4421 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.47130000 sl=0.44015590 tp=0.49408736 risk=0.03114410 reward=0.02278736 rr=0.7317 atr=0.00777639 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.44833015180621566 resistance=0.494865 swing_high=0.4658 swing_low=0.4421 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.45370000 sl=0.44631187 tp=0.46119607 risk=0.00738813 reward=0.00749607 rr=1.0146 atr=0.00807314 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.44833015180621566 resistance=0.4620033791776043 swing_high=0.4779 swing_low=0.4559 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.45610000 sl=0.44634889 tp=0.46121087 risk=0.00975111 reward=0.00511087 rr=0.5241 atr=0.00792506 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.44833015180621566 resistance=0.4620033791776043 swing_high=0.4779 swing_low=0.4559 rejection_high=0.4596
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.47140000 sl=0.46296599 tp=0.47423025 risk=0.00843401 reward=0.00283025 rr=0.3356 atr=0.00753604 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.4584260427260313 resistance=0.4749838531829709 swing_high=0.4779 swing_low=0.4505 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.47530000 sl=0.46488010 tp=0.48019204 risk=0.01041990 reward=0.00489204 rr=0.4695 atr=0.00607959 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.4685671670528595 resistance=0.49906500000000004 swing_high=0.4808 swing_low=0.4664 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.48120000 sl=0.46479045 tp=0.50461618 risk=0.01640955 reward=0.02341618 rr=1.4270 atr=0.00643819 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.4685671670528595 resistance=0.50526 swing_high=0.4808 swing_low=0.4664 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.48170000 sl=0.46965911 tp=0.50209840 risk=0.01204089 reward=0.02039840 rr=1.6941 atr=0.00802083 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.4716643210102445 resistance=0.5029004800116204 swing_high=0.5056 swing_low=0.4721 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.48690000 sl=0.47549427 tp=0.50218485 risk=0.01140573 reward=0.01528485 rr=1.3401 atr=0.00715627 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.46995792413725707 resistance=0.5029004800116204 swing_high=0.4784 swing_low=0.4612 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.48480000 sl=0.47642356 tp=0.49087208 risk=0.00837644 reward=0.00607208 rr=0.7249 atr=0.00670577 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.4807617524763738 resistance=0.4915426609944608 swing_high=0.4943 swing_low=0.4781 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.45780000 sl=0.46120212 tp=0.44976122 risk=0.00340212 reward=0.00803878 rr=2.3629 atr=0.00400850 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.44936037366807985 resistance=0.45864566845286303 swing_high=0.4602 swing_low=0.448 rejection_high=0.4593
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.45460000 sl=0.45940554 tp=0.44976259 risk=0.00480554 reward=0.00483741 rr=1.0066 atr=0.00402217 sl_reason=above_rejection_high tp_reason=nearest_support support=0.44936037366807985 resistance=0.45864566845286303 swing_high=0.4602 swing_low=0.448 rejection_high=0.4584
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.45500000 sl=0.45769265 tp=0.44975743 risk=0.00269265 reward=0.00524257 rr=1.9470 atr=0.00397059 sl_reason=above_rejection_high tp_reason=nearest_support support=0.44936037366807985 resistance=0.45864566845286303 swing_high=0.4602 swing_low=0.448 rejection_high=0.4567
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.45440000 sl=0.45733652 tp=0.44973498 risk=0.00293652 reward=0.00466502 rr=1.5886 atr=0.00374607 sl_reason=above_rejection_high tp_reason=nearest_support support=0.44936037366807985 resistance=0.45864566845286303 swing_high=0.4602 swing_low=0.448 rejection_high=0.4564
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.44730000 sl=0.46273649 tp=0.44307915 risk=0.01543649 reward=0.00422085 rr=0.2734 atr=0.00374596 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.4427045578888685 resistance=0.4543696304607054 swing_high=0.4618 swing_low=0.4412 rejection_high=0.4487
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.43630000 sl=0.44338304 tp=0.41517335 risk=0.00708304 reward=0.02112665 rr=2.9827 atr=0.00493215 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.41468013316769187 resistance=0.4545389967434667 swing_high=0.4558 swing_low=0.4431 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.43530000 sl=0.43860157 tp=0.43264761 risk=0.00330157 reward=0.00265239 rr=0.8034 atr=0.00400628 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.4322469796704579 resistance=0.43598140100822713 swing_high=0.4376 swing_low=0.4301 rejection_high=0.4373
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.43590000 sl=0.43861574 tp=0.43265328 risk=0.00271574 reward=0.00324672 rr=1.1955 atr=0.00406297 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.4322469796704579 resistance=0.43598140100822713 swing_high=0.4376 swing_low=0.4301 rejection_high=0.4389
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.43290000 sl=0.43686613 tp=0.41506658 risk=0.00396613 reward=0.01783342 rr=4.4964 atr=0.00386450 sl_reason=above_rejection_high tp_reason=nearest_support support=0.41468013316769187 resistance=0.43598140100822713 swing_high=0.4376 swing_low=0.4338 rejection_high=0.4359
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.41050000 sl=0.41266833 tp=0.40790733 risk=0.00216833 reward=0.00259267 rr=1.1957 atr=0.00307333 sl_reason=above_rejection_high tp_reason=swing_low support=0.406414440378132 resistance=0.4141779491746238 swing_high=0.4175 swing_low=0.4076 rejection_high=0.4119
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.41050000 sl=0.41404024 tp=0.40789610 risk=0.00354024 reward=0.00260390 rr=0.7355 atr=0.00296095 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.406414440378132 resistance=0.4141494240662027 swing_high=0.4133 swing_low=0.4076 rejection_high=0.4112
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.41060000 sl=0.41400879 tp=0.40788352 risk=0.00340879 reward=0.00271648 rr=0.7969 atr=0.00283517 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.406414440378132 resistance=0.4141494240662027 swing_high=0.4133 swing_low=0.4076 rejection_high=0.4112
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.40500000 sl=0.41357316 tp=0.40140315 risk=0.00857316 reward=0.00359685 rr=0.4195 atr=0.00389266 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.4010138793970494 resistance=0.4056270669217887 swing_high=0.4126 swing_low=0.3958 rejection_high=0.4073
+Сбор данных для GALA/USDT... (лимит 10000)
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.00203400 sl=0.00194505 tp=0.00205182 risk=0.00008895 reward=0.00001782 rr=0.2003 atr=0.00005181 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.0019534660413130568 resistance=0.0021357 swing_high=0.002057 swing_low=0.001958 rejection_high=0.002058
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.00216300 sl=0.00207039 tp=0.00226610 risk=0.00009261 reward=0.00010310 rr=1.1133 atr=0.00005045 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.0019534660413130568 resistance=0.00227115 swing_high=0.002083 swing_low=0.001958 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00209200 sl=0.00194049 tp=0.00215187 risk=0.00015151 reward=0.00005987 rr=0.3952 atr=0.00005191 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0019534660413130568 resistance=0.0021570656593393593 swing_high=0.002176 swing_low=0.001958 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00213300 sl=0.00194049 tp=0.00215187 risk=0.00019251 reward=0.00001887 rr=0.0980 atr=0.00005192 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0019534660413130568 resistance=0.0021570656593393593 swing_high=0.002176 swing_low=0.001958 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00210100 sl=0.00193988 tp=0.00215163 risk=0.00016112 reward=0.00005063 rr=0.3142 atr=0.00005435 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0019534660413130568 resistance=0.0021570656593393593 swing_high=0.002176 swing_low=0.001958 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00208800 sl=0.00202463 tp=0.00215172 risk=0.00006337 reward=0.00006372 rr=1.0055 atr=0.00005347 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.002057466789880258 resistance=0.0021570656593393593 swing_high=0.002176 swing_low=0.002038 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00212000 sl=0.00202400 tp=0.00215146 risk=0.00009600 reward=0.00003146 rr=0.3278 atr=0.00005601 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.002057466789880258 resistance=0.0021570656593393593 swing_high=0.002176 swing_low=0.002038 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.00222500 sl=0.00216134 tp=0.00233039 risk=0.00006366 reward=0.00010539 rr=1.6555 atr=0.00005864 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.0020660029150814775 resistance=0.0023362500000000002 swing_high=0.002176 swing_low=0.002052 rejection_high=0.002265
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00217600 sl=0.00203630 tp=0.00223673 risk=0.00013970 reward=0.00006073 rr=0.4347 atr=0.00006281 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0020660029150814775 resistance=0.0022430103730830364 swing_high=0.002265 swing_low=0.002052 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00219100 sl=0.00203649 tp=0.00222714 risk=0.00015451 reward=0.00003614 rr=0.2339 atr=0.00006206 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0020660029150814775 resistance=0.0022333471192771607 swing_high=0.00225 swing_low=0.002052 rejection_high=0.002221
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00219800 sl=0.00203688 tp=0.00222730 risk=0.00016112 reward=0.00002930 rr=0.1818 atr=0.00006048 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0020660029150814775 resistance=0.0022333471192771607 swing_high=0.00225 swing_low=0.002052 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00219600 sl=0.00203708 tp=0.00222738 risk=0.00015892 reward=0.00003138 rr=0.1975 atr=0.00005966 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0020660029150814775 resistance=0.0022333471192771607 swing_high=0.00225 swing_low=0.002052 rejection_high=0.002221
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00217500 sl=0.00203715 tp=0.00222741 risk=0.00013785 reward=0.00005241 rr=0.3802 atr=0.00005940 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0020660029150814775 resistance=0.0022333471192771607 swing_high=0.00225 swing_low=0.002052 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00219500 sl=0.00203786 tp=0.00222769 risk=0.00015714 reward=0.00003269 rr=0.2080 atr=0.00005655 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0020660029150814775 resistance=0.0022333471192771607 swing_high=0.00225 swing_low=0.002052 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00219900 sl=0.00206378 tp=0.00223786 risk=0.00013522 reward=0.00003886 rr=0.2874 atr=0.00005919 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0020785820759981256 resistance=0.0022437814606601687 swing_high=0.002285 swing_low=0.002079 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00218500 sl=0.00206389 tp=0.00223791 risk=0.00012111 reward=0.00005291 rr=0.4369 atr=0.00005875 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0020785820759981256 resistance=0.0022437814606601687 swing_high=0.002285 swing_low=0.002079 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.00201600 sl=0.00193354 tp=0.00205575 risk=0.00008246 reward=0.00003975 rr=0.4821 atr=0.00007969 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0019534660413130568 resistance=0.0020637175693476104 swing_high=0.002285 swing_low=0.002079 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00193600 sl=0.00195586 tp=0.00189320 risk=0.00001986 reward=0.00004280 rr=2.1552 atr=0.00003943 sl_reason=above_rejection_high tp_reason=nearest_support support=0.0018892572419199009 resistance=0.0019993115583903107 swing_high=0.001969 swing_low=0.001872 rejection_high=0.001946
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00194000 sl=0.00197545 tp=0.00189304 risk=0.00003545 reward=0.00004696 rr=1.3247 atr=0.00003780 sl_reason=above_rejection_high tp_reason=nearest_support support=0.0018892572419199009 resistance=0.0019993115583903107 swing_high=0.001969 swing_low=0.001872 rejection_high=0.001966
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00194600 sl=0.00196863 tp=0.00189271 risk=0.00002263 reward=0.00005329 rr=2.3551 atr=0.00003451 sl_reason=above_rejection_high tp_reason=nearest_support support=0.0018892572419199009 resistance=0.0019670321116248154 swing_high=0.001981 swing_low=0.001872 rejection_high=0.00196
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00192500 sl=0.00194151 tp=0.00190695 risk=0.00001651 reward=0.00001805 rr=1.0935 atr=0.00002949 sl_reason=above_resistance tp_reason=swing_low support=0.0018920518156026265 resistance=0.0019341351691997762 swing_high=0.001959 swing_low=0.001904 rejection_high=0.001939
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00195000 sl=0.00197026 tp=0.00190590 risk=0.00002026 reward=0.00004410 rr=2.1764 atr=0.00002904 sl_reason=above_rejection_high tp_reason=swing_low support=0.001895589001880369 resistance=0.0019670321116248154 swing_high=0.001959 swing_low=0.001903 rejection_high=0.001963
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00194400 sl=0.00196919 tp=0.00190588 risk=0.00002519 reward=0.00003812 rr=1.5136 atr=0.00002875 sl_reason=above_rejection_high tp_reason=swing_low support=0.001895589001880369 resistance=0.001969351179981352 swing_high=0.00198 swing_low=0.001903 rejection_high=0.001962
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.00185400 sl=0.00191214 tp=0.00181040 risk=0.00005814 reward=0.00004360 rr=0.7500 atr=0.00002455 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.001807942436959905 resistance=0.0018970913294572257 swing_high=0.001906 swing_low=0.001918 rejection_high=0.001876
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.00195200 sl=0.00193567 tp=0.00195512 risk=0.00001633 reward=0.00000312 rr=0.1909 atr=0.00002882 sl_reason=below_support_zone tp_reason=swing_high support=0.0019428710259144655 resistance=0.001971844434494055 swing_high=0.001958 swing_low=0.001839 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.00195000 sl=0.00193586 tp=0.00195520 risk=0.00001414 reward=0.00000520 rr=0.3674 atr=0.00002805 sl_reason=below_support_zone tp_reason=swing_high support=0.0019428710259144655 resistance=0.001971844434494055 swing_high=0.001958 swing_low=0.001839 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00202000 sl=0.00192831 tp=0.00203332 risk=0.00009169 reward=0.00001332 rr=0.1453 atr=0.00002676 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.0019436206255364922 resistance=0.0020637175693476104 swing_high=0.002036 swing_low=0.001935 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00192800 sl=0.00194474 tp=0.00189889 risk=0.00001674 reward=0.00002911 rr=1.7390 atr=0.00001895 sl_reason=above_rejection_high tp_reason=swing_low support=0.0018908407655986138 resistance=0.0019441409897595439 swing_high=0.001962 swing_low=0.001897 rejection_high=0.00194
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00192900 sl=0.00194058 tp=0.00189883 risk=0.00001158 reward=0.00003017 rr=2.6054 atr=0.00001832 sl_reason=above_rejection_high tp_reason=swing_low support=0.0018908407655986138 resistance=0.0019441409897595439 swing_high=0.001962 swing_low=0.001897 rejection_high=0.001936
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00192200 sl=0.00194934 tp=0.00191808 risk=0.00002734 reward=0.00000392 rr=0.1433 atr=0.00002081 sl_reason=above_resistance tp_reason=swing_low support=0.0018908407655986138 resistance=0.0019441409897595439 swing_high=0.001962 swing_low=0.001916 rejection_high=0.00196
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00191900 sl=0.00193240 tp=0.00189476 risk=0.00001340 reward=0.00002424 rr=1.8096 atr=0.00001759 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.0018929969834246612 resistance=0.0019209185858739947 swing_high=0.001928 swing_low=0.001887 rejection_high=0.001929
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00191300 sl=0.00192515 tp=0.00189469 risk=0.00001215 reward=0.00001831 rr=1.5078 atr=0.00001691 sl_reason=above_resistance tp_reason=nearest_support support=0.0018929969834246612 resistance=0.0019209185858739947 swing_high=0.001928 swing_low=0.001887 rejection_high=0.001921
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00189000 sl=0.00190417 tp=0.00186907 risk=0.00001417 reward=0.00002093 rr=1.4767 atr=0.00002069 sl_reason=above_rejection_high tp_reason=swing_low support=0.0018489426258426742 resistance=0.001906968005194099 swing_high=0.001925 swing_low=0.001867 rejection_high=0.001899
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00189000 sl=0.00190271 tp=0.00186889 risk=0.00001271 reward=0.00002111 rr=1.6608 atr=0.00001885 sl_reason=above_rejection_high tp_reason=swing_low support=0.0018489426258426742 resistance=0.001902239400802305 swing_high=0.001899 swing_low=0.001867 rejection_high=0.001898
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00188400 sl=0.00189431 tp=0.00187472 risk=0.00001031 reward=0.00000928 rr=0.9003 atr=0.00001722 sl_reason=above_rejection_high tp_reason=swing_low support=0.0018489426258426742 resistance=0.0018999300461087732 swing_high=0.001898 swing_low=0.001873 rejection_high=0.00189
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.00194400 sl=0.00193438 tp=0.00197148 risk=0.00000962 reward=0.00002748 rr=2.8572 atr=0.00001633 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0019384645607317115 resistance=0.0019731106620061245 swing_high=0.001927 swing_low=0.001902 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.00194400 sl=0.00193454 tp=0.00197154 risk=0.00000946 reward=0.00002754 rr=2.9102 atr=0.00001571 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0019384645607317115 resistance=0.0019731106620061245 swing_high=0.001927 swing_low=0.001902 rejection_high=0.001948
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.00188700 sl=0.00190706 tp=0.00188062 risk=0.00002006 reward=0.00000638 rr=0.3178 atr=0.00001625 sl_reason=above_retest_resistance tp_reason=swing_low support=0.0018489426258426742 resistance=0.0018999300461087732 swing_high=0.001989 swing_low=0.001879 rejection_high=0.001899
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00187400 sl=0.00188786 tp=0.00184541 risk=0.00001386 reward=0.00002859 rr=2.0620 atr=0.00001945 sl_reason=above_rejection_high tp_reason=nearest_support support=0.001843469079727108 resistance=0.0019003514695321573 swing_high=0.001907 swing_low=0.001833 rejection_high=0.001883
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00187600 sl=0.00189584 tp=0.00184540 risk=0.00001984 reward=0.00003060 rr=1.5422 atr=0.00001935 sl_reason=above_rejection_high tp_reason=nearest_support support=0.001843469079727108 resistance=0.0019003514695321573 swing_high=0.001907 swing_low=0.001833 rejection_high=0.001891
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00187500 sl=0.00188567 tp=0.00184534 risk=0.00001067 reward=0.00002966 rr=2.7796 atr=0.00001869 sl_reason=above_rejection_high tp_reason=nearest_support support=0.001843469079727108 resistance=0.0019003514695321573 swing_high=0.001907 swing_low=0.001833 rejection_high=0.001881
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00187400 sl=0.00188951 tp=0.00184527 risk=0.00001551 reward=0.00002873 rr=1.8521 atr=0.00001804 sl_reason=above_rejection_high tp_reason=nearest_support support=0.001843469079727108 resistance=0.001896885141594579 swing_high=0.001891 swing_low=0.001833 rejection_high=0.001885
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00187200 sl=0.00188338 tp=0.00184522 risk=0.00001138 reward=0.00002678 rr=2.3521 atr=0.00001754 sl_reason=above_rejection_high tp_reason=nearest_support support=0.001843469079727108 resistance=0.001896885141594579 swing_high=0.001891 swing_low=0.001833 rejection_high=0.001879
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00188500 sl=0.00190029 tp=0.00184519 risk=0.00001529 reward=0.00003981 rr=2.6031 atr=0.00001718 sl_reason=above_rejection_high tp_reason=nearest_support support=0.001843469079727108 resistance=0.001896885141594579 swing_high=0.001891 swing_low=0.001833 rejection_high=0.001896
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.00184300 sl=0.00186978 tp=0.00180985 risk=0.00002678 reward=0.00003315 rr=1.2376 atr=0.00001912 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.001807942436959905 resistance=0.0018971768653500952 swing_high=0.001901 swing_low=0.001865 rejection_high=None
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.00178600 sl=0.00181403 tp=0.00163112 risk=0.00002803 reward=0.00015488 rr=5.5255 atr=0.00001345 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.0016297768916478047 resistance=0.001829456964933426 swing_high=0.001836 swing_low=0.00181 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00181500 sl=0.00183236 tp=0.00178646 risk=0.00001736 reward=0.00002854 rr=1.6443 atr=0.00001344 sl_reason=above_rejection_high tp_reason=nearest_support support=0.001785112887390625 resistance=0.001829456964933426 swing_high=0.001836 swing_low=0.001783 rejection_high=0.001829
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.00180900 sl=0.00183639 tp=0.00178647 risk=0.00002739 reward=0.00002253 rr=0.8227 atr=0.00001355 sl_reason=above_relevant_swing_high tp_reason=nearest_support support=0.001785112887390625 resistance=0.0018284947870653644 swing_high=0.001833 swing_low=0.001783 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00180900 sl=0.00181732 tp=0.00178644 risk=0.00000832 reward=0.00002256 rr=2.7100 atr=0.00001330 sl_reason=above_rejection_high tp_reason=nearest_support support=0.001785112887390625 resistance=0.0018284947870653644 swing_high=0.001833 swing_low=0.001783 rejection_high=0.001814
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00174200 sl=0.00175389 tp=0.00173012 risk=0.00001189 reward=0.00001188 rr=0.9991 atr=0.00001557 sl_reason=above_rejection_high tp_reason=nearest_support support=0.0017285602149497254 resistance=0.001756889478363726 swing_high=0.001763 swing_low=0.001718 rejection_high=0.00175
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.00176300 sl=0.00178302 tp=0.00173188 risk=0.00002002 reward=0.00003112 rr=1.5546 atr=0.00001207 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.001730671824525607 resistance=0.0018022075479009554 swing_high=0.001807 swing_low=0.00178 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00175200 sl=0.00181000 tp=0.00173187 risk=0.00005800 reward=0.00002013 rr=0.3471 atr=0.00001199 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.001730671824525607 resistance=0.0017535855034496093 swing_high=0.001807 swing_low=0.00178 rejection_high=0.001759
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00183200 sl=0.00181100 tp=0.00184735 risk=0.00002100 reward=0.00001535 rr=0.7309 atr=0.00001651 sl_reason=below_support_zone tp_reason=swing_high support=0.0018151264736614389 resistance=0.001849430422304812 swing_high=0.001849 swing_low=0.001823 rejection_high=None
+[RISK DEBUG] setup=BREAKOUT_RETEST direction=LONG entry=0.00187900 sl=0.00185136 tp=0.00189532 risk=0.00002764 reward=0.00001632 rr=0.5906 atr=0.00001855 sl_reason=below_retest_support tp_reason=nearest_resistance support=0.0018716511497683665 resistance=0.0018971768653500952 swing_high=0.001849 swing_low=0.001806 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00181600 sl=0.00183028 tp=0.00178676 risk=0.00001428 reward=0.00002924 rr=2.0481 atr=0.00001719 sl_reason=above_resistance tp_reason=nearest_support support=0.0017850366037180684 resistance=0.0018259808887119363 swing_high=0.001908 swing_low=0.001827 rejection_high=0.001826
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00181500 sl=0.00182709 tp=0.00181464 risk=0.00001209 reward=0.00000036 rr=0.0300 atr=0.00001638 sl_reason=above_rejection_high tp_reason=swing_low support=0.0017850366037180684 resistance=0.0018259808887119363 swing_high=0.001908 swing_low=0.001813 rejection_high=0.001823
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00181500 sl=0.00182796 tp=0.00179658 risk=0.00001296 reward=0.00001842 rr=1.4208 atr=0.00001584 sl_reason=above_rejection_high tp_reason=swing_low support=0.001789453907965793 resistance=0.0018259808887119363 swing_high=0.001908 swing_low=0.001795 rejection_high=0.001824
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00181600 sl=0.00182574 tp=0.00179650 risk=0.00000974 reward=0.00001950 rr=2.0020 atr=0.00001497 sl_reason=above_rejection_high tp_reason=swing_low support=0.001789453907965793 resistance=0.0018243764537897787 swing_high=0.001827 swing_low=0.001795 rejection_high=0.001822
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00181400 sl=0.00182462 tp=0.00179645 risk=0.00001062 reward=0.00001755 rr=1.6532 atr=0.00001447 sl_reason=above_rejection_high tp_reason=swing_low support=0.001789453907965793 resistance=0.0018243764537897787 swing_high=0.001827 swing_low=0.001795 rejection_high=0.001821
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00181200 sl=0.00182331 tp=0.00180532 risk=0.00001131 reward=0.00000668 rr=0.5902 atr=0.00001324 sl_reason=above_rejection_high tp_reason=swing_low support=0.001789453907965793 resistance=0.0018268084178664457 swing_high=0.00184 swing_low=0.001804 rejection_high=0.00182
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00178000 sl=0.00180644 tp=0.00175022 risk=0.00002644 reward=0.00002978 rr=1.1263 atr=0.00001694 sl_reason=above_resistance tp_reason=nearest_support support=0.0017485236855826127 resistance=0.0018022075479009554 swing_high=0.00184 swing_low=0.001804 rejection_high=0.001832
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00176400 sl=0.00176951 tp=0.00176000 risk=0.00000551 reward=0.00000400 rr=0.7258 atr=0.00001003 sl_reason=above_rejection_high tp_reason=swing_low support=0.0017485236855826127 resistance=0.0017807574534956282 swing_high=0.001783 swing_low=0.001759 rejection_high=0.001767
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00174600 sl=0.00175350 tp=0.00173136 risk=0.00000750 reward=0.00001464 rr=1.9513 atr=0.00001119 sl_reason=above_resistance tp_reason=nearest_support support=0.001730243066468448 resistance=0.0017507034749967851 swing_high=0.001788 swing_low=0.001759 rejection_high=0.001757
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00174600 sl=0.00175429 tp=0.00173168 risk=0.00000829 reward=0.00001432 rr=1.7278 atr=0.00001434 sl_reason=above_resistance tp_reason=nearest_support support=0.001730243066468448 resistance=0.0017507034749967851 swing_high=0.001788 swing_low=0.001759 rejection_high=0.001758
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00174600 sl=0.00175430 tp=0.00173168 risk=0.00000830 reward=0.00001432 rr=1.7253 atr=0.00001438 sl_reason=above_resistance tp_reason=nearest_support support=0.001730243066468448 resistance=0.0017507034749967851 swing_high=0.001788 swing_low=0.001707 rejection_high=0.001763
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00169800 sl=0.00170790 tp=0.00166456 risk=0.00000990 reward=0.00003344 rr=3.3764 atr=0.00001561 sl_reason=above_rejection_high tp_reason=nearest_support support=0.0016630023063852121 resistance=0.0017528064220778841 swing_high=0.001682 swing_low=0.001656 rejection_high=0.001704
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00170000 sl=0.00170775 tp=0.00166450 risk=0.00000775 reward=0.00003550 rr=4.5808 atr=0.00001500 sl_reason=above_rejection_high tp_reason=nearest_support support=0.0016630023063852121 resistance=0.0017528064220778841 swing_high=0.001682 swing_low=0.001656 rejection_high=0.001704
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.00171600 sl=0.00169184 tp=0.00171673 risk=0.00002416 reward=0.00000073 rr=0.0304 atr=0.00001266 sl_reason=below_relevant_swing_low tp_reason=swing_high support=0.0017064365563306343 resistance=0.0017528064220778841 swing_high=0.001718 swing_low=0.001695 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00170600 sl=0.00173593 tp=0.00169517 risk=0.00002993 reward=0.00001083 rr=0.3617 atr=0.00001173 sl_reason=expanded_to_swing_high tp_reason=swing_low support=0.0016630023063852121 resistance=0.0017062867659408147 swing_high=0.001733 swing_low=0.001694 rejection_high=0.001728
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00170000 sl=0.00170792 tp=0.00169517 risk=0.00000792 reward=0.00000483 rr=0.6100 atr=0.00001168 sl_reason=above_rejection_high tp_reason=swing_low support=0.0016630023063852121 resistance=0.0017062867659408147 swing_high=0.001733 swing_low=0.001694 rejection_high=0.001705
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00174600 sl=0.00175635 tp=0.00173166 risk=0.00001035 reward=0.00001434 rr=1.3855 atr=0.00001417 sl_reason=above_resistance tp_reason=nearest_support support=0.001730243066468448 resistance=0.0017528064220778841 swing_high=0.001728 swing_low=0.001714 rejection_high=0.001756
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00175700 sl=0.00174463 tp=0.00176646 risk=0.00001237 reward=0.00000946 rr=0.7648 atr=0.00001536 sl_reason=below_support_zone tp_reason=swing_high support=0.00174846650563596 resistance=0.0017715843834640358 swing_high=0.001768 swing_low=0.001719 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00178300 sl=0.00176158 tp=0.00178417 risk=0.00002142 reward=0.00000117 rr=0.0548 atr=0.00001827 sl_reason=below_support_zone tp_reason=swing_high support=0.0017661434437764923 resistance=0.0018041838190956088 swing_high=0.001786 swing_low=0.001737 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00178200 sl=0.00176189 tp=0.00179753 risk=0.00002011 reward=0.00001553 rr=0.7723 atr=0.00001702 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0017661434437764923 resistance=0.0017992336993897572 swing_high=0.00183 swing_low=0.00178 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00173200 sl=0.00173935 tp=0.00172012 risk=0.00000735 reward=0.00001188 rr=1.6161 atr=0.00001460 sl_reason=above_resistance tp_reason=nearest_support support=0.0017186602892665698 resistance=0.0017357021321360386 swing_high=0.001775 swing_low=0.001769 rejection_high=0.001741
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00180600 sl=0.00178073 tp=0.00182399 risk=0.00002527 reward=0.00001799 rr=0.7122 atr=0.00001237 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0017838250114996447 resistance=0.0018252308465011849 swing_high=0.001826 swing_low=0.001803 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00180700 sl=0.00178079 tp=0.00182402 risk=0.00002621 reward=0.00001702 rr=0.6494 atr=0.00001213 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0017838250114996447 resistance=0.0018252308465011849 swing_high=0.001826 swing_low=0.001803 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00180700 sl=0.00178081 tp=0.00182403 risk=0.00002619 reward=0.00001703 rr=0.6502 atr=0.00001205 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0017838250114996447 resistance=0.0018252308465011849 swing_high=0.001826 swing_low=0.001803 rejection_high=None
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00175000 sl=0.00175952 tp=0.00173401 risk=0.00000952 reward=0.00001599 rr=1.6795 atr=0.00001049 sl_reason=above_resistance tp_reason=nearest_support support=0.0017329628913453842 resistance=0.001756898378200675 swing_high=0.001787 swing_low=0.001766 rejection_high=0.001758
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.00178300 sl=0.00176244 tp=0.00178598 risk=0.00002056 reward=0.00000298 rr=0.1448 atr=0.00001024 sl_reason=expanded_to_swing_low tp_reason=swing_high support=0.0017827431043770064 resistance=0.0018005725938956163 swing_high=0.001787 swing_low=0.001765 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00189800 sl=0.00187367 tp=0.00192004 risk=0.00002433 reward=0.00002204 rr=0.9061 atr=0.00001331 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0018886758072762363 resistance=0.0019213735771800781 swing_high=0.001922 swing_low=0.001877 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00190100 sl=0.00187370 tp=0.00192005 risk=0.00002730 reward=0.00001905 rr=0.6978 atr=0.00001321 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0018886758072762363 resistance=0.0019213735771800781 swing_high=0.001922 swing_low=0.001877 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00190100 sl=0.00187666 tp=0.00192165 risk=0.00002434 reward=0.00002065 rr=0.8486 atr=0.00001335 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0018873460987006891 resistance=0.0019229880194579576 swing_high=0.001934 swing_low=0.00188 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00187900 sl=0.00186905 tp=0.00189576 risk=0.00000995 reward=0.00001676 rr=1.6842 atr=0.00001757 sl_reason=below_support_zone tp_reason=nearest_resistance support=0.0018734398898202949 resistance=0.0018975208610148423 swing_high=0.00194 swing_low=0.001875 rejection_high=None
+[RISK DEBUG] setup=SUPPORT_BOUNCE direction=LONG entry=0.00195100 sl=0.00193336 tp=0.00196630 risk=0.00001764 reward=0.00001530 rr=0.8674 atr=0.00001704 sl_reason=below_support_zone tp_reason=swing_high support=0.0019376239200990563 resistance=0.001975167023963727 swing_high=0.001968 swing_low=0.001901 rejection_high=0.001964
+[RISK DEBUG] setup=TREND_PULLBACK direction=LONG entry=0.00194200 sl=0.00191442 tp=0.00197084 risk=0.00002758 reward=0.00002884 rr=1.0457 atr=0.00001832 sl_reason=below_relevant_swing_low tp_reason=nearest_resistance support=0.0019376603420811927 resistance=0.0019726720812882187 swing_high=0.001979 swing_low=0.001919 rejection_high=None
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00180400 sl=0.00182639 tp=0.00179276 risk=0.00002239 reward=0.00001124 rr=0.5022 atr=0.00001756 sl_reason=above_rejection_high tp_reason=swing_low support=0.0017851664894268403 resistance=0.0018250764630295252 swing_high=0.00188 swing_low=0.001791 rejection_high=0.001822
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00175300 sl=0.00176238 tp=0.00175226 risk=0.00000938 reward=0.00000074 rr=0.0785 atr=0.00001264 sl_reason=above_resistance tp_reason=swing_low support=0.0017338555621618885 resistance=0.001759218696296328 swing_high=0.001772 swing_low=0.001751 rejection_high=0.001761
+[RISK DEBUG] setup=RESISTANCE_REJECTION direction=SHORT entry=0.00173200 sl=0.00173881 tp=0.00171990 risk=0.00000681 reward=0.00001210 rr=1.7773 atr=0.00001242 sl_reason=above_resistance tp_reason=nearest_support support=0.0017186602892665698 resistance=0.0017357021321360386 swing_high=0.001772 swing_low=0.001742 rejection_high=0.001741
+[RISK DEBUG] setup=BREAKDOWN_RETEST direction=SHORT entry=0.00169200 sl=0.00170826 tp=0.00166467 risk=0.00001626 reward=0.00002733 rr=1.6808 atr=0.00001670 sl_reason=above_retest_resistance tp_reason=nearest_support support=0.0016630023063852121 resistance=0.0017062867659408147 swing_high=0.001751 swing_low=0.001716 rejection_high=0.001707
+[RISK DEBUG] setup=TREND_PULLBACK_DOWN direction=SHORT entry=0.00170500 sl=0.00175519 tp=0.00166393 risk=0.00005019 reward=0.00004107 rr=0.8182 atr=0.00001677 sl_reason=expanded_to_swing_high tp_reason=nearest_support support=0.0016622543887933985 resistance=0.0017062867659408147 swing_high=0.001751 swing_low=0.001656 rejection_high=0.001725
+СТАТИСТИКА ОБУЧЕНИЯ (STRUCTURAL TRIPLE BARRIER)
+Режим: NORMAL
+Всего TA сигналов (после фильтрации трендом): 1700
+Успешных (TP): 168.0
+Неуспешных (SL/Time): 1532.0
+Positive Rate (Win-Rate): 9.88%
+Сигналов на монету (в среднем): 68.0
+Собрано 1700 сигналов. Запуск AutoML и ансамбля...
+AutoML подобрал лучшие параметры XGBoost.
+No threshold met minimum sample size on Val Set. Defaulting to 0.5.
+Train samples: 972 (Pos: 99, Neg: 873)
+Validation samples: 292 | OOS Test samples: 340
+Best Threshold (Selected on Val Set): 0.50
+OOS Expectancy (per trade): nan R
+OOS Total Estimated Net Profit: nan R (from 22 trades)
+       86.76%
+      27.27%
+         17.14%
+F1 Score:        0.2105
+PR-AUC:          0.2128
+Brier Score:     0.1261 (Calibration)
+Confusion Matrix (TN, FP / FN, TP):
+[[289  16]
+[ 29   6]]
+[LONG] Samples: 162 (Pos: 9, Neg: 153) | Acc: 92.0%, Prec: 16.7%, Rec: 11.1%, F1: 0.1333
+[SHORT] Samples: 178 (Pos: 26, Neg: 152) | Acc: 82.0%, Prec: 31.2%, Rec: 19.2%, F1: 0.2381
+ДЕТАЛИЗАЦИЯ ПО СЕТАПАМ PRICE ACTION (LONG / SHORT)
+СЕТАП                    | НАПР  | СИГНАЛЫ | WIN  | LOSS | WIN RATE | СРЕД. ДВИЖ | SCORE | ML PROB
+BREAKDOWN_RETEST         | SHORT | 135     | 9    | 126  |     6.7% | +  0.50% |  82.8 |    0.22
+BREAKOUT_RETEST          | LONG  | 159     | 24   | 135  |    15.1% | +  1.03% |  84.2 |    0.34
+LIQUIDITY_SWEEP_LONG     | LONG  | 1       | 0    | 1    |     0.0% | +  0.00% |  55.0 |    0.18
+LIQUIDITY_SWEEP_SHORT    | SHORT | 4       | 0    | 4    |     0.0% | +  0.00% |  56.2 |    0.36
+RANGE_REJECTION          | SHORT | 6       | 0    | 6    |     0.0% | +  0.00% |  58.0 |    0.28
+RESISTANCE_REJECTION     | SHORT | 233     | 28   | 205  |    12.0% | +  0.40% |  64.2 |    0.28
+SUPPORT_BOUNCE           | LONG  | 177     | 20   | 157  |    11.3% | +  0.32% |  64.5 |    0.28
+TREND_PULLBACK           | LONG  | 510     | 19   | 491  |     3.7% | +  0.17% |  65.7 |    0.20
+TREND_PULLBACK_DOWN      | SHORT | 475     | 68   | 407  |    14.3% | +  0.38% |  65.5 |    0.33
+Модель предсказания TP (Regressor) обучена.
+[V] ИИ V3 (Ансамбль + TP Регрессор) успешно сохранен в файл: model_normal.pkl
+[V] [СИСТЕМА] Обучение завершено! Модель успешно обновлена.
+[СИСТЕМА] Запуск торгового ядра...
+Включен режим Testnet (Песочница Binance Futures)
+Рынки успешно загружены.
+Модель ИИ V3 успешно загружена из model_normal.pkl. Порог: 0.50
+Session Working Capital (Bot Equity): 500.00 USDT
+Loaded capital state: 499.0 USDT
+Loaded 1 positions from live_state.json at startup.
+Символы: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT', 'ADA/USDT', 'XRP/USDT', 'DOGE/USDT', 'LINK/USDT', 'AVAX/USDT', 'DOT/USDT', 'LTC/USDT', 'BCH/USDT', 'ATOM/USDT', 'UNI/USDT', 'FIL/USDT', 'NEAR/USDT', 'AAVE/USDT', 'OP/USDT', 'ARB/USDT', 'INJ/USDT', 'SUI/USDT', 'APT/USDT', 'S/USDT', 'WLD/USDT', 'GALA/USDT'], Таймфрейм: 15m
+Бот переходит в цикл мониторинга (Многопоточный режим)...
+Пул потоков создан с max_workers=5
+Empty snapshot check 1/3 for BTC/USDT
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+[V] INJ/USDT - 1-й слой: ДА (BREAKDOWN_RETEST, SELL) -> Передаю на 2-й слой
+Оценка моделей: XGB=0.19, RF=0.38, GB=0.02
+Оценка ИИ (Ансамбль): уверенность 0.20 (порог 0.50)
+[X] INJ/USDT - 1-й слой: ДА - 2-й слой: НЕТ (уверенность 19.8%)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Empty snapshot check 2/3 for BTC/USDT
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Position BTC/USDT confirmed closed.
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Position BTC/USDT confirmed closed.
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Position BTC/USDT confirmed closed.
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Position BTC/USDT confirmed closed.
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Position BTC/USDT confirmed closed.
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Position BTC/USDT confirmed closed.
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Position BTC/USDT confirmed closed.
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
+Position BTC/USDT confirmed closed.
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] SOL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOGE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] DOT/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] NEAR/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] AAVE/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+[X] ARB/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
 [X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] UNI/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] FIL/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] APT/USDT - 1-й слой: НЕТ (RESISTANCE_TOO_CLOSE)
-[X] GALA/USDT - 1-й слой: НЕТ (BEARISH_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[V] APT/USDT - 1-й слой: ДА (RESISTANCE_REJECTION, SELL) -> Передаю на 2-й слой
-Оценка моделей: XGB=0.06, RF=0.10, GB=0.00
-Оценка ИИ (Ансамбль): уверенность 0.05 (порог 0.50)
-[X] APT/USDT - 1-й слой: ДА - 2-й слой: НЕТ (уверенность 5.5%)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[V] DOGE/USDT - 1-й слой: ДА (BREAKDOWN_RETEST, SELL) -> Передаю на 2-й слой
-Оценка моделей: XGB=0.07, RF=0.27, GB=0.00
-Оценка ИИ (Ансамбль): уверенность 0.11 (порог 0.50)
-[X] DOGE/USDT - 1-й слой: ДА - 2-й слой: НЕТ (уверенность 11.3%)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] ETH/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] XRP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] LINK/USDT - 1-й слой: НЕТ (BAD_GLOBAL_TREND)
-[X] AVAX/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] OP/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[X] GALA/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] LINK/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] DOT/USDT - 1-й слой: НЕТ (GREEN_CANDLE_CLOSE)
-[X] BCH/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[V] DOT/USDT - 1-й слой: ДА (TREND_PULLBACK_DOWN, SELL) -> Передаю на 2-й слой
-Оценка моделей: XGB=0.11, RF=0.17, GB=0.02
-Оценка ИИ (Ансамбль): уверенность 0.10 (порог 0.50)
-[X] DOT/USDT - 1-й слой: ДА - 2-й слой: НЕТ (уверенность 10.1%)
-[X] ATOM/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
+[СИСТЕМА] Логи скопированы в буфер обмена.
+Position BTC/USDT confirmed closed.
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] LINK/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
 [X] FIL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] AAVE/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[V] ARB/USDT - 1-й слой: ДА (TREND_PULLBACK_DOWN, SELL) -> Передаю на 2-й слой
-Оценка моделей: XGB=0.63, RF=0.48, GB=0.49
-Оценка ИИ (Ансамбль): уверенность 0.53 (порог 0.50)
-[GO] ARB/USDT - 1-й слой: ДА - 2-й слой: ДА (уверенность 53.1%) -> Проверяю Risk Engine и размер позиции...
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[ARB/USDT] Risk Sizing: AI Confidence 53.1% (x1.0) -> Risk 1.00%. Risk Amount: 9.99 USDT from 999.00 Effective Cap
-[ARB/USDT] Не удалось открыть сделку на бирже: rr_too_low_0.03
-[X] ATOM/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
+[X] WLD/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
+Position BTC/USDT confirmed closed.
+Cannot determine PnL for closed position BTC/USDT. Keeping state for reconciliation.
+[X] LINK/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
 [X] FIL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] AAVE/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[V] ARB/USDT - 1-й слой: ДА (TREND_PULLBACK_DOWN, SELL) -> Передаю на 2-й слой
-Оценка моделей: XGB=0.63, RF=0.48, GB=0.49
-Оценка ИИ (Ансамбль): уверенность 0.53 (порог 0.50)
-[GO] ARB/USDT - 1-й слой: ДА - 2-й слой: ДА (уверенность 53.1%) -> Проверяю Risk Engine и размер позиции...
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[ARB/USDT] Risk Sizing: AI Confidence 53.1% (x1.0) -> Risk 1.00%. Risk Amount: 9.99 USDT from 999.00 Effective Cap
-[ARB/USDT] Не удалось открыть сделку на бирже: rr_too_low_0.03
-[X] ATOM/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[X] FIL/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)
-[X] AAVE/USDT - 1-й слой: НЕТ (NOT_IN_RANGE_STRUCTURE)
-[V] ARB/USDT - 1-й слой: ДА (TREND_PULLBACK_DOWN, SELL) -> Передаю на 2-й слой
-Оценка моделей: XGB=0.63, RF=0.48, GB=0.49
-Оценка ИИ (Ансамбль): уверенность 0.53 (порог 0.50)
-[GO] ARB/USDT - 1-й слой: ДА - 2-й слой: ДА (уверенность 53.1%) -> Проверяю Risk Engine и размер позиции...
-[ARB/USDT] Risk Sizing: AI Confidence 53.1% (x1.0) -> Risk 1.00%. Risk Amount: 9.99 USDT from 999.00 Effective Cap
-[X] S/USDT - 1-й слой: НЕТ (NO_BEARISH_CONFIRMATION)
-[ARB/USDT] Не удалось открыть сделку на бирже: rr_too_low_0.03
-[СИСТЕМА] Лог сохранён: G:\AlgoBot\downloaded_console_log.txt
-[СИСТЕМА] Лог сохранён: G:\AlgoBot\downloaded_console_log.txt
+[X] WLD/USDT - 1-й слой: НЕТ (SUPPORT_TOO_CLOSE)

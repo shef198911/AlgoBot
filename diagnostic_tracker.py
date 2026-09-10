@@ -68,16 +68,27 @@ class DiagnosticTracker:
         }
         return stage_map.get(stage, stage)
 
-    def record_ta_signal(self, symbol, side, timestamp=None):
+    def record_ta_signal(self, symbol, side, timestamp=None, setup=None):
         with self.lock:
             if not timestamp: timestamp = time.time()
-            self.active_signals[symbol] = {'status': 'active', 'time': timestamp, 'side': side.upper()}
+            if not setup: setup = "UNKNOWN"
+            
+            sig_key = (timestamp, symbol, side.upper(), setup)
+            self.active_signals[sig_key] = {'status': 'active', 'time': timestamp, 'side': side.upper(), 'setup': setup, 'symbol': symbol}
             
             s = side.upper()
             self.stats['ta_signals'][s] += 1
             self.stats['ta_signals']['TOTAL'] += 1
             self.symbol_stats[symbol]['ta_signals'][s] += 1
             self.symbol_stats[symbol]['ta_signals']['TOTAL'] += 1
+
+    def _get_latest_active_key(self, symbol):
+        # Find the most recent active signal key for this symbol
+        keys = [k for k, v in self.active_signals.items() if k[1] == symbol and v['status'] == 'active']
+        if not keys:
+            return None
+        # Sort by timestamp (k[0]) descending and return the latest
+        return sorted(keys, key=lambda x: x[0], reverse=True)[0]
 
     def record_pass(self, symbol, stage):
         with self.lock:
@@ -89,11 +100,20 @@ class DiagnosticTracker:
             if stage == 'FINAL':
                 self.stats['final']['executable_entries'] += 1
                 self.symbol_stats[symbol]['final']['executable_entries'] += 1
-                if symbol in self.active_signals:
-                    self.active_signals.pop(symbol)
+                
+                sig_key = self._get_latest_active_key(symbol)
+                if sig_key:
+                    self.active_signals.pop(sig_key)
 
     def record_reject(self, symbol, stage, reason):
         with self.lock:
+            sig_key = self._get_latest_active_key(symbol)
+            if not sig_key:
+                # Signal already rejected or not found, enforce FIRST REJECTION ONLY
+                return
+                
+            # If we reach here, it's the FIRST rejection for this specific signal
+            
             key = self._get_stage_key(stage)
             if key in self.stats and 'rejected' in self.stats[key]:
                 self.stats[key]['rejected'] += 1
@@ -107,15 +127,15 @@ class DiagnosticTracker:
             self.top_rejections[formatted_reason] += 1
             
             # Record first rejection
-            if symbol in self.active_signals and self.active_signals[symbol].get('status') == 'active':
-                self.active_signals[symbol]['status'] = 'rejected'
-                self.symbol_stats[symbol]['first_rejection_reasons'].append({
-                    'timestamp': self.active_signals[symbol]['time'],
-                    'side': self.active_signals[symbol]['side'],
-                    'stage': stage,
-                    'reason': reason
-                })
-                self.active_signals.pop(symbol)
+            self.active_signals[sig_key]['status'] = 'rejected'
+            self.symbol_stats[symbol]['first_rejection_reasons'].append({
+                'timestamp': self.active_signals[sig_key]['time'],
+                'side': self.active_signals[sig_key]['side'],
+                'setup': self.active_signals[sig_key]['setup'],
+                'stage': stage,
+                'reason': reason
+            })
+            self.active_signals.pop(sig_key)
 
     def record_ml_prediction(self, symbol, side, is_approved, probability):
         with self.lock:
@@ -151,12 +171,16 @@ class DiagnosticTracker:
                 report.append(f"Entry Gate pass:     {global_funnel.get('ENTRY_GATE_PASS', 0)}")
                 report.append(f"ML pass:             {global_funnel.get('ML_PASS', 0)}")
                 
-                ml_pass = global_funnel.get('ML_PASS', 0)
-                risk_fail = global_funnel.get('RISK_FAIL', 0)
-                risk_pass = max(0, ml_pass - risk_fail)
+                # Fetch actual real executions from tracker stats
+                actual_risk_pass = self.stats.get('risk_engine', {}).get('passed', 0)
+                actual_margin_pass = self.stats.get('margin', {}).get('passed', 0)
                 
-                report.append(f"Risk pass:           {risk_pass}")
-                report.append(f"Margin pass:         {risk_pass}")
+                # If these stages are not explicitly recorded, mark as NOT_EVALUATED
+                risk_str = str(actual_risk_pass) if actual_risk_pass > 0 or global_funnel.get('RISK_FAIL', 0) > 0 else "NOT_EVALUATED"
+                margin_str = str(actual_margin_pass) if actual_margin_pass > 0 else "NOT_EVALUATED"
+                
+                report.append(f"Risk pass:           {risk_str}")
+                report.append(f"Margin pass:         {margin_str}")
                 
                 order_attempts = global_funnel.get('ORDER_SUCCESS', 0) + global_funnel.get('ORDER_FAIL', 0)
                 report.append(f"Order attempts:      {order_attempts}")

@@ -216,7 +216,7 @@ def train_ai():
     val_fees_in_r = 0.001 / np.maximum(val_risk_dist, 0.0001)
     
     best_expectancy = -9999
-    best_thresh = 0.5
+    best_thresh = 0.55
     for thresh in np.arange(0.3, 0.8, 0.05):
         preds = (probs_val >= thresh).astype(int)
         taken_trades = np.where(preds == 1)[0]
@@ -237,8 +237,8 @@ def train_ai():
             best_thresh = thresh
             
     if best_expectancy == -9999:
-        logger.warning("No threshold met minimum sample size on Val Set. Defaulting to 0.5.")
-        best_thresh = 0.5
+        logger.warning("No threshold met minimum sample size on Val Set. Defaulting to 0.55.")
+        best_thresh = 0.55
             
     # Final Metrics on Test Set (OOS)
     probs_test = ensemble.predict_proba(X_test)[:, 1]
@@ -335,10 +335,13 @@ def train_ai():
     else:
         regressor = None
         
+    fallback_thresh = 0.55
+    final_thresh = float(best_thresh) if 'best_thresh' in locals() and best_thresh != -9999 else fallback_thresh
+    
     model_data = {
         'ensemble': ensemble,
         'regressor': regressor,
-        'threshold': ML_PROBABILITY_THRESHOLD
+        'threshold': final_thresh
     }
     
     joblib.dump(model_data, MODEL_FILE)
