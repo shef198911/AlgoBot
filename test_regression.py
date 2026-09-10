@@ -228,5 +228,29 @@ class TestRegression(unittest.TestCase):
         # We expect 0.3 because best_thresh loop found 0.3 as the optimal threshold in our mock 
         self.assertEqual(saved_model['threshold'], 0.3)
 
+    def test_short_trade_uses_second_target_when_first_fails_rr(self):
+        from risk_manager import StructureRiskEngine
+        engine = StructureRiskEngine()
+        entry = 0.0961
+        sl = 0.0978524
+        atr = 0.0008
+        ctx = {
+            "nearest_support": 0.09461045,
+            "swing_low": 0.0925,
+            "nearest_resistance": 0.0970,
+            "swing_high": 0.0970,
+            "rejection_high": 0.0968,
+        }
+        result = engine.build_trade_plan(
+            direction="SHORT",
+            entry=entry,
+            setup_type="TREND_PULLBACK_DOWN",
+            ctx=ctx,
+            atr=atr,
+            dynamic_tp_pct=0.0155
+        )
+        self.assertTrue(result["valid"])
+        self.assertGreaterEqual(result["rr"], 1.5)
+
 if __name__ == '__main__':
     unittest.main()

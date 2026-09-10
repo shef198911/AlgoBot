@@ -251,7 +251,13 @@ class TraderExecutor:
                 max_acceptable_distance = (risk_usdt * current_price) / max(MIN_POSITION_NOTIONAL_USDT, 1.0)
 
                 trade_plan = self.risk_engine.build_trade_plan(
-                    direction_str, current_price, setup_type, engine_context, atr_value, max_distance=max_acceptable_distance
+                    direction=direction_str,
+                    entry=current_price,
+                    setup_type=setup_type,
+                    ctx=engine_context,
+                    atr=atr_value,
+                    max_distance=max_acceptable_distance,
+                    dynamic_tp_pct=dynamic_tp
                 )
 
                 if not trade_plan.get('valid'):

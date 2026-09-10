@@ -192,13 +192,41 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             if "отклонена Risk Engine" not in err_reason and "Лимит капитала исчерпан" not in err_reason and "Worst-case risk" not in err_reason:
                 record_funnel_event('ORDER_FAIL')
             logger.error(f"[{symbol}] Не удалось открыть сделку на бирже: {err_reason}")
-            tg.send_message(f"⚠️ <b>Внимание: сбой открытия сделки по {symbol}!</b>\nПричина биржи: <code>{err_reason}</code>")
+            
+            if str(err_reason).startswith("rr_too_low_") or any(
+                marker in str(err_reason)
+                for marker in [
+                    "invalid_risk",
+                    "sl_too_",
+                    "tp_calc",
+                    "RISK",
+                    "margin",
+                    "portfolio"
+                ]
+            ):
+                reason_source = "Risk Engine"
+            else:
+                reason_source = "Биржа / Execution"
+
+            tg.send_message(
+                f"⚠️ <b>Сделка по {symbol} не открыта</b>\n"
+                f"Источник отказа: <b>{reason_source}</b>\n"
+                f"Причина: <code>{err_reason}</code>"
+            )
 
     except Exception as e:
         logger.error(f"[{symbol}] Ошибка в потоке обработки: {e}")
 
 def main():
     logger.info("=== Запуск Гибридного ИИ Бота ===")
+    
+    BOT_BUILD = "73b707c45936dc828461edfb52bd30b292dca110"
+    logger.info("=" * 70)
+    logger.info(f"AlgoBot BUILD: {BOT_BUILD}")
+    logger.info(f"TRADING_MODE: {TIMEFRAME}")
+    logger.info(f"ML threshold from config: {getattr(__import__('config'), 'ML_PROBABILITY_THRESHOLD', None)}")
+    logger.info("=" * 70)
+
     tg = TelegramNotifier()
     tg.send_message(f"🚀 <b>AlgoBot запущен!</b>\nОтслеживаю монеты: {', '.join(SYMBOLS)}")
     

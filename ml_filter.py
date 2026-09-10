@@ -29,7 +29,14 @@ class MLFilter:
             except Exception as e:
                 self.logger.error(f"Ошибка загрузки ИИ: {e}")
         else:
-            self.logger.warning(f"Файл {MODEL_FILE} не найден. ИИ отключен.")
+            self.logger.warning(f"Файл {MODEL_FILE} не найден. ML отключен.")
+            
+        self.logger.info(
+            f"ML RUNTIME CONFIG: "
+            f"config_threshold={ML_PROBABILITY_THRESHOLD:.4f}, "
+            f"model_threshold={self.threshold:.4f}, "
+            f"model_file={MODEL_FILE}"
+        )
             
     def evaluate_signal(self, current_features):
         """

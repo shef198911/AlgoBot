@@ -277,7 +277,16 @@ class StructureRiskEngine:
 
         return risk, reward, reward / risk
 
-    def build_trade_plan(self, direction: str, entry: float, setup_type: str, ctx: Dict[str, Any], atr: float, max_distance: Optional[float] = None) -> Dict[str, Any]:
+    def build_trade_plan(
+        self,
+        direction: str,
+        entry: float,
+        setup_type: str,
+        ctx: Dict[str, Any],
+        atr: float,
+        max_distance: Optional[float] = None,
+        dynamic_tp_pct: Optional[float] = None
+    ) -> Dict[str, Any]:
         if not ctx:
             return {"valid": False, "reason": "no_context"}
 
@@ -310,10 +319,150 @@ class StructureRiskEngine:
             if risk_distance > atr * (MAX_SL_ATR * 3):
                 return {"valid": False, "reason": "sl_too_wide", "risk_distance": risk_distance}
 
-        tp_info = self.calculate_targets(direction, entry, sl, setup_type, ctx, atr)
-        tp1 = tp_info.get("tp1")
-        if not tp1:
-            return {"valid": False, "reason": "tp_calc_failed"}
+        tp_info = self.calculate_targets(
+            direction,
+            entry,
+            sl,
+            setup_type,
+            ctx,
+            atr
+        )
+
+        structural_tp1 = tp_info.get("tp1")
+        structural_tp2 = tp_info.get("tp2")
+
+        target_candidates = []
+
+        if structural_tp1 is not None:
+            target_candidates.append(
+                (float(structural_tp1), tp_info.get("reason", "nearest_structural_target"))
+            )
+
+        if structural_tp2 is not None:
+            target_candidates.append(
+                (float(structural_tp2), "secondary_structural_target")
+            )
+
+        # AI TP является только кандидатом.
+        # Он НЕ может отменить структурную проверку.
+        if dynamic_tp_pct is not None:
+            try:
+                dynamic_tp_pct = float(dynamic_tp_pct)
+
+                if 0.0 < dynamic_tp_pct < 1.0:
+                    if direction == "LONG":
+                        ai_tp = entry * (1.0 + dynamic_tp_pct)
+                    elif direction == "SHORT":
+                        ai_tp = entry * (1.0 - dynamic_tp_pct)
+                    else:
+                        ai_tp = None
+
+                    if ai_tp is not None:
+                        # AI TP должен оставаться внутри структурного диапазона.
+                        # Не разрешаем модели ставить TP за пределы подтвержденных
+                        # структурных целей.
+                        if target_candidates:
+                            prices = [p for p, _ in target_candidates]
+
+                            if direction == "LONG":
+                                structural_nearest = min(prices)
+                                structural_farthest = max(prices)
+
+                                if structural_nearest <= ai_tp <= structural_farthest:
+                                    target_candidates.append(
+                                        (ai_tp, "ai_dynamic_tp")
+                                    )
+
+                            elif direction == "SHORT":
+                                structural_nearest = max(prices)
+                                structural_farthest = min(prices)
+
+                                if structural_farthest <= ai_tp <= structural_nearest:
+                                    target_candidates.append(
+                                        (ai_tp, "ai_dynamic_tp")
+                                    )
+
+            except (TypeError, ValueError):
+                pass
+
+        if not target_candidates:
+            return {
+                "valid": False,
+                "reason": "tp_calc_failed"
+            }
+
+        # Убираем дубликаты
+        unique_candidates = {}
+
+        for target_price, target_reason in target_candidates:
+            unique_candidates[round(float(target_price), 12)] = (
+                float(target_price),
+                target_reason
+            )
+
+        target_candidates = list(unique_candidates.values())
+
+        # Сначала проверяем ближайшую достижимую цель.
+        # Если она не даёт MIN_RR, пробуем более дальнюю структурную цель.
+        if direction == "LONG":
+            target_candidates.sort(key=lambda x: x[0])
+        else:
+            target_candidates.sort(key=lambda x: x[0], reverse=True)
+
+        selected_target = None
+        selected_reason = None
+        selected_rr = 0.0
+        selected_reward = 0.0
+
+        for candidate_target, candidate_reason in target_candidates:
+
+            candidate_risk, candidate_reward, candidate_rr = self.calculate_directional_rr(
+                direction=direction,
+                entry=entry,
+                stop_loss=sl,
+                target=candidate_target
+            )
+
+            if candidate_risk <= 0 or candidate_reward <= 0:
+                continue
+
+            if candidate_rr >= MIN_RR:
+                selected_target = candidate_target
+                selected_reason = candidate_reason
+                selected_rr = candidate_rr
+                selected_reward = candidate_reward
+                break
+
+        if selected_target is None:
+            # Ни одна структурно допустимая цель не обеспечивает требуемый RR.
+            # Сделка должна быть отклонена, а не искусственно растягиваться.
+            first_target = target_candidates[0][0]
+
+            _, first_reward, first_rr = self.calculate_directional_rr(
+                direction=direction,
+                entry=entry,
+                stop_loss=sl,
+                target=first_target
+            )
+
+            return {
+                "valid": False,
+                "reason": f"rr_too_low_{first_rr:.2f}",
+                "rr": first_rr,
+                "risk_distance": risk_distance,
+                "reward_distance": first_reward,
+                "dynamic_tp_pct": dynamic_tp_pct,
+                "candidate_targets": [
+                    {
+                        "price": price,
+                        "reason": reason
+                    }
+                    for price, reason in target_candidates
+                ]
+            }
+
+        tp1 = selected_target
+        tp2 = structural_tp2
 
         risk_distance, reward_distance, rr = self.calculate_directional_rr(
             direction=direction,
@@ -321,35 +470,24 @@ class StructureRiskEngine:
             stop_loss=sl,
             target=tp1
         )
-        
-        if risk_distance <= 0 or reward_distance <= 0:
-            return {
-                "valid": False,
-                "reason": "invalid_reward_geometry",
-                "risk_distance": risk_distance,
-                "reward_distance": reward_distance
-            }
 
         _log.warning(
-            "[RISK DEBUG] "
+            "[RISK PLAN] "
             f"setup={setup_type} "
             f"direction={direction} "
             f"entry={entry:.8f} "
             f"sl={sl:.8f} "
             f"tp={tp1:.8f} "
-            f"risk={risk_distance:.8f} "
-            f"reward={reward_distance:.8f} "
-            f"rr={rr:.4f} "
-            f"atr={atr:.8f} "
-            f"sl_reason={sl_info.get('reason')} "
-            f"tp_reason={tp_info.get('reason')} "
-            f"support={ctx.get('nearest_support')} "
-            f"resistance={ctx.get('nearest_resistance')} "
-            f"swing_high={ctx.get('swing_high')} "
-            f"swing_low={ctx.get('swing_low')} "
-            f"rejection_high={ctx.get('rejection_high')}"
+            f"risk_pct={(risk_distance / entry) * 100:.3f}% "
+            f"reward_pct={(reward_distance / entry) * 100:.3f}% "
+            f"rr={rr:.3f} "
+            f"dynamic_tp_pct={dynamic_tp_pct} "
+            f"tp_reason={selected_reason} "
+            f"structural_tp1={structural_tp1} "
+            f"structural_tp2={structural_tp2} "
+            f"sl_reason={sl_info.get('reason')}"
         )
-        
+
         if rr < MIN_RR:
             return {
                 "valid": False,
@@ -366,12 +504,14 @@ class StructureRiskEngine:
             "stop_loss": sl,
             "take_profit": tp1,
             "tp1": tp1,
-            "tp2": tp_info.get("tp2"),
+            "tp2": tp2,
             "risk_distance": risk_distance,
             "rr": rr,
             "setup_type": setup_type,
             "sl_reason": sl_info.get("reason"),
-            "tp_reason": tp_info.get("reason"),
-            "structural_level": sl_info.get("structural_level")
+            "tp_reason": selected_reason,
+            "structural_level": sl_info.get("structural_level"),
+            "dynamic_tp_pct": dynamic_tp_pct,
+            "dynamic_tp_used": selected_reason == "ai_dynamic_tp"
         }
 
