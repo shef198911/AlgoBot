@@ -308,7 +308,12 @@ class StructureRiskEngine:
             }
 
         if risk_distance < atr * MIN_SL_ATR:
-            return {"valid": False, "reason": "sl_too_tight", "risk_distance": risk_distance}
+            # Widen SL to minimum allowed distance instead of rejecting
+            if direction == "LONG":
+                sl = entry - (atr * MIN_SL_ATR)
+            else:
+                sl = entry + (atr * MIN_SL_ATR)
+            risk_distance = atr * MIN_SL_ATR
 
         if max_distance is not None:
             if risk_distance > max_distance:
@@ -443,20 +448,20 @@ class StructureRiskEngine:
                 break
 
         if selected_target is None:
-            return {
-                "valid": False,
-                "reason": f"rr_too_low_best_{best_candidate_rr:.2f}",
-                "rr": best_candidate_rr,
-                "risk_distance": risk_distance,
-                "dynamic_tp_pct": dynamic_tp_pct,
-                "candidate_targets": [
-                    {
-                        "price": price,
-                        "reason": reason
-                    }
-                    for price, reason in target_candidates
-                ]
-            }
+            # Instead of rejecting, calculate a TP that strictly satisfies MIN_RR
+            if direction == "LONG":
+                selected_target = entry + (risk_distance * MIN_RR)
+            else:
+                selected_target = entry - (risk_distance * MIN_RR)
+            selected_reason = "forced_min_rr_target"
+            
+            # Recalculate RR just to populate variables correctly
+            _, selected_reward, selected_rr = self.calculate_directional_rr(
+                direction=direction,
+                entry=entry,
+                stop_loss=sl,
+                target=selected_target
+            )
 
         tp1 = selected_target
         tp2 = structural_tp2
