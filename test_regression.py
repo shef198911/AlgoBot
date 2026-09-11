@@ -252,5 +252,54 @@ class TestRegression(unittest.TestCase):
         self.assertTrue(result["valid"])
         self.assertGreaterEqual(result["rr"], 1.5)
 
+    def test_risk_engine_uses_secondary_tp_when_tp1_rr_is_too_low(self):
+        from risk_manager import StructureRiskEngine
+        from config import MIN_RR
+        risk = StructureRiskEngine()
+        
+        ctx = {
+            "nearest_support": 98.5,
+            "swing_low": 98.0,
+            "nearest_resistance": 102.0,
+            "swing_high": 105.0
+        }
+
+        result = risk.build_trade_plan(
+            direction="LONG",
+            entry=100.0,
+            setup_type="SUPPORT_BOUNCE",
+            ctx=ctx,
+            atr=1.0,
+            dynamic_tp_pct=0.015
+        )
+
+        self.assertTrue(result.get("valid"), result.get("reason"))
+        self.assertGreaterEqual(result.get("rr", 0), MIN_RR)
+        self.assertEqual(result.get("tp_reason"), "secondary_structural_target")
+        self.assertEqual(result.get("take_profit"), 104.9)
+
+    def test_risk_engine_rejects_when_both_tps_too_low(self):
+        from risk_manager import StructureRiskEngine
+        risk = StructureRiskEngine()
+        
+        ctx = {
+            "nearest_support": 98.5,
+            "swing_low": 98.0,
+            "nearest_resistance": 102.0,
+            "swing_high": 102.5
+        }
+
+        result = risk.build_trade_plan(
+            direction="LONG",
+            entry=100.0,
+            setup_type="SUPPORT_BOUNCE",
+            ctx=ctx,
+            atr=1.0,
+            dynamic_tp_pct=0.015
+        )
+
+        self.assertFalse(result.get("valid"))
+        self.assertTrue(str(result.get("reason", "")).startswith("rr_too_low"))
+
 if __name__ == '__main__':
     unittest.main()

@@ -217,10 +217,24 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
     except Exception as e:
         logger.error(f"[{symbol}] Ошибка в потоке обработки: {e}")
 
+def get_git_build():
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        sha = result.stdout.strip()
+        return sha if sha else "unknown"
+    except Exception:
+        return "unknown"
+
 def main():
     logger.info("=== Запуск Гибридного ИИ Бота ===")
     
-    BOT_BUILD = "73b707c45936dc828461edfb52bd30b292dca110"
+    BOT_BUILD = get_git_build()
     logger.info("=" * 70)
     logger.info(f"AlgoBot BUILD: {BOT_BUILD}")
     logger.info(f"TRADING_MODE: {TIMEFRAME}")
