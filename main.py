@@ -1,5 +1,6 @@
 import time
 import os
+import html
 import concurrent.futures
 import threading
 from config import (
@@ -212,7 +213,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             tg.send_message(
                 f"⚠️ <b>Сделка по {symbol} не открыта</b>\n"
                 f"Источник отказа: <b>{reason_source}</b>\n"
-                f"Причина: <code>{err_reason}</code>"
+                f"Причина: <code>{html.escape(str(err_reason))}</code>"
             )
 
     except Exception as e:
