@@ -184,8 +184,9 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             tp = pos.get('tp_price', 0)
             logger.info(f"[{symbol}] Сделка и защитные ордера успешно выставлены на бирже.")
             tg.send_message(f"💰 <b>Сделка {side_str.upper()} по {symbol} открыта!</b>\nВход: {current_price}\nСтоп-Лосс: {sl}\nТейк-Профит: {tp}")
+            time_str = time.strftime("%Y-%m-%d %H:%M:%S")
             with open("trade_history.txt", "a", encoding="utf-8") as f:
-                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_str.upper()} | Вход: {current_price}\n")
+                f.write(f"{time_str} | {symbol} | {side_str.upper()} OPEN | Вход: {current_price:.5f} | SL: {sl:.5f} | TP: {tp:.5f}\n")
         else:
             err_reason = getattr(executor, 'last_error', 'Неизвестная ошибка биржи')
             # If not already recorded as RISK_FAIL in executor, record as ORDER_FAIL

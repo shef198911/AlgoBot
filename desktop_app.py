@@ -836,7 +836,8 @@ class AlgoBotApp:
             
             active_pos = []
             for pos in (positions or []):
-                contracts = float(pos.get('contracts', 0))
+                amt_str = pos.get('info', {}).get('positionAmt', pos.get('contracts', 0))
+                contracts = abs(float(amt_str)) if amt_str else 0.0
                 if contracts > 0:
                     symbol = pos['symbol']
                     clean_sym = symbol.split(':')[0]
