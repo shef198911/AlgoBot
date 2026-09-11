@@ -447,15 +447,32 @@ class StructureRiskEngine:
                 selected_reward = candidate_reward
                 break
 
+        is_technical_fallback = False
         if selected_target is None:
-            # Instead of rejecting, calculate a TP that strictly satisfies MIN_RR
+            # Calculate a TP that strictly satisfies MIN_RR
             if direction == "LONG":
                 selected_target = entry + (risk_distance * MIN_RR)
+                max_tp_limit = entry + (atr * 5.0) # Upper bound: 5 ATR
+                if selected_target > max_tp_limit:
+                    return {
+                        "valid": False,
+                        "reason": "technical_tp_exceeds_max_limit",
+                        "rr": best_candidate_rr,
+                        "risk_distance": risk_distance
+                    }
             else:
                 selected_target = entry - (risk_distance * MIN_RR)
-            selected_reason = "forced_min_rr_target"
+                max_tp_limit = entry - (atr * 5.0)
+                if selected_target < max_tp_limit:
+                    return {
+                        "valid": False,
+                        "reason": "technical_tp_exceeds_max_limit",
+                        "rr": best_candidate_rr,
+                        "risk_distance": risk_distance
+                    }
+            selected_reason = "technical_min_rr_target"
+            is_technical_fallback = True
             
-            # Recalculate RR just to populate variables correctly
             _, selected_reward, selected_rr = self.calculate_directional_rr(
                 direction=direction,
                 entry=entry,
@@ -505,6 +522,7 @@ class StructureRiskEngine:
             "entry": entry,
             "stop_loss": sl,
             "take_profit": tp1,
+            "reason": selected_reason,
             "tp1": tp1,
             "tp2": tp2,
             "risk_distance": risk_distance,

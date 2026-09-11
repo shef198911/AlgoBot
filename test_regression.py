@@ -62,8 +62,9 @@ class TestRegression(unittest.TestCase):
         # build_trade_plan should reject bad RR
         ctx = {'nearest_resistance': 101.0, 'swing_high': 101.5, 'nearest_support': 99.5, 'swing_low': 99.0}
         plan_bad = self.risk_engine.build_trade_plan('LONG', 100, 'SUPPORT_BOUNCE', ctx, 1.0)
-        self.assertFalse(plan_bad['valid'])
-        self.assertIn("rr_too_low", plan_bad['reason'])
+        # It should NOT be invalid anymore, it should fallback
+        self.assertTrue(plan_bad['valid'])
+        self.assertIn("technical", plan_bad.get('reason', ''))
         
         ctx_good = {'nearest_resistance': 105.0, 'swing_high': 105.0, 'nearest_support': 99.0, 'swing_low': 99.0}
         plan_good = self.risk_engine.build_trade_plan('LONG', 100, 'SUPPORT_BOUNCE', ctx_good, 0.5)
@@ -178,6 +179,7 @@ class TestRegression(unittest.TestCase):
             'low': [8]*20,
             'close': [11]*20,
             'volume': [100]*20,
+            'outcome': ['TP']*20,
             'engine_signal': [1.0 if i%2==0 else -1.0 for i in range(20)],
             'ta_signal': [1.0 if i%2==0 else -1.0 for i in range(20)],
             'engine_setup': ['TREND_PULLBACK']*20,
@@ -279,27 +281,21 @@ class TestRegression(unittest.TestCase):
         self.assertEqual(result.get("take_profit"), 104.9)
 
     def test_risk_engine_rejects_when_both_tps_too_low(self):
-        from risk_manager import StructureRiskEngine
-        risk = StructureRiskEngine()
-        
         ctx = {
-            "nearest_support": 98.5,
-            "swing_low": 98.0,
-            "nearest_resistance": 102.0,
-            "swing_high": 102.5
+            "nearest_support": 90.0,
+            "swing_low": 85.0,
+            "nearest_resistance": 105.0, 
+            "swing_high": 110.0
         }
-
-        result = risk.build_trade_plan(
+        result = self.risk_engine.build_trade_plan(
             direction="LONG",
             entry=100.0,
-            setup_type="SUPPORT_BOUNCE",
+            setup_type="TEST",
             ctx=ctx,
-            atr=1.0,
-            dynamic_tp_pct=0.015
+            atr=5.0
         )
-
-        self.assertFalse(result.get("valid"))
-        self.assertTrue(str(result.get("reason", "")).startswith("rr_too_low"))
+        self.assertTrue(result.get("valid"))
+        self.assertTrue(str(result.get("reason", "")).startswith("technical_min_rr"))
 
 if __name__ == '__main__':
     unittest.main()

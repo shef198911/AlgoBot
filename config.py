@@ -93,7 +93,7 @@ MIN_RR = 1.5
 
 
 # --- Настройки ИИ (Meta-Labeling) ---
-ML_PROBABILITY_THRESHOLD = 0.65  # Минимальная вероятность от ИИ для входа в сделку (от 0 до 1)
+ML_PROBABILITY_THRESHOLD = 0.55  # Минимальная вероятность от ИИ для входа в сделку (от 0 до 1)
 MODEL_FILE = f"model_{TRADING_MODE.lower()}.pkl" # Разные файлы для разных режимов
 
 # --- Настройки Telegram ---
