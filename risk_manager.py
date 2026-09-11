@@ -414,6 +414,10 @@ class StructureRiskEngine:
         selected_rr = 0.0
         selected_reward = 0.0
 
+        best_candidate_rr = 0.0
+        best_candidate_price = None
+        best_candidate_reason = None
+
         for candidate_target, candidate_reason in target_candidates:
 
             candidate_risk, candidate_reward, candidate_rr = self.calculate_directional_rr(
@@ -426,6 +430,11 @@ class StructureRiskEngine:
             if candidate_risk <= 0 or candidate_reward <= 0:
                 continue
 
+            if candidate_rr > best_candidate_rr:
+                best_candidate_rr = candidate_rr
+                best_candidate_price = candidate_target
+                best_candidate_reason = candidate_reason
+
             if candidate_rr >= MIN_RR:
                 selected_target = candidate_target
                 selected_reason = candidate_reason
@@ -434,23 +443,11 @@ class StructureRiskEngine:
                 break
 
         if selected_target is None:
-            # Ни одна структурно допустимая цель не обеспечивает требуемый RR.
-            # Сделка должна быть отклонена, а не искусственно растягиваться.
-            first_target = target_candidates[0][0]
-
-            _, first_reward, first_rr = self.calculate_directional_rr(
-                direction=direction,
-                entry=entry,
-                stop_loss=sl,
-                target=first_target
-            )
-
             return {
                 "valid": False,
-                "reason": f"rr_too_low_{first_rr:.2f}",
-                "rr": first_rr,
+                "reason": f"rr_too_low_best_{best_candidate_rr:.2f}",
+                "rr": best_candidate_rr,
                 "risk_distance": risk_distance,
-                "reward_distance": first_reward,
                 "dynamic_tp_pct": dynamic_tp_pct,
                 "candidate_targets": [
                     {
