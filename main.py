@@ -82,17 +82,23 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         sr_info = f"Запас до сопротивления: +{dist_res:.1f}%" if side_str == 'buy' else f"Запас до поддержки: -{dist_sup:.1f}%"
         logger.info(f"[V] {symbol} - 1-й слой: ДА ({setup_name}, {side_str.upper()}) -> Передаю на 2-й слой")
 
-        # Шаг 4: Бот №2 (ИИ) фильтрует сигнал
-        is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
-        from diagnostic_tracker import diagnostic_tracker
-        diagnostic_tracker.record_ml_prediction(symbol, side_str, is_approved, ai_confidence)
-        
+        # Шаг 4: Слой 2 (ML) фильтр
+        if strategy_id == "v1":
+            is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
+            from diagnostic_tracker import diagnostic_tracker
+            diagnostic_tracker.record_ml_prediction(symbol, side_str, is_approved, ai_confidence)
+        else:
+            is_approved = True
+            ai_confidence = 1.0
+            dynamic_tp = None
+            probs_str = ""
+
         if not is_approved:
             with signal_tracker_lock:
                 if sig_key in signal_states:
                     signal_states[sig_key]['status'] = 'ML_REJECTED'
             record_funnel_event('ML_FAIL')
-            logger.warning(f"[X] {symbol} - 1-й слой: ДА - 2-й слой: НЕТ (уверенность {ai_confidence*100:.1f}%)")
+            logger.warning(f"❌ {symbol} - 1-й слой: ДА - 2-й слой: НЕТ (уверенность {ai_confidence*100:.1f}%)")
             return
 
         record_funnel_event('ML_PASS')
