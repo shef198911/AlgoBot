@@ -218,6 +218,12 @@ class TraderExecutor:
                     raise Exception(f"Leverage not confirmed for {symbol}")
 
             except Exception as e:
+                if "supports option markets only" in str(e) or "Position info absent" in str(e):
+                    self.logger.warning(f"Could not verify leverage for {symbol} (no open positions or unsupported fetch_position). Assuming success.")
+                    with self.capital_lock:
+                        self.pending_margins.pop(symbol, None)
+                    return True
+                
                 err = f"Failed to verify margin mode/leverage for {symbol}: {e}"
                 self.logger.error(err)
                 self.last_error = err
@@ -1091,10 +1097,10 @@ class TraderExecutor:
                             req_margin = float(pos_data.get('margin_required', abs(pnl) + 0.1))
                             pnl_pct = (pnl / req_margin) * 100 if req_margin > 0 else 0.0
                             
-                            msg = f"🏁 <b>Сделка ЗАКРЫТА: {symbol} ({side_p})</b>\nРезультат: {win_loss}\nPnL: {pnl:.2f} USDT ({pnl_pct:.2f}%)\nВход: {entry_p:.5f}\nВыход: {exit_price:.5f}"
+                            msg = f"🚀 <b>Сделка ЗАКРЫТА [{self.strategy_id.upper()}]: {symbol} ({side_p})</b>\nРезультат: {win_loss}\nPnL: {pnl:.2f} USDT ({pnl_pct:.2f}%)\nВход: {entry_p:.5f}\nВыход: {exit_price:.5f}"
                             tg.send_message(msg)
                             
-                            with open("trade_history.txt", "a", encoding="utf-8") as hist_f:
+                            with open(self.history_file, "a", encoding="utf-8") as hist_f:
                                 hist_f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | {side_p} CLOSED | PnL: {pnl:.2f} USDT | Вход: {entry_p:.5f} | Выход: {exit_price:.5f}\n")
                         except Exception as e:
                             self.logger.error(f"Failed to send close notification for {symbol}: {e}")

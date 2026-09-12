@@ -97,7 +97,7 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
 
         record_funnel_event('ML_PASS')
         tp_text = f"{dynamic_tp*100:.2f}% (Динамический)" if dynamic_tp else "Стандартный"
-        msg_approved = f"✅ <b>Сигнал ОДОБРЕН ИИ</b>\nМонета: {symbol}\nСетап: {setup_name}\nТип: {side_str.upper()}\nВход: {current_price}\n{sr_info}\nУверенность ИИ: {ai_confidence*100:.1f}%\nТейк-Профит ИИ: {tp_text}\n\nОтправляю ордер..."
+        msg_approved = f"✅ <b>Сигнал ОДОБРЕН [{strategy_id.upper()}]</b>\nМонета: {symbol}\nСетап: {setup_name}\nТип: {side_str.upper()}\nВход: {current_price}\n{sr_info}\nУверенность: {ai_confidence*100:.1f}%\nТейк-Профит: {tp_text}\n\nОтправляю ордер..."
         logger.info(f"[GO] {symbol} - 1-й слой: ДА - 2-й слой: ДА (уверенность {ai_confidence*100:.1f}%) -> Проверяю Risk Engine и размер позиции...")
         tg.send_message(msg_approved)
         
