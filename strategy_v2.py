@@ -252,14 +252,7 @@ class StrategyV2:
                     "channel_mid": float(row["DONCHIAN_MID"]),
                 }
 
-                if is_live:
-                    self.logger.info(
-                        f"[V2 SIGNAL] {symbol} direction=LONG entry={entry:.8f} "
-                        f"donchian_high={row['DONCHIAN_HIGH']:.8f} donchian_low={row['DONCHIAN_LOW']:.8f} "
-                        f"adx={row['ADX']:.2f} di_plus={row['DI_PLUS']:.2f} di_minus={row['DI_MINUS']:.2f} "
-                        f"di_spread={row['DI_SPREAD']:.2f} vol_ratio={row['VOL_RATIO']:.2f} "
-                        f"breakout_atr={row['BREAKOUT_ATR_LONG']:.2f} candle_atr={row['CANDLE_RANGE_ATR']:.2f}"
-                    )
+
 
             elif short_signal and not long_signal:
                 breakout_level = float(row["DONCHIAN_LOW"])
@@ -282,14 +275,7 @@ class StrategyV2:
                     "channel_mid": float(row["DONCHIAN_MID"]),
                 }
 
-                if is_live:
-                    self.logger.info(
-                        f"[V2 SIGNAL] {symbol} direction=SHORT entry={entry:.8f} "
-                        f"donchian_high={row['DONCHIAN_HIGH']:.8f} donchian_low={row['DONCHIAN_LOW']:.8f} "
-                        f"adx={row['ADX']:.2f} di_plus={row['DI_PLUS']:.2f} di_minus={row['DI_MINUS']:.2f} "
-                        f"di_spread={row['DI_SPREAD']:.2f} vol_ratio={row['VOL_RATIO']:.2f} "
-                        f"breakout_atr={row['BREAKOUT_ATR_SHORT']:.2f} candle_atr={row['CANDLE_RANGE_ATR']:.2f}"
-                    )
+
 
         data["SETUP_SCORE"] = np.where(data["ta_signal"] != 0, 100.0, 0.0)
         data["HTF_TREND"] = "STRATEGY_V2"

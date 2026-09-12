@@ -358,9 +358,10 @@ def main():
                     logger.error(f"Ошибка в потоке для {sym}: {e}")
             
             # Ждем до следующей итерации 
-            current_minute = datetime.now().minute
-            if current_minute % 5 == 0 and datetime.now().second < 15:
+            heartbeat_counter = getattr(executor, 'heartbeat_counter', 0)
+            if heartbeat_counter % 12 == 0:
                 logger.info("⏳ Бот активен, ожидание торговых сетапов...")
+            executor.heartbeat_counter = heartbeat_counter + 1
             
             time.sleep(15)
 
