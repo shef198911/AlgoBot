@@ -10,8 +10,8 @@ API_KEY = os.getenv("BINANCE_TESTNET_API_KEY", "")
 API_SECRET = os.getenv("BINANCE_TESTNET_API_SECRET", "")
 USE_TESTNET = True  # КРИТИЧНО: Всегда True во время тестов!
 
-TRADING_MODE = "NORMAL" # Режимы: "NORMAL" или "SCALPING"
-RISK_MODE = "BALANCED" # Режим: "CONSERVATIVE", "BALANCED", "AGGRESSIVE"
+TRADING_MODE = "SCALPING" # Режимы: "NORMAL" или "SCALPING"
+RISK_MODE = "AGGRESSIVE" # Режим: "CONSERVATIVE", "BALANCED", "AGGRESSIVE"
 AI_ENABLED = True
 SYMBOLS = [
     "BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "ADA/USDT", "XRP/USDT", "DOGE/USDT", "LINK/USDT", "AVAX/USDT",
@@ -87,13 +87,13 @@ USE_TRAILING = True        # Использовать плавающий сто�
 TRAILING_ACTIVATION_PCT = 0.008  # Активация трейлинга при +0.8% профита
 TRAILING_DISTANCE_PCT = 0.004    # Дистанция трейлинга 0.4%
 
-STOP_LOSS_PCT = 0.02
-TAKE_PROFIT_PCT = 0.04
+STOP_LOSS_PCT = 0.01
+TAKE_PROFIT_PCT = 0.02
 MIN_RR = 1.5
 
 
 # --- Настройки ИИ (Meta-Labeling) ---
-ML_PROBABILITY_THRESHOLD = 0.55  # Минимальная вероятность от ИИ для входа в сделку (от 0 до 1)
+ML_PROBABILITY_THRESHOLD = 0.50  # Минимальная вероятность от ИИ для входа в сделку (от 0 до 1)
 MODEL_FILE = f"model_{TRADING_MODE.lower()}.pkl" # Разные файлы для разных режимов
 
 # --- Настройки Telegram ---

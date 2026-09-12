@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 import os
 import html
@@ -299,7 +300,7 @@ def main():
             
     logger.info(f"Session Working Capital (Bot Equity): {session_working_capital:.2f} USDT")
     
-    executor = TraderExecutor(fetcher.exchange, working_capital=session_working_capital)
+    executor = TraderExecutor(fetcher.exchange, working_capital=session_working_capital, strategy_id=strategy_id)
 
     logger.info(f"Символы: {active_symbols}, Таймфрейм: {TIMEFRAME}")
     last_processed_candle = {sym: None for sym in active_symbols}
@@ -329,12 +330,10 @@ def main():
             current_usdt_balance = -1.0 # default to unknown state
             try:
                 balance = fetcher.exchange.fetch_balance()
-                if 'free' in balance and 'USDT' in balance['free']:
-                    current_usdt_balance = float(balance['free']['USDT'])
+                if 'free' in balance and quote_asset in balance['free']:
+                    current_usdt_balance = float(balance['free'][quote_asset])
                 else:
-                    logger.error("Свободный баланс (free) USDT не найден в ответе биржи!")
-                    current_usdt_balance = -1.0
-                executor.update_real_balance(current_usdt_balance)
+                    logger.error(f"Свободный баланс (free) {quote_asset} не найден в ответе биржи!")
             except Exception as e:
                 logger.error(f"Ошибка получения баланса: {e}")
                 executor.update_real_balance(-1.0)
@@ -356,9 +355,13 @@ def main():
                 try:
                     future.result()
                 except Exception as e:
-                    logger.error(f"Необработанная ошибка в потоке для {sym}: {e}")
+                    logger.error(f"Ошибка в потоке для {sym}: {e}")
             
-            # Ждем перед следующим опросом 
+            # Ждем до следующей итерации 
+            current_minute = datetime.now().minute
+            if current_minute % 5 == 0 and datetime.now().second < 15:
+                logger.info("⏳ Бот активен, ожидание торговых сетапов...")
+            
             time.sleep(15)
 
         except KeyboardInterrupt:

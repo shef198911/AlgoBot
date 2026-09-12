@@ -842,7 +842,14 @@ class AlgoBotStrategyUI:
                     sl, tp = None, None
                     sl_ok = False
                     tp_ok = False
-                    match_key = clean_sym if clean_sym in st else (symbol if symbol in st else None)
+                    match_key = None
+                    for k in [symbol, clean_sym]:
+                        if k in st and st[k].get('sl_price'):
+                            match_key = k
+                            break
+                    if not match_key:
+                        match_key = clean_sym if clean_sym in st else (symbol if symbol in st else None)
+
                     if match_key:
                         val_sl = st[match_key].get('sl_price')
                         val_tp = st[match_key].get('tp_price')
