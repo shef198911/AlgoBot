@@ -1173,11 +1173,19 @@ class AlgoBotMainApp:
         self.v2_ui = AlgoBotStrategyUI(page, "v2", "USDC")
 
         tabs = ft.Tabs(
-            selected_index=0,
-            tabs=[
-                ft.Tab(label="V1 (USDT - ML)", content=self.v1_ui.main_layout),
-                ft.Tab(label="V2 (USDC - Donchian)", content=self.v2_ui.main_layout),
-            ],
+            selected_index=0, length=2,
+            content=ft.Column([
+                ft.TabBar(
+                    tabs=[
+                        ft.Tab(label="V1 (USDT - ML)"),
+                        ft.Tab(label="V2 (USDC - Donchian)"),
+                    ],
+                    indicator_color=C_CYAN,
+                    label_color=C_TEXT,
+                    unselected_label_color=C_TEXT_DIM,
+                ),
+                ft.TabBarView(expand=True, controls=[self.v1_ui.main_layout, self.v2_ui.main_layout])
+            ]),
             expand=1,
         )
 
