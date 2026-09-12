@@ -1169,20 +1169,20 @@ class AlgoBotMainApp:
         self.page.window.width = 1320
         self.page.window.height = 880
         self.page.fonts = {"Inter": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"}
-
         self.v1_ui = AlgoBotStrategyUI(page, "v1", "USDT")
         self.v2_ui = AlgoBotStrategyUI(page, "v2", "USDC")
 
         tabs = ft.Tabs(
             selected_index=0,
             tabs=[
-                ft.Tab(text="V1 (USDT - ML)", content=self.v1_ui.main_layout),
-                ft.Tab(text="V2 (USDC - Donchian)", content=self.v2_ui.main_layout),
+                ft.Tab(label="V1 (USDT - ML)", content=self.v1_ui.main_layout),
+                ft.Tab(label="V2 (USDC - Donchian)", content=self.v2_ui.main_layout),
             ],
             expand=1,
         )
 
         self.page.add(tabs)
+
 
 def main(page: ft.Page):
     app = AlgoBotMainApp(page)
