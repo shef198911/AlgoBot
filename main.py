@@ -338,8 +338,10 @@ def main():
                 balance = fetcher.exchange.fetch_balance()
                 if 'free' in balance and quote_asset in balance['free']:
                     current_usdt_balance = float(balance['free'][quote_asset])
+                    executor.update_real_balance(current_usdt_balance)
                 else:
                     logger.error(f"Свободный баланс (free) {quote_asset} не найден в ответе биржи!")
+                    executor.update_real_balance(-1.0)
             except Exception as e:
                 logger.error(f"Ошибка получения баланса: {e}")
                 executor.update_real_balance(-1.0)
