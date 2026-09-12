@@ -1,0 +1,20 @@
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Ошибка в потоке для {sym}: {e}")
+            
+            # Ждем до следующей итерации 
+            current_minute = datetime.now().minute
+            if current_minute % 5 == 0 and datetime.now().second < 15:
+                logger.info("⏳ Бот активен, ожидание торговых сетапов...")
+            
+            time.sleep(15)
+
+        except KeyboardInterrupt:
+            logger.info("Остановка бота пользователем.")
+            break
+        except Exception as e:
+            logger.error(f"Непредвиденная ошибка в главном цикле: {e}")
+            time.sleep(10)
+
+if __name__ == "__main__":
+    main()
