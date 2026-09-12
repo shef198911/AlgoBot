@@ -24,11 +24,14 @@ from diagnostic_tracker import diagnostic_tracker
 tg_notifier = TelegramNotifier()
 
 class TraderExecutor:
-    def __init__(self, exchange_client, lock=None, working_capital=500.0):
+    def __init__(self, exchange_client, lock=None, working_capital=500.0, strategy_id="v1"):
+        self.strategy_id = strategy_id
+        self.state_file = f"live_state_{self.strategy_id}.json"
+        self.equity_file = f"bot_equity_{self.strategy_id}.json"
         self.logger = logger.getChild("TraderExecutor")
         self.risk_engine = StructureRiskEngine()
         self.working_capital = working_capital
-        self.capital_tracker = CapitalTracker(working_capital)
+        self.capital_tracker = CapitalTracker(working_capital, state_file=self.equity_file)
         self.real_balance = 0.0  # Updated each cycle from exchange
         if isinstance(exchange_client, SafeExchange):
             self.exchange = exchange_client
@@ -47,8 +50,8 @@ class TraderExecutor:
         try:
             import os
             import json
-            if os.path.exists("live_state.json"):
-                with open("live_state.json", "r", encoding="utf-8") as f:
+            if os.path.exists(self.state_file):
+                with open(self.state_file, "r", encoding="utf-8") as f:
                     saved_state = json.load(f)
                     for sym, pos_data in saved_state.items():
                         self.positions[sym] = pos_data
@@ -745,7 +748,7 @@ class TraderExecutor:
     def _save_live_state(self):
         with self.state_lock:
             try:
-                with open("live_state.json", "w", encoding="utf-8") as f:
+                with open(self.state_file, "w", encoding="utf-8") as f:
                     json.dump(self.positions, f, indent=4, default=str)
             except Exception as e:
                 self.logger.error(f"Ошибка сохранения live_state: {e}")

@@ -275,11 +275,11 @@ def main():
     if strategy_id == "v1":
         from strategy_ta import TAStrategy
         ta_bot = TAStrategy()
+        ml_bot = MLFilter()
     else:
         from strategy_v2 import StrategyV2
         ta_bot = StrategyV2()
-        
-    ml_bot = MLFilter()
+        ml_bot = None
     
     # Calculate working capital for the session
     from config import MAX_CAPITAL_USDT
@@ -338,8 +338,8 @@ def main():
                 thread_executor.submit(
                     process_symbol, 
                     sym, fetcher, ta_bot, ml_bot, executor, tg, 
-                    last_processed_candle, current_usdt_balance, positions_snapshot
-                ): sym for sym in SYMBOLS
+                    last_processed_candle, current_usdt_balance, positions_snapshot, strategy_id
+                ): sym for sym in active_symbols
             }
             
             for future in concurrent.futures.as_completed(futures):

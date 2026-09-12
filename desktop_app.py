@@ -32,7 +32,7 @@ class AlgoBotStrategyUI:
         self.strategy_id = strategy_id
         self.quote_asset = quote
         self.history_file = f"trade_history_{self.strategy_id}.txt"
-        self.config_file = "config.py"
+        self.config_file = f"config_{self.strategy_id}.py"
         self.state_file = f"live_state_{self.strategy_id}.json"
         
         self.bot_process = None
