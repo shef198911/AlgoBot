@@ -219,23 +219,21 @@ class TraderExecutor:
 
             except Exception as e:
                 if "supports option markets only" in str(e) or "Position info absent" in str(e):
-                    self.logger.warning(f"Could not verify leverage for {symbol} (no open positions or unsupported fetch_position). Assuming success.")
+                    self.logger.warning(f"Could not verify leverage for {symbol} (no open positions or unsupported fetch_position). Using configured leverage={LEVERAGE}.")
+                    actual_leverage = LEVERAGE
+                else:
+                    err = f"Failed to verify margin mode/leverage for {symbol}: {e}"
+                    self.logger.error(err)
+                    self.last_error = err
                     with self.capital_lock:
                         self.pending_margins.pop(symbol, None)
-                    return True
-                
-                err = f"Failed to verify margin mode/leverage for {symbol}: {e}"
-                self.logger.error(err)
-                self.last_error = err
-                with self.capital_lock:
-                    self.pending_margins.pop(symbol, None)
-                diagnostic_tracker.record_reject(symbol, 'LEVERAGE', err)
-                record_funnel_event('RISK_FAIL')
-                try:
-                    self.exchange.cancel_all_orders(symbol)
-                except:
-                    pass
-                return False
+                    diagnostic_tracker.record_reject(symbol, 'LEVERAGE', err)
+                    record_funnel_event('RISK_FAIL')
+                    try:
+                        self.exchange.cancel_all_orders(symbol)
+                    except:
+                        pass
+                    return False
 
             direction_str = 'LONG' if side in ['buy', 'long'] else 'SHORT'
             diagnostic_tracker.record_pass(symbol, 'LEVERAGE')
