@@ -33,6 +33,7 @@ class AlgoBotStrategyUI:
         self.quote_asset = quote
         self.history_file = f"trade_history_{self.strategy_id}.txt"
         self.config_file = "config.py"
+        self.state_file = f"live_state_{self.strategy_id}.json"
         
         self.bot_process = None
         self._cached_tickers = None
@@ -815,15 +816,17 @@ class AlgoBotStrategyUI:
             positions = self.fetcher.exchange.fetch_positions()
             
             st = {}
-            if os.path.exists('live_state.json'):
+            if os.path.exists(self.state_file):
                 try:
-                    with open('live_state.json', 'r', encoding='utf-8') as f:
+                    with open(self.state_file, 'r', encoding='utf-8') as f:
                         st = json.load(f)
                 except Exception:
                     pass
             
             active_pos = []
             for pos in (positions or []):
+                if not pos['symbol'].endswith(self.quote_asset) and not pos['symbol'].endswith(f"{self.quote_asset}:USDT"):
+                    continue
                 amt_str = pos.get('info', {}).get('positionAmt', pos.get('contracts', 0))
                 contracts = abs(float(amt_str)) if amt_str else 0.0
                 if contracts > 0:

@@ -50,6 +50,7 @@ class StructureRiskEngine:
 
             elif setup_type == 'BREAKOUT_RETEST':
                 swing_low = ctx.get('swing_low')
+                broken_level = ctx.get('broken_level')
                 levels = []
                 if broken_level is not None:
                     levels.append((broken_level, "below_retest_support"))
@@ -156,6 +157,7 @@ class StructureRiskEngine:
 
             elif setup_type == 'BREAKDOWN_RETEST':
                 swing_high = ctx.get('swing_high')
+                broken_level = ctx.get('broken_level')
                 levels = []
                 if broken_level is not None:
                     levels.append((broken_level, "above_retest_resistance"))
