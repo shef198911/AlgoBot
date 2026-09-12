@@ -160,3 +160,37 @@ MIN_SL_ATR = 0.5
 MAX_SL_ATR = 3.0
 MIN_RR = 1.5
 TP_BUFFER_ATR = 0.10
+
+
+
+# ============================================================
+# STRATEGY V2 - DONCHIAN TREND BREAKOUT
+# ============================================================
+DONCHIAN_PERIOD = 20
+ADX_PERIOD = 14
+ADX_MIN = 20.0
+DI_SPREAD_MIN = 2.5
+VOLUME_RATIO_MIN = 1.05
+BREAKOUT_MIN_ATR = 0.05
+BREAKOUT_MAX_ATR = 1.50
+OBV_SLOPE_LOOKBACK = 5
+
+DONCHIAN_STOP_ATR = 0.75
+DONCHIAN_TARGET_RR = 2.0
+DONCHIAN_MAX_TARGET_ATR = 5.0
+
+FEATURE_COLUMNS_V2 = [
+    "DONCHIAN_HIGH",
+    "DONCHIAN_LOW",
+    "DONCHIAN_MID",
+    "CHANNEL_WIDTH_ATR",
+    "ADX",
+    "DI_PLUS",
+    "DI_MINUS",
+    "DI_SPREAD",
+    "VOL_RATIO",
+    "OBV_SLOPE",
+    "BREAKOUT_ATR_LONG",
+    "BREAKOUT_ATR_SHORT",
+    "CANDLE_RANGE_ATR",
+]

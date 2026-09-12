@@ -1,6 +1,7 @@
 import time
 import os
 import html
+import argparse
 import concurrent.futures
 import threading
 from config import (
@@ -8,11 +9,9 @@ from config import (
     API_KEY, API_SECRET, USE_TESTNET, USE_COMPOUNDING, COMPOUND_PCT
 )
 from data_fetcher import DataFetcher
-from strategy_ta import TAStrategy
 from ml_filter import MLFilter
 from executor import TraderExecutor
 from telegram_notifier import TelegramNotifier
-from trend_helper import get_global_trend
 from entry_gate import record_funnel_event, get_funnel_summary
 
 execute_lock = threading.Lock()
@@ -21,7 +20,7 @@ signal_tracker_lock = threading.Lock()
 # States: CANDIDATE, ML_REJECTED, EXECUTION_FAILED, EXECUTED, UNKNOWN
 signal_states = {}
 
-def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance, positions_snapshot):
+def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed_candle, current_usdt_balance, positions_snapshot, strategy_id="v1"):
     try:
         status = executor.check_position_status(symbol, cached_positions=positions_snapshot)
         if status is True or status == "UNKNOWN":
@@ -34,8 +33,14 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             return
 
         # Шаг 2: Бот №1 (Теханализ) генерирует сигнал и признаки
-        trend_str = get_global_trend(fetcher, symbol)
-        analyzed_data = ta_bot.generate_features_and_signals(df, htf_trend=trend_str, symbol=symbol, is_live=True)
+        if strategy_id == "v1":
+            from trend_helper import get_global_trend
+            trend_str = get_global_trend(fetcher, symbol)
+            analyzed_data = ta_bot.generate_features_and_signals(df, htf_trend=trend_str, symbol=symbol, is_live=True)
+        else:
+            # Для V2 глобальный тренд не требуется
+            analyzed_data = ta_bot.generate_features_and_signals(df, symbol=symbol, is_live=True)
+            
         if analyzed_data is None or analyzed_data.empty:
             return
 
@@ -234,7 +239,15 @@ def get_git_build():
         return "unknown"
 
 def main():
-    logger.info("=== Запуск Гибридного ИИ Бота ===")
+    parser = argparse.ArgumentParser(description="AlgoBot Main Runner")
+    parser.add_argument("--strategy", type=str, default="v1", choices=["v1", "v2"], help="Strategy to run (v1 or v2)")
+    parser.add_argument("--quote", type=str, default="USDT", help="Quote asset to trade (e.g., USDT, USDC)")
+    args = parser.parse_args()
+    
+    strategy_id = args.strategy
+    quote_asset = args.quote
+
+    logger.info(f"=== Запуск Гибридного ИИ Бота (Strategy: {strategy_id.upper()}, Quote: {quote_asset}) ===")
     
     BOT_BUILD = get_git_build()
     logger.info("=" * 70)
@@ -243,15 +256,29 @@ def main():
     logger.info(f"ML threshold from config: {getattr(__import__('config'), 'ML_PROBABILITY_THRESHOLD', None)}")
     logger.info("=" * 70)
 
+    # Filter symbols by quote asset
+    active_symbols = [sym for sym in SYMBOLS if sym.endswith(f"/{quote_asset}")]
+    if not active_symbols and quote_asset != "USDT":
+        # Create symbols dynamically if not in SYMBOLS list
+        base_assets = [sym.split("/")[0] for sym in SYMBOLS if "/" in sym]
+        active_symbols = [f"{base}/{quote_asset}" for base in base_assets]
+
     tg = TelegramNotifier()
-    tg.send_message(f"🚀 <b>AlgoBot запущен!</b>\nОтслеживаю монеты: {', '.join(SYMBOLS)}")
+    tg.send_message(f"🚀 <b>AlgoBot запущен ({strategy_id.upper()})!</b>\nОтслеживаю монеты ({quote_asset}): {', '.join(active_symbols)}")
     
     if not API_KEY or not API_SECRET:
         logger.error("API ключи не найдены в config.py! Бот будет работать только в режиме анализа (без сделок).")
     
     # 1. Инициализация модулей
     fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
-    ta_bot = TAStrategy()
+    
+    if strategy_id == "v1":
+        from strategy_ta import TAStrategy
+        ta_bot = TAStrategy()
+    else:
+        from strategy_v2 import StrategyV2
+        ta_bot = StrategyV2()
+        
     ml_bot = MLFilter()
     
     # Calculate working capital for the session
@@ -265,12 +292,12 @@ def main():
     
     executor = TraderExecutor(fetcher.exchange, working_capital=session_working_capital)
 
-    logger.info(f"Символы: {SYMBOLS}, Таймфрейм: {TIMEFRAME}")
-    last_processed_candle = {sym: None for sym in SYMBOLS}
+    logger.info(f"Символы: {active_symbols}, Таймфрейм: {TIMEFRAME}")
+    last_processed_candle = {sym: None for sym in active_symbols}
     logger.info("Бот переходит в цикл мониторинга (Многопоточный режим)...")
 
     # Создаем единый пул потоков
-    max_workers = min(5, len(SYMBOLS))
+    max_workers = min(5, len(active_symbols))
     thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
     logger.info(f"Пул потоков создан с max_workers={max_workers}")
 

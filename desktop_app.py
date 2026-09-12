@@ -10,9 +10,6 @@ import atexit
 from data_fetcher import DataFetcher
 from config import API_KEY, API_SECRET, USE_TESTNET
 
-CONFIG_FILE = "config.py"
-HISTORY_FILE = "trade_history.txt"
-
 # ──────────────────────────────────────────────────
 #  Цвета и константы дизайн-системы
 # ──────────────────────────────────────────────────
@@ -29,20 +26,13 @@ C_BLUE         = "#58A6FF"
 C_PURPLE       = "#BC8CFF"
 C_CYAN         = "#39D2C0"
 
-class AlgoBotApp:
-    def __init__(self, page: ft.Page):
+class AlgoBotStrategyUI:
+    def __init__(self, page: ft.Page, strategy_id: str, quote: str):
         self.page = page
-        self.page.title = "AlgoBot AI"
-        self.page.theme_mode = ft.ThemeMode.DARK
-        self.page.bgcolor = C_BG
-        self.page.theme = ft.Theme(
-            color_scheme_seed=ft.Colors.INDIGO,
-            visual_density=ft.VisualDensity.COMPACT,
-        )
-        self.page.padding = 0
-        self.page.window.width = 1320
-        self.page.window.height = 880
-        self.page.fonts = {"Inter": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"}
+        self.strategy_id = strategy_id
+        self.quote_asset = quote
+        self.history_file = f"trade_history_{self.strategy_id}.txt"
+        self.config_file = "config.py"
         
         self.bot_process = None
         self._cached_tickers = None
@@ -51,11 +41,9 @@ class AlgoBotApp:
         
         atexit.register(self.emergency_kill_bot)
         
-        # Reusable single DataFetcher client to avoid 5-second connection overhead
         self.fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
         
-        # Log store for filtering and deduplication
-        self.raw_logs = []  # list of dicts: {category, icon, icon_bg, symbol, text, color, timestamp, count, raw}
+        self.raw_logs = []
         self.active_log_filter = "ALL"
         
         self.read_config()
@@ -71,7 +59,7 @@ class AlgoBotApp:
     # ──────────────────────────────────────────────
     def read_config(self):
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            with open(self.config_file, "r", encoding="utf-8") as f:
                 content = f.read()
             mode_match = re.search(r'TRADING_MODE\s*=\s*"([^"]+)"', content)
             self.current_mode = mode_match.group(1) if mode_match else "NORMAL"
@@ -131,7 +119,7 @@ class AlgoBotApp:
 
     def save_config(self, e=None):
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            with open(self.config_file, "r", encoding="utf-8") as f:
                 content = f.read()
             new_size = float(self.input_base_risk.value or 0.0)
             mode_risk = self.dd_trade_size_mode.value
@@ -162,7 +150,7 @@ class AlgoBotApp:
             content = re.sub(r'USE_TRAILING\s*=\s*(True|False)', f'USE_TRAILING = {new_trail}', content)
             content = re.sub(r'USE_COMPOUNDING\s*=\s*(True|False)', f'USE_COMPOUNDING = {new_comp}', content)
             content = re.sub(r'COMPOUND_PCT\s*=\s*[0-9.]+', f'COMPOUND_PCT = {new_comp_pct}', content)
-            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            with open(self.config_file, "w", encoding="utf-8") as f:
                 f.write(content)
             self.log_message("[СИСТЕМА] Настройки успешно сохранены.", "info")
             self.btn_save_text.value = "Сохранено ✓"
@@ -546,7 +534,7 @@ class AlgoBotApp:
             bgcolor=C_SURFACE,
         )
 
-        self.page.add(ft.Row([sidebar, ft.Container(content=center, expand=True), right_sidebar], expand=True, spacing=0))
+        self.main_layout = ft.Row([sidebar, ft.Container(content=center, expand=True), right_sidebar], expand=True, spacing=0)
 
     # ──────────────────────────────────────────────
     #  LOG FILTERING & COMPACT LOG CARDS
@@ -1000,9 +988,9 @@ class AlgoBotApp:
     async def update_history_loop(self):
         last_hist = ""
         while True:
-            if os.path.exists(HISTORY_FILE):
+            if os.path.exists(self.history_file):
                 try:
-                    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                    with open(self.history_file, "r", encoding="utf-8") as f:
                         hist = f.read()
                     if hist != last_hist:
                         last_hist = hist
@@ -1087,7 +1075,7 @@ class AlgoBotApp:
             base_dir = os.path.dirname(os.path.abspath(__file__))
             main_script = os.path.join(base_dir, "main.py")
             self.bot_process = subprocess.Popen(
-                [sys.executable, "-u", main_script], cwd=base_dir,
+                [sys.executable, "-u", main_script, "--strategy", self.strategy_id, "--quote", self.quote_asset], cwd=base_dir,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
@@ -1166,8 +1154,36 @@ class AlgoBotApp:
         else:
             self.log_message("[ОШИБКА] Отчёт не создан.", "error")
 
-def main(page: ft.Page):
-    app = AlgoBotApp(page)
 
-if __name__ == "__main__":
-    ft.run(main)
+class AlgoBotMainApp:
+    def __init__(self, page: ft.Page):
+        self.page = page
+        self.page.title = "AlgoBot AI - Dual Strategy"
+        self.page.theme_mode = ft.ThemeMode.DARK
+        self.page.bgcolor = C_BG
+        self.page.theme = ft.Theme(
+            color_scheme_seed=ft.Colors.INDIGO,
+            visual_density=ft.VisualDensity.COMPACT,
+        )
+        self.page.padding = 0
+        self.page.window.width = 1320
+        self.page.window.height = 880
+        self.page.fonts = {"Inter": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"}
+
+        self.v1_ui = AlgoBotStrategyUI(page, "v1", "USDT")
+        self.v2_ui = AlgoBotStrategyUI(page, "v2", "USDC")
+
+        tabs = ft.Tabs(
+            selected_index=0,
+            tabs=[
+                ft.Tab(text="V1 (USDT - ML)", content=self.v1_ui.main_layout),
+                ft.Tab(text="V2 (USDC - Donchian)", content=self.v2_ui.main_layout),
+            ],
+            expand=1,
+        )
+
+        self.page.add(tabs)
+
+def main(page: ft.Page):
+    app = AlgoBotMainApp(page)
+

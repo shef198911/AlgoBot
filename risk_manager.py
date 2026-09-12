@@ -21,8 +21,34 @@ class StructureRiskEngine:
         reason = ""
 
         if direction == 'LONG':
-            if setup_type == 'BREAKOUT_RETEST':
-                broken_level = ctx.get('broken_level')
+            # =====================================================
+            # STRATEGY V2 - DONCHIAN BREAKOUT
+            # =====================================================
+            if setup_type == "DONCHIAN_BREAKOUT_LONG":
+                stop_anchor = ctx.get("stop_anchor")
+
+                if stop_anchor is None:
+                    return {
+                        "valid": False,
+                        "reason": "missing_donchian_stop_anchor"
+                    }
+
+                sl = float(stop_anchor)
+
+                if sl >= entry:
+                    return {
+                        "valid": False,
+                        "reason": "invalid_donchian_long_sl"
+                    }
+
+                return {
+                    "stop_loss": sl,
+                    "structural_level": sl,
+                    "buffer": 0.0,
+                    "reason": "donchian_breakout_stop"
+                }
+
+            elif setup_type == 'BREAKOUT_RETEST':
                 swing_low = ctx.get('swing_low')
                 levels = []
                 if broken_level is not None:
@@ -101,8 +127,34 @@ class StructureRiskEngine:
             }
 
         elif direction == 'SHORT':
-            if setup_type == 'BREAKDOWN_RETEST':
-                broken_level = ctx.get('broken_level')
+            # =====================================================
+            # STRATEGY V2 - DONCHIAN BREAKOUT
+            # =====================================================
+            if setup_type == "DONCHIAN_BREAKOUT_SHORT":
+                stop_anchor = ctx.get("stop_anchor")
+
+                if stop_anchor is None:
+                    return {
+                        "valid": False,
+                        "reason": "missing_donchian_stop_anchor"
+                    }
+
+                sl = float(stop_anchor)
+
+                if sl <= entry:
+                    return {
+                        "valid": False,
+                        "reason": "invalid_donchian_short_sl"
+                    }
+
+                return {
+                    "stop_loss": sl,
+                    "structural_level": sl,
+                    "buffer": 0.0,
+                    "reason": "donchian_breakout_stop"
+                }
+
+            elif setup_type == 'BREAKDOWN_RETEST':
                 swing_high = ctx.get('swing_high')
                 levels = []
                 if broken_level is not None:
@@ -347,6 +399,26 @@ class StructureRiskEngine:
             target_candidates.append(
                 (float(structural_tp2), "secondary_structural_target")
             )
+
+        # Strategy V2 preferred target.
+        preferred_tp = ctx.get("preferred_tp")
+
+        if preferred_tp is not None:
+            try:
+                preferred_tp = float(preferred_tp)
+
+                if direction == "LONG" and preferred_tp > entry:
+                    target_candidates.append(
+                        (preferred_tp, "donchian_preferred_tp")
+                    )
+
+                elif direction == "SHORT" and preferred_tp < entry:
+                    target_candidates.append(
+                        (preferred_tp, "donchian_preferred_tp")
+                    )
+
+            except (TypeError, ValueError):
+                pass
 
         # AI TP является только кандидатом.
         # Он НЕ может отменить структурную проверку.
