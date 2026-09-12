@@ -83,9 +83,9 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
         logger.info(f"[V] {symbol} - 1-й слой: ДА ({setup_name}, {side_str.upper()}) -> Передаю на 2-й слой")
 
         # Шаг 4: Слой 2 (ML) фильтр
+        from diagnostic_tracker import diagnostic_tracker
         if strategy_id == "v1":
             is_approved, ai_confidence, dynamic_tp, probs_str = ml_bot.evaluate_signal(current_state)
-            from diagnostic_tracker import diagnostic_tracker
             diagnostic_tracker.record_ml_prediction(symbol, side_str, is_approved, ai_confidence)
         else:
             is_approved = True
@@ -198,7 +198,8 @@ def process_symbol(symbol, fetcher, ta_bot, ml_bot, executor, tg, last_processed
             logger.info(f"[{symbol}] Сделка и защитные ордера успешно выставлены на бирже.")
             tg.send_message(f"💰 <b>Сделка {side_str.upper()} по {symbol} открыта!</b>\nВход: {current_price}\nСтоп-Лосс: {sl}\nТейк-Профит: {tp}")
             time_str = time.strftime("%Y-%m-%d %H:%M:%S")
-            with open("trade_history.txt", "a", encoding="utf-8") as f:
+            history_file = f"trade_history_{strategy_id}.txt"
+            with open(history_file, "a", encoding="utf-8") as f:
                 f.write(f"{time_str} | {symbol} | {side_str.upper()} OPEN | Вход: {current_price:.5f} | SL: {sl:.5f} | TP: {tp:.5f}\n")
         else:
             err_reason = getattr(executor, 'last_error', 'Неизвестная ошибка биржи')

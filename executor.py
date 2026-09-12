@@ -55,9 +55,9 @@ class TraderExecutor:
                     saved_state = json.load(f)
                     for sym, pos_data in saved_state.items():
                         self.positions[sym] = pos_data
-                self.logger.info(f"Loaded {len(self.positions)} positions from live_state.json at startup.")
+                self.logger.info(f"Loaded {len(self.positions)} positions from {self.state_file} at startup.")
         except Exception as e:
-            self.logger.warning(f"Ошибка загрузки live_state.json при старте: {e}")
+            self.logger.warning(f"Ошибка загрузки {self.state_file} при старте: {e}")
         
         try:
             self.exchange.load_markets()
@@ -116,7 +116,7 @@ class TraderExecutor:
         self.logger.warning(log_msg)
         try:
             import time
-            with open("trade_history.txt", "a", encoding="utf-8") as f:
+            with open(f"trade_history_{self.strategy_id}.txt", "a", encoding="utf-8") as f:
                 f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {symbol} | REJECT | Ошибка: {reject_reason} | Risk USDT: {risk_usdt:.2f}\n")
         except Exception:
             pass
