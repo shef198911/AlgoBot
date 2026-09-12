@@ -790,13 +790,13 @@ class AlgoBotStrategyUI:
             except Exception:
                 pass
             balance = self.fetcher.exchange.fetch_balance()
-            if 'free' in balance and 'USDT' in balance['free']:
-                usdt = float(balance['free']['USDT'])
+            if 'free' in balance and self.quote_asset in balance['free']:
+                val = float(balance['free'][self.quote_asset])
             else:
-                usdt = -1.0
-            self.lbl_balance.value = f"{usdt:,.2f} USDT"
+                val = 0.0
+            self.lbl_balance.value = f"{val:,.2f} {self.quote_asset}"
         except Exception as e:
-            self.lbl_balance.value = "Ошибка загрузки"
+            self.lbl_balance.value = "Ошибка баланса загрузки"
             self.log_message(f"[ОШИБКА] Баланс: {e}", "error")
         finally:
             try:

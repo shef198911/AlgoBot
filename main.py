@@ -256,21 +256,30 @@ def main():
     logger.info(f"ML threshold from config: {getattr(__import__('config'), 'ML_PROBABILITY_THRESHOLD', None)}")
     logger.info("=" * 70)
 
-    # Filter symbols by quote asset
-    active_symbols = [sym for sym in SYMBOLS if sym.endswith(f"/{quote_asset}")]
-    if not active_symbols and quote_asset != "USDT":
-        # Create symbols dynamically if not in SYMBOLS list
-        base_assets = [sym.split("/")[0] for sym in SYMBOLS if "/" in sym]
-        active_symbols = [f"{base}/{quote_asset}" for base in base_assets]
+    if not API_KEY or not API_SECRET:
+        logger.error("API ключи не найдены в config.py!")
+
+    # 1. Инициализация обмена
+    fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
+    fetcher.load_markets()
+    markets = fetcher.exchange.markets or {}
+
+    # Получаем доступные пары для выбранного quote_asset
+    base_assets = [sym.split("/")[0] for sym in SYMBOLS if "/" in sym]
+    active_symbols = []
+    
+    for base in base_assets:
+        found = False
+        for symbol, market in markets.items():
+            if market.get('base') == base and market.get('quote') == quote_asset:
+                active_symbols.append(symbol)
+                found = True
+                break
+        if not found and quote_asset == "USDT":
+            active_symbols.append(f"{base}/USDT") # fallback
 
     tg = TelegramNotifier()
-    tg.send_message(f"🚀 <b>AlgoBot запущен ({strategy_id.upper()})!</b>\nОтслеживаю монеты ({quote_asset}): {', '.join(active_symbols)}")
-    
-    if not API_KEY or not API_SECRET:
-        logger.error("API ключи не найдены в config.py! Бот будет работать только в режиме анализа (без сделок).")
-    
-    # 1. Инициализация модулей
-    fetcher = DataFetcher(use_testnet=USE_TESTNET, api_key=API_KEY, api_secret=API_SECRET)
+    tg.send_message(f"🚀 <b>AlgoBot Запущен ({strategy_id.upper()})!</b>\nРабочий пул ({quote_asset}): {', '.join(active_symbols)}")
     
     if strategy_id == "v1":
         from strategy_ta import TAStrategy
