@@ -1187,3 +1187,6 @@ class AlgoBotMainApp:
 def main(page: ft.Page):
     app = AlgoBotMainApp(page)
 
+
+if __name__ == '__main__':
+    ft.app(target=main)
