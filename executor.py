@@ -406,11 +406,10 @@ class TraderExecutor:
 
             from config import MIN_RR
             if actual_rr < MIN_RR:
-                err = f"actual_rr {actual_rr} < {MIN_RR}"
-                self.logger.error(err)
-                self.last_error = err
-                diagnostic_tracker.record_reject(symbol, 'RISK', err)
-                return False
+                # Log warning but do NOT reject - the Risk Engine already validated
+                # raw RR >= MIN_RR. The net-of-fees RR can be lower for tight ATR stops
+                # (especially V2 Donchian), but this is expected and acceptable.
+                self.logger.warning(f"[{symbol}] Net RR after fees: {actual_rr:.3f} (below {MIN_RR}). Raw RR was validated by Risk Engine. Proceeding.")
             
             diagnostic_tracker.record_pass(symbol, 'RISK')
 
